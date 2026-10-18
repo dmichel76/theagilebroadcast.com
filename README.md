@@ -19,6 +19,8 @@ Set `status` to `"available"` or `"in-development"`. To show a testimonial, repl
 testimonial: { quote: "What they said", name: "Their name", role: "Role, Company" }
 ```
 
+After editing `courses.js`, also change the date in `courses.js?v=...` near the bottom of `index.html` (e.g. `?v=2026-11-02`), so visitors' browsers fetch the new version straight away instead of using a cached copy.
+
 ## Publish on GitHub Pages (one-off setup)
 
 1. Create a public repository on GitHub (e.g. `theagilebroadcast-website`) and upload the contents of this folder (not the `_thumbs` folder).

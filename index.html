@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Agile Broadcast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Dr David Michel helps product teams and their leaders deliver value, not just output. Training, coaching, conference talks and the book Demystifying Value Delivery.">
+<meta property="og:title" content="The Agile Broadcast · Dr David Michel">
+<meta property="og:description" content="Training, coaching and talks on value, flow and learning in product development.">
+<meta property="og:image" content="assets/img/hero-david.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
+<style>
+/* Layout: bold, banded page. Deep navy hero and feature bands alternate with white; heavy uppercase grotesk headlines, mono eyebrow labels, one amber accent taken from the Learning colour in David's sketches. */
+:root{
+  --navy:#12213B;      /* hero, feature bands */
+  --navy-2:#1C3157;    /* raised surfaces on navy */
+  --paper:#FFFFFF;     /* page */
+  --soft:#F1F3F7;      /* quiet bands */
+  --ink:#12213B;       /* text on light */
+  --muted:#56637A;     /* secondary text */
+  --on-navy:#DCE3EF;   /* text on navy */
+  --line:#D9DEE8;
+  --accent:#F2A91E;    /* amber */
+  --accent-ink:#B87700;
+  --display:"Archivo", "Arial Black", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+  --hand:"Shantell Sans", "Comic Sans MS", cursive;
+  --maxw:1200px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-0.01em;text-wrap:balance;margin:0}
+h1,h2{text-transform:uppercase}
+h2{font-size:clamp(2.2rem,5vw,3.9rem)}
+h2 em,h1 em{font-style:normal;color:var(--accent)}
+h3{font-size:1.3rem;font-weight:750;line-height:1.15}
+p{margin:0}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+section{padding-block:clamp(64px,9vw,128px)}
+.eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:18px}
+.dark .eyebrow,.hero .eyebrow{color:var(--accent)}
+.lede{font-size:1.15rem;color:var(--muted);max-width:60ch}
+.stack{display:flex;flex-direction:column;gap:20px}
+.hand{font-family:var(--hand);font-size:.95rem;color:var(--muted)}
+.dark{background:var(--navy);color:var(--on-navy)}
+.dark h2,.dark h3{color:#fff}
+.dark .lede{color:#AEB9CC}
+.dark a{color:#fff}
+.soft,.tinted{background:var(--soft)}
+
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.95rem;text-transform:uppercase;letter-spacing:.02em;padding:15px 22px;text-decoration:none;border:2px solid transparent;transition:background .15s, color .15s}
+.btn-primary{background:var(--accent);color:var(--navy)!important}
+.btn-primary:hover{background:#FFC04D}
+.btn-ghost{border-color:currentColor;color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:#fff}
+.dark .btn-ghost,.hero .btn-ghost,.book .btn-ghost{color:#fff}
+.dark .btn-ghost:hover,.hero .btn-ghost:hover{background:#fff;color:var(--navy)}
+.btn-row{display:flex;flex-wrap:wrap;gap:12px}
+
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+.brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+.brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+.brand span{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-family:var(--body);font-weight:500;font-size:.95rem}
+.nav ul a{color:var(--on-navy);text-decoration:none}
+.nav ul a:hover{color:var(--accent)}
+.nav .btn{padding:10px 16px;font-size:.85rem}
+@media (max-width:980px){.nav ul{display:none}}
+@media (max-width:420px){.nav .btn{padding:9px 12px;font-size:.78rem}.brand span{display:none}}
+
+.hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(48px,7vw,96px) 0;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(32px,5vw,64px);align-items:end}
+.hero-grid > div{padding-bottom:clamp(48px,7vw,96px)}
+.hero h1{font-size:clamp(2.8rem,7vw,6rem);color:#fff;letter-spacing:-0.02em;line-height:.95}
+.hero .lede{margin-top:28px;color:#C3CCDB;font-size:clamp(1.1rem,1.6vw,1.25rem)}
+.hero .lede em{color:#fff}
+.hero .btn-row{margin-top:36px}
+.hero-photo{position:relative;min-width:0;align-self:end}
+.hero-photo img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:40% 30%}
+.hero-photo .hand{position:absolute;left:0;bottom:0;background:var(--accent);color:var(--navy);padding:8px 14px;font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase}
+.proof{background:var(--navy-2);color:#AEB9CC}
+.proof .wrap{display:flex;flex-wrap:wrap;gap:10px 32px;align-items:center;padding-block:22px;font-family:var(--mono);font-size:.82rem;letter-spacing:.06em;text-transform:uppercase}
+.proof strong{color:var(--accent);font-weight:500}
+.proof span{color:#fff}
+@media (max-width:860px){.hero-grid{grid-template-columns:1fr}.hero-photo{order:-1;margin-inline:calc(-1 * max(16px, env(safe-area-inset-left, 0px)))}.hero-photo img{aspect-ratio:5/4;object-position:50% 25%}.hero-grid > div{padding-bottom:56px}}
+
+.sketch{background:#fff;border:2px solid var(--ink);padding:clamp(12px,2vw,22px)}
+.dark .sketch{border-color:#fff}
+.sketch img{width:100%}
+.sketch figcaption{margin-top:10px}
+figure{margin:0}
+
+.stuck-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,64px);align-items:start;margin-top:48px}
+.pains{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pains li{padding:22px;background:var(--soft);border-left:4px solid var(--accent)}
+.pains q{display:block;font-family:var(--display);font-size:1.15rem;font-weight:750;line-height:1.2;quotes:"“" "”"}
+.pains p{color:var(--muted);margin-top:10px;font-size:.95rem}
+@media (max-width:980px){.stuck-grid{grid-template-columns:1fr}}
+@media (max-width:560px){.pains{grid-template-columns:1fr}}
+
+.approach-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,72px);align-items:center}
+.model{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.model div{background:var(--navy-2);padding:18px;border-top:4px solid var(--c)}
+.model h3{font-size:1.1rem;text-transform:uppercase}
+.model p{color:#AEB9CC;font-size:.95rem;margin-top:8px}
+@media (max-width:860px){.approach-grid{grid-template-columns:1fr}}
+@media (max-width:560px){.model{grid-template-columns:1fr}}
+
+.paths{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;border:2px solid var(--ink)}
+.path{display:flex;flex-direction:column;gap:12px;padding:28px 24px;text-decoration:none;color:var(--ink);border-right:2px solid var(--ink);transition:background .15s}
+.path:last-child{border-right:0}
+.path:hover{background:var(--accent)}
+.path h3{font-size:1.35rem;text-transform:uppercase}
+.path p{color:var(--muted);font-size:.98rem}
+.path:hover p{color:var(--ink)}
+.path span{margin-top:auto;padding-top:8px;font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;text-transform:uppercase}
+@media (max-width:980px){.paths{grid-template-columns:repeat(2,1fr)}.path:nth-child(2){border-right:0}.path:nth-child(-n+2){border-bottom:2px solid var(--ink)}}
+@media (max-width:520px){.paths{grid-template-columns:1fr}.path{border-right:0;border-bottom:2px solid var(--ink)}.path:last-child{border-bottom:0}}
+
+.section-head{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,72px);align-items:end}
+@media (max-width:860px){.section-head{grid-template-columns:1fr}}
+.courses{display:flex;flex-direction:column;gap:24px;margin-top:56px}
+.course{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,4vw,56px);padding:clamp(24px,4vw,44px);background:#fff;border:2px solid var(--ink)}
+.course.soon{background:transparent;border-style:dashed;grid-template-columns:1fr}
+.course .meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{font-family:var(--mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;background:var(--soft);color:var(--muted)}
+.chip.ok{background:var(--accent);color:var(--navy)}
+.course h3{font-size:clamp(1.5rem,2.6vw,2.1rem);text-transform:uppercase;font-weight:800}
+.course .summary{margin-top:14px;color:var(--muted)}
+.course h4{font-family:var(--mono);font-weight:500;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px;color:var(--accent-ink)}
+.course ul{margin:0 0 24px;padding-left:1.1em}
+.course li{margin-bottom:6px}
+.course li::marker{color:var(--accent)}
+blockquote.quote{margin:24px 0 0;padding:20px 22px;background:var(--soft);border-left:4px solid var(--accent)}
+blockquote.quote footer{margin-top:8px;color:var(--muted);font-size:.95rem}
+@media (max-width:860px){.course{grid-template-columns:1fr}}
+
+.offers{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:48px}
+.offers div{padding:26px;background:var(--soft)}
+.offers h3{text-transform:uppercase}
+.offers p{color:var(--muted);margin-top:10px}
+@media (max-width:760px){.offers{grid-template-columns:1fr}}
+
+#speaking{background:var(--navy);color:var(--on-navy)}
+#speaking h2,#speaking h3{color:#fff}
+#speaking .lede{color:#AEB9CC}
+#speaking .hand{color:#AEB9CC}
+#speaking .more-talks{color:#AEB9CC}
+#speaking .eyebrow{color:var(--accent)}
+.speaking-photo{margin-top:48px}
+.speaking-photo img{width:100%;aspect-ratio:21/9;object-fit:cover;object-position:50% 45%}
+.talks{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+.talk{display:flex;flex-direction:column;gap:12px;background:var(--navy-2);padding:26px}
+.talk .where{font-family:var(--mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.talk h3{font-size:1.35rem}
+.talk p{color:#AEB9CC;font-size:.97rem}
+.talk a{margin-top:auto;color:#fff;font-weight:600;font-size:.95rem}
+.photo-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.photo-pair img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.more-talks{margin-top:40px;font-size:.98rem;max-width:75ch}
+@media (max-width:860px){.talks{grid-template-columns:1fr}.speaking-photo img{aspect-ratio:16/10}}
+@media (max-width:520px){.photo-pair{grid-template-columns:1fr}}
+
+.book{background:var(--accent);color:var(--navy)}
+.book-grid{display:grid;grid-template-columns:.7fr 1.3fr;gap:clamp(32px,6vw,88px);align-items:center}
+.book-cover img{width:100%;max-width:380px;box-shadow:16px 16px 0 var(--navy)}
+.book h2{color:var(--navy)}
+.book .eyebrow{color:var(--navy)}
+.book .lede{color:#3A3220;margin-top:20px}
+.book .pull{margin-top:28px;font-family:var(--hand);font-size:1.15rem;color:var(--navy)}
+.book .btn-primary{background:var(--navy);color:#fff!important}
+.book .btn-primary:hover{background:var(--navy-2)}
+.book .btn-row{margin-top:32px}
+.book .sketch{margin-top:28px;max-width:520px;border-color:var(--navy)}
+@media (max-width:760px){.book-grid{grid-template-columns:1fr}.book-cover img{max-width:240px}}
+
+.videos{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:48px}
+.video{display:flex;flex-direction:column;gap:14px;text-decoration:none;color:var(--ink)}
+.thumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--navy)}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.thumb .fallback{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-start;padding:20px;font-family:var(--display);font-weight:800;text-transform:uppercase;color:#fff;font-size:1.4rem;line-height:1}
+.thumb .play{position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px 0 0 -34px;background:var(--accent);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.thumb .play path{fill:var(--navy)}
+.video:hover .play{transform:scale(1.08)}
+.video h3{font-size:1.25rem}
+.views{font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:640px){.videos{grid-template-columns:1fr}}
+
+.about-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,6vw,88px);align-items:center}
+.about-grid img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:45% 30%}
+.about .stack p{max-width:62ch}
+@media (max-width:760px){.about-grid{grid-template-columns:1fr}.about-grid img{aspect-ratio:1/1}}
+
+.contact{background:var(--navy);color:var(--on-navy)}
+.contact h2{font-size:clamp(2.4rem,6vw,4.6rem);max-width:16ch;color:#fff}
+.contact .lede{margin-top:24px;color:#AEB9CC}
+.contact .btn-row{margin-top:36px}
+.contact .btn-ghost{color:#fff}
+.contact .btn-ghost:hover{background:#fff;color:var(--navy)}
+footer.site{padding-block:28px;background:var(--navy);border-top:1px solid var(--navy-2);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between}
+footer.site a{color:#C3CCDB}
+
+.paths{grid-template-columns:repeat(3,1fr)}
+@media (max-width:980px){.paths{grid-template-columns:1fr}.path{border-right:0!important;border-bottom:2px solid var(--ink)}.path:last-child{border-bottom:0}}
+.talks{grid-template-columns:repeat(2,1fr)}
+@media (max-width:860px){.talks{grid-template-columns:1fr}}
+.photo-pair{grid-template-columns:1.6fr 1fr}
+.photo-pair img{height:100%;aspect-ratio:auto;min-height:0}
+@media (max-width:520px){.photo-pair{grid-template-columns:1fr}.photo-pair img{aspect-ratio:16/10;height:auto}}
+.connect{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px;margin-top:40px}
+.connect-card{display:flex;flex-direction:column;gap:10px;padding:28px;background:var(--navy-2);color:var(--on-navy);text-decoration:none;transition:transform .15s}
+.connect-card:hover{transform:translateY(-3px)}
+.connect-card h3{color:#fff;font-size:1.4rem;text-transform:uppercase}
+.connect-card p{color:#AEB9CC;font-size:.98rem}
+.connect-card span{margin-top:auto;padding-top:12px;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.9rem;color:var(--accent)}
+.connect-card.primary{background:var(--accent)}
+.connect-card.primary h3,.connect-card.primary span{color:var(--navy)}
+.connect-card.primary p{color:#3A3220}
+@media (max-width:860px){.connect{grid-template-columns:1fr}}
+
+/* softer edges */
+.btn{border-radius:8px}
+.sketch,.course,.offers div,.talk,.connect-card,.pains li,.model div,.thumb,.speaking-photo img,.photo-pair img,.about-grid img,.hero-photo img{border-radius:12px}
+.pains li{border-radius:4px 12px 12px 4px}
+.paths{border-radius:12px;overflow:hidden}
+
+/* showcase: book and YouTube as objects straddling the hero edge */
+.showcase{padding-block:0 clamp(64px,8vw,104px);background:linear-gradient(var(--navy) 0, var(--navy) 150px, var(--paper) 150px)}
+.showcase-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,96px);padding-top:24px}
+.show-item{display:flex;flex-direction:column;gap:28px;min-width:0}
+.show-text{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.show-text h2{font-size:clamp(1.6rem,2.8vw,2.3rem);line-height:1}
+.show-text p{color:var(--muted);max-width:46ch}
+.show-text .btn{margin-top:8px}
+.note{font-family:var(--hand);font-size:1.15rem;color:var(--ink)!important;display:flex;align-items:center;gap:6px;margin-left:-6px}
+.arrow{width:46px;height:30px;transform:rotate(8deg) translateY(-6px);flex:none}
+.arrow path{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+
+.book3d{position:relative;display:block;width:clamp(170px,22vw,230px);margin-left:clamp(8px,4vw,56px);transform:rotate(-7deg);transition:transform .35s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(22px 26px 22px rgba(10,20,40,.38))}
+.book3d .cover{position:relative;display:block;border-radius:3px 8px 8px 3px;overflow:hidden}
+.book3d .cover img{width:100%}
+.book3d .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.35) 0,rgba(255,255,255,.22) 2.5%,rgba(0,0,0,.08) 5%,transparent 9%,transparent 92%,rgba(0,0,0,.12) 100%)}
+.book3d::before{content:"";position:absolute;top:5px;bottom:5px;right:-11px;width:12px;background:repeating-linear-gradient(90deg,#FBF8F0 0 2px,#E4DFD3 2px 3px);border-radius:0 4px 4px 0;box-shadow:inset 3px 0 4px rgba(0,0,0,.2)}
+.book3d:hover{transform:rotate(-2deg) translateY(-8px)}
+
+.screen{position:relative;display:block;width:min(100%,520px);transform:rotate(3.5deg);transition:transform .35s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(18px 26px 24px rgba(10,20,40,.38));margin-top:clamp(40px,6vw,72px)}
+.screen-inner{position:relative;display:block;aspect-ratio:16/9;border:12px solid #0B1426;border-radius:16px;overflow:hidden;background:#000}
+.screen-inner img,.screen-inner video{width:100%;height:100%;object-fit:cover;display:block}
+.screen .play{position:absolute;left:50%;top:50%;width:76px;height:54px;margin:-27px 0 0 -38px;border-radius:14px;background:#E62117;display:flex;align-items:center;justify-content:center;transition:transform .2s}
+.screen .play path{fill:#fff}
+.screen:hover{transform:rotate(0deg) translateY(-8px)}
+.screen:hover .play{transform:scale(1.1)}
+
+.sticker{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;width:104px;height:104px;border-radius:50%;font-family:var(--hand);font-weight:500;font-size:1.15rem;line-height:1.05;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+.sticker-amber{top:-26px;right:-46px;background:var(--accent);color:var(--navy);transform:rotate(14deg);border:3px dashed rgba(18,33,59,.35)}
+.sticker-red{top:-34px;left:-26px;background:#E62117;color:#fff;transform:rotate(-12deg);border:3px dashed rgba(255,255,255,.45)}
+
+.stats{display:flex;flex-wrap:wrap;gap:12px 32px;margin:4px 0 0}
+.stats div{display:flex;flex-direction:column-reverse}
+.stats dd{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(2rem,3.6vw,2.8rem);line-height:1;color:var(--ink)}
+.stats dt{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.btn-red{background:#E62117;color:#fff}
+.btn-red:hover{background:#C41A11}
+@media (max-width:860px){
+  .showcase{background:linear-gradient(var(--navy) 0, var(--navy) 120px, var(--paper) 120px)}
+  .showcase-grid{grid-template-columns:1fr;gap:72px}
+  .screen{margin-top:24px;width:calc(100% - 24px)}
+}
+@media (prefers-reduced-motion:reduce){.book3d,.screen{transition:none}}
+
+/* hero cutout portrait */
+@media (min-width:861px){.hero-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:clamp(2.8rem,5.4vw,4.8rem)}}
+.hero-photo{display:flex;justify-content:center;align-items:flex-end;isolation:isolate}
+.hero .hero-photo img{width:118%;max-width:none;margin-right:-9%;margin-top:-24px;aspect-ratio:auto;object-fit:contain;border-radius:0;filter:drop-shadow(0 18px 30px rgba(0,0,0,.35))}
+@media (max-width:860px){.hero .hero-photo{margin-inline:0;padding-top:16px}.hero .hero-photo img{width:100%;max-width:340px;margin:0;aspect-ratio:auto}}
+
+.coach-photo img{width:100%;aspect-ratio:5/4;object-fit:cover;object-position:50% 30%;border-radius:12px}
+.photo-pair{grid-template-columns:repeat(3,1fr)!important}
+.photo-pair img{aspect-ratio:4/3!important;height:auto!important;object-fit:cover}
+.photo-pair img[src*="aotb-stage"]{object-position:50% 70%}
+@media (max-width:760px){.photo-pair{grid-template-columns:1fr!important}}
+
+.book-cover{display:flex;justify-content:center;padding:24px 0}
+.book3d-lg{width:clamp(200px,26vw,320px);margin-left:0;transform:rotate(5deg);filter:drop-shadow(26px 30px 26px rgba(18,33,59,.45))}
+.book3d-lg:hover{transform:rotate(1deg) translateY(-8px)}
+.book .book-cover img{max-width:none;box-shadow:none}
+.sticker-navy{bottom:-26px;right:-40px;background:var(--navy);color:var(--accent);transform:rotate(-14deg);border:3px dashed rgba(242,169,30,.5)}
+@media (max-width:760px){.book3d-lg{width:220px}}
+.book .sketch{transform:rotate(-2deg);box-shadow:8px 10px 0 rgba(18,33,59,.18)}
+@media (min-width:861px){.approach-grid{grid-template-columns:.85fr 1.15fr}}
+#approach .sketch{padding:clamp(8px,1.2vw,14px)}
+
+/* core model diagram, drawn in the page */
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:18px 18px;align-items:stretch;margin:0}
+.cm-box{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:30px 16px 20px;border:2.5px solid var(--c);border-radius:14px 18px 12px 20px/18px 12px 20px 14px;background:repeating-linear-gradient(-45deg,var(--soft-c) 0 2px,#fff 2px 9px)}
+.cm-value{--c:#16A37F;--soft-c:#E2F5EE}
+.cm-flow{--c:#1E88E5;--soft-c:#E1EFFC}
+.cm-learning{--c:#E3A500;--soft-c:#FCF1D3;grid-column:1 / -1;justify-self:center;width:min(100%,calc(50% - 9px))}
+.cm-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--navy);color:var(--c);padding:0 10px;font-family:var(--hand);font-size:1rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.cm-icon{width:44px;height:44px;padding:9px;border-radius:50%;background:var(--c);box-sizing:content-box}
+.cm-icon path{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.cm-box h3{font-family:var(--hand)!important;font-weight:500;text-transform:none!important;font-size:clamp(1.7rem,2.6vw,2.2rem);color:var(--ink)!important;letter-spacing:0;line-height:1.1}
+.cm-box p{font-family:var(--hand);font-size:1.02rem;line-height:1.35;color:#3D4A5C!important;max-width:24ch}
+.cm-arrows{grid-column:1 / -1;width:100%;height:64px;margin:-6px 0 -2px}
+.cm-arrows path{fill:none;stroke:#E3A500;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:520px){.cm{gap:16px 12px}.cm-box{padding:26px 10px 16px}.cm-learning{width:100%}.cm-box p{font-size:.95rem}.cm-icon{width:34px;height:34px;padding:8px}}
+
+/* ways I can help: photo cards on a tinted band */
+.help{background:var(--soft)}
+.help .section-head{align-items:end}
+.help .paths{display:grid;grid-template-columns:repeat(3,1fr)!important;gap:20px;margin-top:44px;border:0!important;border-radius:0!important;overflow:visible!important}
+.help .path{display:flex;flex-direction:column;gap:0;padding:0!important;background:#fff;border:0!important;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(18,33,59,.06),0 10px 30px rgba(18,33,59,.08);color:var(--ink);transition:transform .2s, box-shadow .2s}
+.help .path:hover{background:#fff;transform:translateY(-4px);box-shadow:0 2px 4px rgba(18,33,59,.08),0 18px 40px rgba(18,33,59,.14)}
+.help .path img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:0;border-bottom:5px solid var(--c)}
+.help .path-training{--c:var(--accent)}
+.help .path-coaching{--c:#16A37F}
+.help .path-speaking{--c:#E62117}
+.help .path-training img{object-position:50% 30%}
+.help .path-coaching img{object-position:50% 25%}
+.path-body{display:flex;flex-direction:column;gap:10px;padding:24px 24px 26px;flex:1}
+.path-tag{align-self:flex-start;font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--c);color:var(--navy)}
+.path-speaking .path-tag,.path-coaching .path-tag{color:#fff}
+.help .path h3{font-size:1.35rem;text-transform:none!important;line-height:1.15}
+.help .path p{color:var(--muted)!important;font-size:.98rem}
+.path-cta{margin-top:auto;padding-top:6px;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.85rem;letter-spacing:.02em;color:var(--ink)}
+.path-cta::after{content:"";display:block;width:36px;height:3px;margin-top:6px;background:var(--c);transition:width .2s}
+.help .path:hover .path-cta::after{width:72px}
+@media (max-width:900px){.help .paths{grid-template-columns:1fr!important}.help .path{border-bottom:0!important}}
+
+/* YouTube channel header */
+#videos .channel{display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center}
+.channel-logo{width:clamp(96px,11vw,140px);height:auto;border-radius:50%;box-shadow:0 8px 24px rgba(18,33,59,.18)}
+.channel-info{display:flex;flex-direction:column;gap:8px;min-width:0}
+.channel-info h2{font-size:clamp(1.9rem,3.6vw,2.8rem)}
+.channel-yt{color:#0F0F0F;line-height:0}
+.yt-logo{height:22px;width:auto;display:inline-block}
+.yt-inline{height:.62em;vertical-align:baseline;margin-left:.15em;color:var(--ink)}
+.channel-meta{font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;color:var(--muted)}
+.channel-info .lede{font-size:1.05rem}
+@media (max-width:760px){#videos .channel{grid-template-columns:auto 1fr}.channel-btn{grid-column:1 / -1;justify-self:start}}
+@media (max-width:460px){#videos .channel{grid-template-columns:1fr}.channel-logo{width:88px}}
+.yt-logo,.yt-logo text{text-transform:none!important}
+#videos .thumb .play{background:#FF0000;border-radius:14px;width:72px;height:50px;margin:-25px 0 0 -36px}
+#videos .thumb .play path{fill:#fff}
+
+#training .section-head{grid-template-columns:1fr}
+#training .section-head .lede{max-width:70ch}
+.custom-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 40px;margin-top:24px;padding:clamp(22px,3vw,32px);background:var(--navy);color:var(--on-navy);border-radius:12px}
+.custom-note > div{flex:1 1 380px;min-width:0}
+.custom-note h3{color:#fff;font-size:1.4rem;text-transform:uppercase}
+.custom-note p{color:#AEB9CC;margin-top:8px;max-width:70ch}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#training">Training</a></li>
+        <li><a href="#coaching">Coaching</a></li>
+        <li><a href="#speaking">Speaking</a></li>
+        <li><a href="#book">Book</a></li>
+        <li><a href="#videos">Videos</a></li>
+        <li><a href="#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Training · Coaching · Speaking</span>
+        <h1>We can ship output and still <em>miss value.</em></h1>
+        <p class="lede">I help product teams and their leaders get from idea to value to learning, quickly and reliably, through training, coaching and talks.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+          <a class="btn btn-ghost" href="#help">See how I can help</a>
+        </div>
+      </div>
+      <figure class="hero-photo">
+        <img src="assets/img/hero-david.webp" alt="Portrait of David Michel smiling with his arms crossed" width="1126" height="1397">
+      </figure>
+    </div>
+  </div>
+</section>
+<section class="showcase" aria-label="The book and the YouTube channel">
+  <div class="wrap showcase-grid">
+
+    <div class="show-item">
+      <a class="book3d" href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener" aria-label="Demystifying Value Delivery on Leanpub">
+        <span class="cover"><img src="assets/img/book-cover.jpg" alt="Cover of Demystifying Value Delivery by Dr David Michel" width="700" height="1050"></span>
+        <span class="sticker sticker-amber">Coming<br>soon!</span>
+      </a>
+      <div class="show-text">
+        <p class="note"><svg class="arrow" viewBox="0 0 80 50" aria-hidden="true"><path d="M74 44 C 56 40, 30 34, 14 12"/><path d="M8 20 L 13 10 L 24 13"/></svg>My first book</p>
+        <h2>Demystifying Value Delivery</h2>
+        <p>A practical guide to discovering, delivering and validating value in agile product development. I'm writing it now.</p>
+        <a class="btn btn-primary" href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener">Get notified when it's out</a>
+      </div>
+    </div>
+
+    <div class="show-item">
+      <a class="screen" href="https://www.youtube.com/watch?v=20SdEYJEbrE" target="_blank" rel="noopener" aria-label="Watch Is agile incremental or iterative? on YouTube">
+        <span class="screen-inner">
+          <!-- To use a short looping clip instead, replace the img with:
+               <video src="assets/video/clip.mp4" poster="assets/img/video-incremental-iterative.jpg" autoplay muted loop playsinline></video> -->
+          <img src="assets/img/video-incremental-iterative.jpg" alt="Thumbnail of the video Is agile incremental or iterative?" width="800" height="450">
+          <span class="play" aria-hidden="true"><svg width="22" height="24" viewBox="0 0 22 24"><path d="M2 2l18 10L2 22z"/></svg></span>
+        </span>
+        <span class="sticker sticker-red">Watch<br>now!</span>
+      </a>
+      <div class="show-text">
+        <p class="note"><svg class="arrow" viewBox="0 0 80 50" aria-hidden="true"><path d="M74 44 C 56 40, 30 34, 14 12"/><path d="M8 20 L 13 10 L 24 13"/></svg>My most-watched video</p>
+        <h2>The Agile Broadcast <svg class="yt-logo yt-inline" viewBox="0 0 90 20" role="img" aria-label="YouTube"><rect x="0" y="0" width="28.6" height="20" rx="5.6" fill="#FF0000"/><path d="M11.4 5.7 L19 10 L11.4 14.3 Z" fill="#fff"/><text x="31.5" y="15.6" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="15.5" letter-spacing="-0.6" fill="currentColor">YouTube</text></svg></h2>
+        <dl class="stats">
+          <div><dt>Views</dt><dd>160K+</dd></div>
+          <div><dt>Subscribers</dt><dd>3.5K</dd></div>
+          <div><dt>Top video</dt><dd>34K</dd></div>
+        </dl>
+        <a class="btn btn-red" href="https://www.youtube.com/@TheAgileBroadcast" target="_blank" rel="noopener">Watch the channel</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="approach" class="dark">
+  <div class="wrap approach-grid">
+    <div>
+      <span class="eyebrow">My approach</span>
+      <h2>Value. Flow. Learning. <em>Frameworks come second.</em></h2>
+      <p class="lede" style="margin-top:20px">Scrum, Kanban and SAFe all work for the same underlying reasons. I work at that level, so the change lasts whichever framework you use.</p>
+    </div>
+    <figure class="cm" aria-label="The core model: Value, Flow and Learning">
+      <div class="cm-box cm-value">
+        <span class="cm-tag">Effectiveness</span>
+        <svg class="cm-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 10h24l8 10-20 20L4 20z M4 20h40 M18 10l-4 10 10 20 10-20-4-10"/></svg>
+        <h3>Value</h3>
+        <p>To choose the right things</p>
+      </div>
+      <div class="cm-box cm-flow">
+        <span class="cm-tag">Efficiency</span>
+        <svg class="cm-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M6 16c6-5 10 5 18 0s12 5 18 0 M6 25c6-5 10 5 18 0s12 5 18 0 M6 34c6-5 10 5 18 0s12 5 18 0"/></svg>
+        <h3>Flow</h3>
+        <p>To help work move smoothly</p>
+      </div>
+      <svg class="cm-arrows" viewBox="0 0 400 80" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <path d="M190 76 C 160 50, 120 30, 100 10"/><path d="M92 22 L 100 8 L 114 14"/>
+        <path d="M210 76 C 240 50, 280 30, 300 10"/><path d="M286 14 L 300 8 L 308 22"/>
+      </svg>
+      <div class="cm-box cm-learning">
+        <span class="cm-tag">Adaptability</span>
+        <svg class="cm-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6a12 12 0 0 0-7 21.7V33h14v-5.3A12 12 0 0 0 24 6z M18 38h12 M20 42h8 M24 1v-0 M8 10l3 3 M40 10l-3 3 M3 22h4 M41 22h4"/></svg>
+        <h3>Learning</h3>
+        <p>To adapt when we're not yet sure what's right, and to improve how we work</p>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="help" class="help">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Work with me</span>
+        <h2>Ways I can help</h2>
+      </div>
+      <p class="lede">Not sure which fits? Book a conversation and we'll work it out together.</p>
+    </div>
+    <div class="paths">
+      <a class="path path-training" href="#training">
+        <img src="assets/img/training-david.jpg" alt="" loading="lazy">
+        <div class="path-body">
+          <span class="path-tag">Training</span>
+          <h3>Learn agility through value, flow and learning</h3>
+          <p>Training on agility and ways of working, built on its three core pillars: value, flow and learning. Tailored to your teams.</p>
+          <span class="path-cta">See the courses</span>
+        </div>
+      </a>
+      <a class="path path-coaching" href="#coaching">
+        <img src="assets/img/coaching-david.jpg" alt="" loading="lazy">
+        <div class="path-body">
+          <span class="path-tag">Coaching and consulting</span>
+          <h3>Make the change stick</h3>
+          <p>Working alongside your teams and leaders on the work in front of them.</p>
+          <span class="path-cta">How coaching works</span>
+        </div>
+      </a>
+      <a class="path path-speaking" href="#speaking">
+        <img src="assets/img/speaking-aotb-extroverts.jpg" alt="" loading="lazy">
+        <div class="path-body">
+          <span class="path-tag">Speaking</span>
+          <h3>Talks with real stories behind them</h3>
+          <p>Keynotes and conference talks that are practical, interactive and a bit funny.</p>
+          <span class="path-cta">See the talks</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="training" class="soft">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">For teams and leaders</span>
+        <h2>Training</h2>
+        <p class="lede" style="margin-top:20px">Interactive training on agility and ways of working, focused on its three core pillars: value, flow and learning. Built on real situations and exercises using your own work, so people leave with a shared language and changes they can try the next day.</p>
+      </div>
+    </div>
+    <div class="courses" id="courses" aria-live="polite"></div>
+    <div class="custom-note">
+      <div>
+        <h3>Every course can be tailored</h3>
+        <p>Length, depth and focus can all be adapted to your teams, your context and the challenges you're facing, with examples drawn from your own work. In person or remote, for one team or across a whole organisation.</p>
+      </div>
+      <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Talk about your training needs</a>
+    </div>
+  </div>
+</section>
+
+<section id="coaching">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Making it stick</span>
+        <h2>Coaching and consulting</h2>
+        <p class="lede" style="margin-top:20px">Training builds understanding. Coaching makes it stick. I work with your teams and leaders on the work in front of them, and we measure whether it's helping.</p>
+      </div>
+      <figure class="coach-photo">
+        <img src="assets/img/coaching-david.jpg" alt="David coaching a group, explaining an idea with both hands" width="1200" height="970" loading="lazy">
+      </figure>
+    </div>
+    <div class="offers">
+      <div><h3>Team coaching</h3><p>Value identification and slicing, board design, feedback loops and flow metrics, applied to the team's real workflow.</p></div>
+      <div><h3>Flow across teams</h3><p>When delivery problems sit between teams: visualising dependencies, managing priorities and flow at portfolio level.</p></div>
+      <div><h3>Transformation support</h3><p>Lean change management: clear goals, hypotheses instead of announcements, and simple measures of whether the change is working.</p></div>
+      <div><h3>Leaders and managers</h3><p>Working sessions with leaders to manage the system of work rather than the people in it.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="speaking">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Keynotes and conference talks</span>
+        <h2>Speaking</h2>
+        <p class="lede" style="margin-top:20px">Talks grounded in real projects, from building a laser for scientists to slicing work in retail tech. Practical, interactive, and usually with a few jokes.</p>
+      </div>
+      <div class="btn-row"><a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Invite David to speak</a></div>
+    </div>
+    <figure class="speaking-photo">
+      <img src="assets/img/speaking-breuninger.jpg" alt="David delivering the opening keynote at Breuninger Tech Culture Day in Stuttgart" width="1800" height="899" loading="lazy">
+      <figcaption class="hand" style="margin-top:10px">Opening keynote, Breuninger Tech Culture Day, Stuttgart</figcaption>
+    </figure>
+    <div class="talks">
+      <article class="talk">
+        <span class="where">Invited keynote · Breuninger Tech Culture Day 2025</span>
+        <h3>Slice it right! The secret to real agility</h3>
+        <p>Why "just build the whole thing" isn't a strategy, and how slicing work by value brings delivery and learning forward.</p>
+        <a href="https://www.linkedin.com/feed/update/urn:li:activity:7349039484086161410/" target="_blank" rel="noopener">Read about the day</a>
+      </article>
+      <article class="talk">
+        <span class="where">Agile on the Beach 2025</span>
+        <h3>Agility unscripted: building a laser without the playbook</h3>
+        <p>How a team of scientists and engineers built a building-sized research laser with no framework, just fast feedback and close collaboration in the lab.</p>
+        <a href="https://www.linkedin.com/feed/update/urn:li:activity:7349039484086161410/" target="_blank" rel="noopener">Read about the talk</a>
+      </article>
+    </div>
+    <div class="photo-pair">
+      <img src="assets/img/speaking-aotb-2019.jpg" alt="David on stage at Agile on the Beach 2019 in front of a sketch of a fox and a hen" width="1400" height="788" loading="lazy">
+      <img src="assets/img/speaking-aotb-extroverts.jpg" alt="David on the main stage at Agile on the Beach 2019 presenting Is Agile designed for extroverts" width="1400" height="1050" loading="lazy">
+      <img src="assets/img/speaking-aotb-stage.jpg" alt="David on stage at Agile on the Beach explaining incremental and iterative delivery with the Mona Lisa" width="1000" height="990" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section id="book" class="book">
+  <div class="wrap book-grid">
+    <div class="book-cover">
+      <a class="book3d book3d-lg" href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener" aria-label="Demystifying Value Delivery on Leanpub">
+        <span class="cover"><img src="assets/img/book-cover.jpg" alt="Cover of Demystifying Value Delivery by Dr David Michel" width="700" height="1050" loading="lazy"></span>
+        <span class="sticker sticker-navy">Coming<br>soon!</span>
+      </a>
+    </div>
+    <div>
+      <span class="eyebrow">The book · coming soon</span>
+      <h2>Demystifying Value Delivery</h2>
+      <p class="lede">Coming soon. A practical book about understanding, discovering, delivering and validating value in software development. It doesn't add another framework. It explains the principles underneath them, with real examples and plenty of sketches.</p>
+      <p class="pull">"Building things is not enough. Value comes from delivering small bits early, and learning from each one."</p>
+      <figure class="sketch">
+        <img src="assets/img/sketch-value-delivery.jpg" alt="Sketch comparing all the value delivered at once at the end with small bits of value delivered early and regularly, with cost and risk curves for each" width="807" height="625" loading="lazy">
+      </figure>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener">Get notified on Leanpub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="videos">
+  <div class="wrap">
+    <div class="channel">
+      <img class="channel-logo" src="assets/img/channel-logo.png" alt="The Agile Broadcast channel logo" width="256" height="256">
+      <div class="channel-info">
+        <span class="channel-yt"><svg class="yt-logo" viewBox="0 0 90 20" role="img" aria-label="YouTube"><rect x="0" y="0" width="28.6" height="20" rx="5.6" fill="#FF0000"/><path d="M11.4 5.7 L19 10 L11.4 14.3 Z" fill="#fff"/><text x="31.5" y="15.6" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="15.5" letter-spacing="-0.6" fill="currentColor">YouTube</text></svg></span>
+        <h2>The Agile Broadcast</h2>
+        <p class="channel-meta">@TheAgileBroadcast &nbsp;·&nbsp; 3.5K subscribers &nbsp;·&nbsp; 160K+ views</p>
+        <p class="lede">Short videos that explain agile and product ideas simply, without skipping the parts that matter.</p>
+      </div>
+      <a class="btn btn-red channel-btn" href="https://www.youtube.com/@TheAgileBroadcast?sub_confirmation=1" target="_blank" rel="noopener">Subscribe</a>
+    </div>
+    <div class="videos">
+      <a class="video" href="https://www.youtube.com/watch?v=20SdEYJEbrE" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="assets/img/video-incremental-iterative.jpg" alt="" loading="lazy">
+          <span class="play" aria-hidden="true"><svg width="22" height="24" viewBox="0 0 22 24"><path d="M2 2l18 10L2 22z" fill="#fff"/></svg></span>
+        </div>
+        <h3>Is agile incremental or iterative?</h3>
+        <p class="views">34K views</p>
+      </a>
+      <a class="video" href="https://www.youtube.com/watch?v=rf-K8hI9A3Q" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="assets/img/video-outcome-outputs.jpg" alt="" loading="lazy">
+          <span class="play" aria-hidden="true"><svg width="22" height="24" viewBox="0 0 22 24"><path d="M2 2l18 10L2 22z" fill="#fff"/></svg></span>
+        </div>
+        <h3>Outcome over outputs: how to measure agile success</h3>
+        <p class="views">27K views</p>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<section id="about" class="about soft">
+  <div class="wrap about-grid">
+    <img src="assets/img/about-david.jpg" alt="David Michel speaking to an audience" width="900" height="1125" loading="lazy">
+    <div class="stack">
+      <span class="eyebrow">Scientist turned agilist</span>
+      <h2>Hello, I'm David</h2>
+      <p>Before I worked with product teams, I was a scientist. I did a PhD in physical chemistry and spent the early part of my career in research, then moved into software development and later worked as a business analyst and project manager.</p>
+      <p>That background stayed with me. I approach organisations the way I approached research: understand the system, question assumptions, look for evidence, run experiments and learn from what happens.</p>
+      <p>For more than a decade I've helped teams and organisations improve how they deliver products and services. My focus is value delivery: how organisations identify value, organise work around it, reduce uncertainty, and find out quickly whether what they're doing is making a difference.</p>
+      <div class="btn-row" style="margin-top:8px">
+        <a class="btn btn-ghost" href="https://www.linkedin.com/in/davidjmichel/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="contact">
+  <div class="wrap">
+    <span class="eyebrow">Connect with me</span>
+    <h2>Let's talk about how your teams <em>deliver value.</em></h2>
+    <div class="connect">
+      <a class="connect-card primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">
+        <h3>Book a conversation</h3>
+        <p>A free 30-minute call. Tell me what's getting in the way, and we'll see whether training, coaching or a talk is the right fit.</p>
+        <span>Pick a time on Calendly</span>
+      </a>
+      <a class="connect-card" href="https://www.linkedin.com/in/davidjmichel/" target="_blank" rel="noopener">
+        <h3>LinkedIn</h3>
+        <p>Follow along for posts on value, flow and learning, or send me a message.</p>
+        <span>Connect on LinkedIn</span>
+      </a>
+      <a class="connect-card" href="https://www.youtube.com/@TheAgileBroadcast" target="_blank" rel="noopener">
+        <h3>YouTube</h3>
+        <p>Subscribe to The Agile Broadcast for short videos on agile and product ideas.</p>
+        <span>Subscribe on YouTube</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="https://www.youtube.com/@TheAgileBroadcast" target="_blank" rel="noopener">YouTube</a> &nbsp; <a href="https://www.linkedin.com/in/davidjmichel/" target="_blank" rel="noopener">LinkedIn</a> &nbsp; <a href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener">Leanpub</a></span>
+  </div>
+</footer>
+
+<script src="assets/js/courses.js"></script>
+<script>
+(function(){
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var list=function(title,items){return items&&items.length?'<h4>'+esc(title)+'</h4><ul>'+items.map(function(i){return '<li>'+esc(i)+'</li>'}).join('')+'</ul>':''};
+  var root=document.getElementById('courses');
+  var courses=window.COURSES||[];
+  root.innerHTML=courses.map(function(c){
+    var soon=c.status!=='available';
+    var chips='<span class="chip">'+esc(c.audience)+'</span>'+(soon?'<span class="chip">In development</span>':'<span class="chip ok">Available now</span>');
+    var quote=c.testimonial?'<blockquote class="quote">'+esc(c.testimonial.quote)+'<footer>'+esc(c.testimonial.name)+(c.testimonial.role?', '+esc(c.testimonial.role):'')+'</footer></blockquote>':'';
+    var left='<div><div class="meta">'+chips+'</div><h3>'+esc(c.title)+'</h3><p class="summary">'+esc(c.summary)+'</p>'+(soon?'<p class="summary">Interested? <a href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Let me know</a> and help shape it.</p>':'')+quote+'</div>';
+    var right=soon?'':'<div>'+list('What people learn',c.outcomes)+list('Formats',c.formats)+'<a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Discuss this training</a></div>';
+    return '<article class="course'+(soon?' soon':'')+'">'+left+right+'</article>';
+  }).join('');
+  var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();
+})();
+</script>
+</body>
+</html>

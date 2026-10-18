@@ -43,11 +43,11 @@ window.COURSES = [
     testimonial: null
     },
   {
-    title: "Agility in the Age of AI",
-    audience: "For teams and leaders",
+    title: "Ways of Working with AI",
+    audience: "For individuals, teams and organisations",
     status: "in-development",
     summary:
-      "AI makes building faster, but it doesn't tell you what's worth building. This course looks at how teams can use AI across discovery, delivery and learning to create more value, not just more output.",
+      "How AI is reshaping the way we work at every level: for individuals, for teams and across the organisation. We look at how AI changes ways of working and team structures, and how to use it to become more agile than ever before.",
     outcomes: [],
     formats: [],
     testimonial: null

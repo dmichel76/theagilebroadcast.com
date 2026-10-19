@@ -363,6 +363,37 @@ footer.site a{color:#C3CCDB}
 .custom-note > div{flex:1 1 380px;min-width:0}
 .custom-note h3{color:#fff;font-size:1.4rem;text-transform:uppercase}
 .custom-note p{color:#AEB9CC;margin-top:8px;max-width:70ch}
+
+/* featured (available) course */
+.course.featured{padding:0!important;gap:0!important;overflow:hidden;border:0!important;background:#fff;box-shadow:0 2px 4px rgba(18,33,59,.06),0 16px 40px rgba(18,33,59,.10);grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+.course-left{position:relative;background:var(--navy);color:var(--on-navy);padding:clamp(26px,4vw,44px);display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.course-left::after{content:"";position:absolute;right:-60px;bottom:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(242,169,30,.22),transparent 70%)}
+.course-left > *{position:relative;z-index:1}
+.course-left .meta{margin:0}
+.course-left .chip{background:rgba(255,255,255,.1);color:#C3CCDB}
+.course-left .chip.ok{background:var(--accent);color:var(--navy)}
+.course.featured .course-left h3{color:#fff;font-size:clamp(1.8rem,3vw,2.5rem)}
+.course.featured .course-left .summary{color:#AEB9CC;margin:0}
+.pillars{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.pillar{font-family:var(--hand);font-size:1.05rem;padding:4px 14px;border:2px solid var(--pc);color:#fff;border-radius:14px 18px 12px 20px/18px 12px 20px 14px;background:color-mix(in srgb,var(--pc) 22%,transparent)}
+.pillar-value,.out-value{--pc:#16A37F}
+.pillar-flow,.out-flow{--pc:#3B9BEF}
+.pillar-learning,.out-learning{--pc:#E3A500}
+.course-left .quote{background:rgba(255,255,255,.06);color:#fff;border-left-color:var(--accent)}
+.course-right{padding:clamp(26px,4vw,44px);display:flex;flex-direction:column;gap:6px}
+.course-right h4{margin:0 0 10px!important}
+.outs,.fmts{list-style:none;margin:0 0 22px!important;padding:0!important;display:flex;flex-direction:column;gap:10px}
+.out{display:grid;grid-template-columns:14px 1fr auto;gap:12px;align-items:start;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--pc,#999) 8%,#fff);margin:0!important}
+.out .dot{width:12px;height:12px;border-radius:50%;background:var(--pc,#999);margin-top:6px}
+.out-tag{font-family:var(--hand);font-size:.85rem;color:var(--pc,#999);text-transform:capitalize;white-space:nowrap;padding-top:2px}
+.fmts{flex-direction:row!important;flex-wrap:wrap}
+.fmt{display:flex;gap:10px;align-items:center;flex:1 1 220px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;margin:0!important;font-size:.95rem}
+.fmt-icon{flex:none;width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.fmt-icon svg{width:20px;height:20px;fill:none;stroke:var(--navy);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.course-right .btn{align-self:flex-start;margin-top:4px}
+@media (max-width:860px){.course.featured{grid-template-columns:1fr}.out{grid-template-columns:14px 1fr}.out-tag{display:none}}
+.course-photo{margin-top:auto;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:50% 30%;border-radius:10px;border:3px solid rgba(255,255,255,.12)}
+.course-left .pillars{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -706,20 +737,32 @@ footer.site a{color:#C3CCDB}
   </div>
 </footer>
 
-<script src="assets/js/courses.js?v=2026-10-19"></script>
+<script src="assets/js/courses.js?v=2026-10-19c"></script>
 <script>
 (function(){
   var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
   var list=function(title,items){return items&&items.length?'<h4>'+esc(title)+'</h4><ul>'+items.map(function(i){return '<li>'+esc(i)+'</li>'}).join('')+'</ul>':''};
   var root=document.getElementById('courses');
   var courses=window.COURSES||[];
+  var CAL='https://calendly.com/david-michel-theagilebroadcast/30min';
+  var icons={time:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 13.6c2.9.2 5 2.2 5 5"/></svg>',check:'<svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 3.5h6v3H9zM8.5 13l2.3 2.3 4.7-4.8"/></svg>'};
+  var fmtIcon=function(s){s=s.toLowerCase();return /assess|summary/.test(s)?icons.check:(/people|participants|up to/.test(s)?icons.people:icons.time)};
   root.innerHTML=courses.map(function(c){
     var soon=c.status!=='available';
     var chips='<span class="chip">'+esc(c.audience)+'</span>'+(soon?'<span class="chip">In development</span>':'<span class="chip ok">Available now</span>');
     var quote=c.testimonial?'<blockquote class="quote">'+esc(c.testimonial.quote)+'<footer>'+esc(c.testimonial.name)+(c.testimonial.role?', '+esc(c.testimonial.role):'')+'</footer></blockquote>':'';
-    var left='<div><div class="meta">'+chips+'</div><h3>'+esc(c.title)+'</h3><p class="summary">'+esc(c.summary)+'</p>'+(soon?'<p class="summary">Interested? <a href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Let me know</a> and help shape it.</p>':'')+quote+'</div>';
-    var right=soon?'':'<div>'+list('What people learn',c.outcomes)+list('Formats',c.formats)+'<a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Discuss this training</a></div>';
-    return '<article class="course'+(soon?' soon':'')+'">'+left+right+'</article>';
+    if(soon){
+      var left='<div><div class="meta">'+chips+'</div><h3>'+esc(c.title)+'</h3><p class="summary">'+esc(c.summary)+'</p><p class="summary">Interested? <a href="'+CAL+'" target="_blank" rel="noopener">Let me know</a> and help shape it.</p>'+quote+'</div>';
+      return '<article class="course soon">'+left+'</article>';
+    }
+    var pills=(c.pillars||[]).map(function(p){return '<span class="pillar pillar-'+esc(p.toLowerCase())+'">'+esc(p)+'</span>'}).join('');
+    var outs=(c.outcomes||[]).map(function(o){var txt=typeof o==='string'?o:o.text;var pl=typeof o==='string'?'':(o.pillar||'');return '<li class="out out-'+esc(pl)+'"><span class="dot" aria-hidden="true"></span><span>'+esc(txt)+'</span>'+(pl?'<span class="out-tag">'+esc(pl)+'</span>':'')+'</li>'}).join('');
+    var fmts=(c.formats||[]).map(function(f){return '<li class="fmt"><span class="fmt-icon" aria-hidden="true">'+fmtIcon(f)+'</span><span>'+esc(f)+'</span></li>'}).join('');
+    return '<article class="course featured">'
+      +'<div class="course-left"><div class="meta">'+chips+'</div><h3>'+esc(c.title)+'</h3><p class="summary">'+esc(c.summary)+'</p>'+(pills?'<div class="pillars">'+pills+'</div>':'')+quote+(c.image?'<img class="course-photo" src="'+esc(c.image)+'" alt="" loading="lazy">':'')+'</div>'
+      +'<div class="course-right">'+(outs?'<h4>What people learn</h4><ul class="outs">'+outs+'</ul>':'')+(fmts?'<h4>Format</h4><ul class="fmts">'+fmts+'</ul>':'')
+      +'<a class="btn btn-primary" href="'+CAL+'" target="_blank" rel="noopener">Discuss this training</a></div>'
+      +'</article>';
   }).join('');
   var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();
 })();

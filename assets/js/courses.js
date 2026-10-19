@@ -8,7 +8,8 @@
     audience     Who it is for (short)
     status       "available" or "in-development"
     summary      One or two sentences
-    image        Optional photo shown on available courses, e.g. "assets/img/training-david.jpg"
+    slides       Optional, 1 or 2 images of slides from the course, shown as a small deck,
+                 e.g. ["assets/img/training-slide-pillars.jpg", "assets/img/training-slide-paths.jpg"]
     pillars      Optional, e.g. ["Value", "Flow", "Learning"], shown as coloured tags
     outcomes     List of things people will be able to do afterwards (can be empty: []).
                  Each item is either plain text or { text: "...", pillar: "value" | "flow" | "learning" }
@@ -24,16 +25,15 @@ window.COURSES = [
     summary:
       "How do we move from idea to value to learning as quickly and reliably as possible? This is not a Scrum course. It goes beneath the frameworks to the principles that make any of them work, so it fits whether you use Scrum, Kanban, SAFe or something of your own.",
     pillars: ["Value", "Flow", "Learning"],
-    image: "assets/img/training-david.jpg",
+    slides: ["assets/img/training-slide-pillars.jpg", "assets/img/training-slide-paths.jpg"],
     outcomes: [
-      { text: "Evaluate whether a piece of work is addressing the right problem", pillar: "value" },
-      { text: "Break work down in ways that deliver value earlier", pillar: "value" },
+      { text: "Check whether work is addressing the right problem, and break it down to deliver value earlier", pillar: "value" },
       { text: "Recognise what helps or hinders the flow of work", pillar: "flow" },
-      { text: "Tell whether delivered work has created real value", pillar: "learning" },
-      { text: "Reduce uncertainty and learn sooner", pillar: "learning" }
+      { text: "Tell whether delivered work created real value, reduce uncertainty and learn sooner", pillar: "learning" }
     ],
     formats: [
       "Full day, up to 20 people, highly interactive",
+      "Face-to-face or online (not hybrid)",
       "Optional self-assessment afterwards, with a summary of strengths and opportunities across teams"
     ],
     testimonial: null

@@ -26,7 +26,6 @@ window.COURSES = [
       "How do we move from idea to value to learning as quickly and reliably as possible? This is not a Scrum course. It goes beneath the frameworks to the principles that make any of them work, so it fits whether you use Scrum, Kanban, SAFe or something of your own.",
     pillars: ["Value", "Flow", "Learning"],
     slides: [
-      "assets/img/training-slide-playground.jpg",
       "assets/img/training-slide-outcome.jpg",
       "assets/img/training-slide-fidelity.jpg",
       "assets/img/training-slide-blocked.jpg",

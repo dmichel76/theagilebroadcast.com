@@ -27,9 +27,11 @@ window.COURSES = [
     pillars: ["Value", "Flow", "Learning"],
     slides: [
       "assets/img/training-slide-outcome.jpg",
+      "assets/img/training-slide-miro.jpg",
       "assets/img/training-slide-fidelity.jpg",
       "assets/img/training-slide-blocked.jpg",
       "assets/img/training-slide-wip.jpg",
+      "assets/img/training-slide-assessment.jpg",
       "assets/img/training-slide-paths.jpg"
     ],
     outcomes: [

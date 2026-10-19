@@ -33,6 +33,16 @@ window.COURSES = [
     testimonial: null
   },
   {
+    title: "Slicing Work by Value",
+    audience: "For teams · Advanced",
+    status: "in-development",
+    summary:
+      "How you break work down decides how soon you deliver value and how soon you learn. Slicing by value, rather than by task or component, is one of the most important keys to unlocking agility, and a central theme of my book. This is an advanced course: we recommend starting with Agility with Flow & Value.",
+    outcomes: [],
+    formats: [],
+    testimonial: null
+  },
+  {
     title: "Leading for Value and Flow",
     audience: "For leaders and managers",
     status: "in-development",

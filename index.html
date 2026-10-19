@@ -400,6 +400,11 @@ footer.site a{color:#C3CCDB}
 .deck-slide.back{position:absolute;top:0;right:0;width:88%;transform:rotate(5deg);opacity:.92}
 .deck-slide.front{position:relative;width:92%;transform:rotate(-2.5deg)}
 .course.featured:hover .deck-slide.front{transform:rotate(0) translateY(-4px);transition:transform .3s}
+
+.course-left .deck{position:relative;margin:auto 22px 10px 6px;aspect-ratio:16/9;padding:0;cursor:pointer}
+.course-left .deck .deck-slide{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border-radius:8px;background:#fff;box-shadow:0 14px 30px rgba(0,0,0,.35);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s;transform-origin:50% 60%}
+.course.featured:hover .deck-slide.front{transform:none}
+@media (prefers-reduced-motion:reduce){.course-left .deck .deck-slide{transition:none}}
 </style>
 </head>
 <body>
@@ -743,7 +748,7 @@ footer.site a{color:#C3CCDB}
   </div>
 </footer>
 
-<script src="assets/js/courses.js?v=2026-10-19e"></script>
+<script src="assets/js/courses.js?v=2026-10-19f"></script>
 <script>
 (function(){
   var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
@@ -765,11 +770,26 @@ footer.site a{color:#C3CCDB}
     var outs=(c.outcomes||[]).map(function(o){var txt=typeof o==='string'?o:o.text;var pl=typeof o==='string'?'':(o.pillar||'');return '<li class="out out-'+esc(pl)+'"><span class="dot" aria-hidden="true"></span><span>'+esc(txt)+'</span>'+(pl?'<span class="out-tag">'+esc(pl)+'</span>':'')+'</li>'}).join('');
     var fmts=(c.formats||[]).map(function(f){return '<li class="fmt"><span class="fmt-icon" aria-hidden="true">'+fmtIcon(f)+'</span><span>'+esc(f)+'</span></li>'}).join('');
     return '<article class="course featured">'
-      +'<div class="course-left"><div class="meta">'+chips+'</div><h3>'+esc(c.title)+'</h3><p class="summary">'+esc(c.summary)+'</p>'+(pills?'<div class="pillars">'+pills+'</div>':'')+quote+(c.slides&&c.slides.length?'<div class="deck">'+c.slides.slice(0,2).reverse().map(function(s,i,arr){return '<img class="deck-slide'+(i===arr.length-1?' front':' back')+'" src="'+esc(s)+'" alt="'+(i===arr.length-1?'A slide from the course':'')+'" loading="lazy">'}).join('')+'</div>':'')+'</div>'
+      +'<div class="course-left"><div class="meta">'+chips+'</div><h3>'+esc(c.title)+'</h3><p class="summary">'+esc(c.summary)+'</p>'+(pills?'<div class="pillars">'+pills+'</div>':'')+quote+(c.slides&&c.slides.length?'<div class="deck" data-deck role="img" aria-label="Slides from the course" title="Click to shuffle">'+c.slides.map(function(s){return '<img class="deck-slide" src="'+esc(s)+'" alt="" loading="lazy">'}).join('')+'</div>':'')+'</div>'
       +'<div class="course-right">'+(outs?'<h4>What people learn</h4><ul class="outs">'+outs+'</ul>':'')+(fmts?'<h4>Format</h4><ul class="fmts">'+fmts+'</ul>':'')
       +'<a class="btn btn-primary" href="'+CAL+'" target="_blank" rel="noopener">Discuss this training</a></div>'
       +'</article>';
   }).join('');
+
+  /* shuffle decks: the front slide flies out and tucks in at the back */
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var POS=[{x:0,y:0,r:-2.5,s:1},{x:16,y:-12,r:3,s:.96},{x:-12,y:-20,r:-6,s:.92},{x:6,y:-26,r:5,s:.88}];
+  document.querySelectorAll('[data-deck]').forEach(function(deck){
+    var cards=[].slice.call(deck.querySelectorAll('.deck-slide')); if(cards.length<2) return;
+    var order=cards.slice(), busy=false, paused=false;
+    function place(){order.forEach(function(el,i){var p=POS[Math.min(i,POS.length-1)];el.style.zIndex=String(cards.length-i);el.style.opacity=i<POS.length?'1':'0';el.style.transform='translate('+p.x+'px,'+p.y+'px) rotate('+p.r+'deg) scale('+p.s+')';el.setAttribute('aria-hidden',i?'true':'false');});}
+    function next(){if(busy) return;busy=true;var top=order[0];top.style.transform='translate(115%,-6%) rotate(14deg) scale(.95)';top.style.opacity='0';
+      setTimeout(function(){order.push(order.shift());top.style.transition='none';place();top.style.opacity='0';void top.offsetWidth;top.style.transition='';place();busy=false;},480);}
+    place();
+    deck.addEventListener('click',next);
+    deck.addEventListener('mouseenter',function(){paused=true});deck.addEventListener('mouseleave',function(){paused=false});
+    if(!reduce) setInterval(function(){if(!paused&&!document.hidden) next();},3200);
+  });
   var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();
 })();
 </script>

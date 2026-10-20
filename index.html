@@ -131,6 +131,14 @@ figure{margin:0}
 @media (max-width:520px){.paths{grid-template-columns:1fr}.path{border-right:0;border-bottom:2px solid var(--ink)}.path:last-child{border-bottom:0}}
 
 .section-head{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,72px);align-items:end}
+.try-card{justify-self:end;display:flex;flex-direction:column;gap:10px;max-width:360px;padding:20px 22px;background:#fff;border:1px solid var(--line);text-decoration:none;color:var(--ink);transition:transform .15s,box-shadow .15s}
+.try-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(18,33,59,.12)}
+.try-card .try-dots{display:flex;gap:7px}
+.try-card .try-dots i{width:18px;height:18px;border-radius:50%;border:1px solid #2B2B2B}
+.try-card b{font-family:var(--hand);font-weight:500;font-size:1.25rem;line-height:1.2}
+.try-card span{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+@media (max-width:860px){.try-card{justify-self:start}}
+@media (prefers-reduced-motion:reduce){.try-card{transition:none}}
 @media (max-width:860px){.section-head{grid-template-columns:1fr}}
 .courses{display:flex;flex-direction:column;gap:24px;margin-top:56px}
 .course{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,4vw,56px);padding:clamp(24px,4vw,44px);background:#fff;border:2px solid var(--ink)}
@@ -357,7 +365,8 @@ footer.site a{color:#C3CCDB}
 #videos .thumb .play{background:#FF0000;border-radius:14px;width:72px;height:50px;margin:-25px 0 0 -36px}
 #videos .thumb .play path{fill:#fff}
 
-#training .section-head{grid-template-columns:1fr}
+#training .section-head{grid-template-columns:minmax(0,1fr) auto}
+@media (max-width:860px){#training .section-head{grid-template-columns:1fr}}
 #training .section-head .lede{max-width:70ch}
 .custom-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 40px;margin-top:24px;padding:clamp(22px,3vw,32px);background:var(--navy);color:var(--on-navy);border-radius:12px}
 .custom-note > div{flex:1 1 380px;min-width:0}
@@ -496,6 +505,7 @@ footer.site a{color:#C3CCDB}
       <span class="eyebrow">My approach</span>
       <h2>Value. Flow. Learning. <em>Frameworks come second.</em></h2>
       <p class="lede" style="margin-top:20px">Scrum, Kanban and SAFe all work for the same underlying reasons. I work at that level, so the change lasts whichever framework you use.</p>
+      <div class="btn-row" style="margin-top:32px"><a class="btn btn-ghost" href="self-assessment.html">Take the 3-minute self-reflection</a></div>
     </div>
     <figure class="cm" aria-label="The core model: Value, Flow and Learning">
       <div class="cm-box cm-value">
@@ -573,6 +583,11 @@ footer.site a{color:#C3CCDB}
         <h2>Training</h2>
         <p class="lede" style="margin-top:20px">Interactive training on agility and ways of working, focused on its three core pillars: value, flow and learning. Built on real situations and exercises using your own work, so people leave with a shared language and changes they can try the next day.</p>
       </div>
+      <a class="try-card" href="self-assessment.html">
+        <span class="try-dots" aria-hidden="true"><i style="background:#BE1111"></i><i style="background:#F89A4C"></i><i style="background:#FFDA45"></i><i style="background:#AEEBC9"></i><i style="background:#08712A"></i></span>
+        <b>Try the self-reflection we use in the workshop</b>
+        <span>12 questions · 3 minutes →</span>
+      </a>
     </div>
     <div class="courses" id="courses" aria-live="polite"></div>
     <div class="custom-note">

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agility Self-Reflection</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Twelve questions on how often you really work with value, learning and flow. The same self-reflection David Michel runs in his Agility with Flow and Value training.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
+<style>
+/* Layout: same banded system as the homepage. Navy hero, then a white "Miro board" grid of questions × five frequency dots, then a results band that reads like the participant's column on the workshop board. */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --paper:#FFFFFF; --soft:#F1F3F7;
+  --ink:#12213B; --muted:#56637A; --on-navy:#DCE3EF; --line:#D9DEE8;
+  --accent:#F2A91E; --accent-ink:#B87700;
+  /* frequency scale, from the workshop legend */
+  --rarely:#BE1111; --sometimes:#F89A4C; --often:#FFDA45; --usually:#AEEBC9; --always:#08712A;
+  --dot-edge:#2B2B2B;
+  /* arrows */
+  --up:#0B7A2C; --same:#F89A4C; --down:#BE1111;
+  /* core model pillars, as on the homepage */
+  --value:#16A37F; --flow:#3B9BEF; --learning:#E3A500;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+  --hand:"Shantell Sans","Comic Sans MS",cursive;
+  --maxw:1200px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-0.01em;text-wrap:balance;margin:0}
+h1,h2{text-transform:uppercase}
+h1 em,h2 em{font-style:normal;color:var(--accent)}
+p{margin:0}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+.eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:18px}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.95rem;text-transform:uppercase;letter-spacing:.02em;padding:15px 22px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s,opacity .15s}
+.btn-primary{background:var(--accent);color:var(--navy)!important}
+.btn-primary:hover{background:#FFC04D}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;background:var(--accent)}
+.btn-ghost{background:transparent;border-color:currentColor;color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:#fff}
+.btn-row{display:flex;flex-wrap:wrap;gap:12px}
+
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+.brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+.brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+.brand span{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+.nav ul a{color:var(--on-navy);text-decoration:none}
+.nav ul a:hover{color:var(--accent)}
+.nav .btn{padding:10px 16px;font-size:.85rem}
+@media (max-width:980px){.nav ul{display:none}}
+@media (max-width:420px){.nav .btn{padding:9px 12px;font-size:.78rem}.brand span{display:none}}
+
+/* hero */
+.sa-hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(48px,7vw,88px)}
+.sa-hero .eyebrow{color:var(--accent)}
+.sa-hero h1{color:#fff;font-size:clamp(2.4rem,6vw,4.6rem);letter-spacing:-0.02em;line-height:.95;max-width:16ch}
+.sa-hero .lede{margin-top:24px;color:#C3CCDB;font-size:clamp(1.05rem,1.5vw,1.2rem);max-width:58ch}
+.sa-hero .note{margin-top:14px;font-family:var(--hand);font-size:1rem;color:#AEB9CC}
+
+/* board */
+.board-band{background:var(--soft);padding-block:clamp(40px,6vw,80px)}
+.board{background:#fff;border:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 18px 40px rgba(18,33,59,.08)}
+.board-title{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--line)}
+.grid{--qcol:minmax(0,1fr);--ocol:clamp(64px,8vw,104px);display:grid;grid-template-columns:var(--qcol) repeat(5,var(--ocol))}
+.legend{display:contents}
+.legend > *{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:5;background:#fff;border-bottom:1px solid var(--dot-edge)}
+.legend .lg-q{padding:14px 16px;font-family:var(--hand);font-size:1rem;color:var(--muted);display:flex;align-items:flex-end}
+.legend .lg-o{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;padding:14px 4px 12px;font-weight:600;font-size:.82rem;text-align:center}
+.legend .lg-o i{width:22px;height:22px;border-radius:50%;background:var(--c);border:1px solid var(--dot-edge)}
+.row{display:contents}
+.row > *{border-bottom:1px solid var(--line)}
+.q{padding:16px;font-weight:600;font-size:.98rem;line-height:1.35;display:flex;align-items:center;gap:12px;min-width:0}
+.q .num{flex:none;font-family:var(--mono);font-weight:500;font-size:.75rem;color:var(--muted);width:2ch}
+.opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-left:1px solid var(--line)}
+.dot{appearance:none;width:34px;height:34px;border-radius:50%;padding:0;cursor:pointer;background:color-mix(in srgb,var(--c) 22%,#fff);border:1.5px dashed color-mix(in srgb,var(--c) 70%,#8892A3);transition:transform .15s,background .15s,opacity .15s}
+.dot:hover{transform:scale(1.12);background:color-mix(in srgb,var(--c) 55%,#fff)}
+.dot[aria-checked="true"]{background:var(--c);border:1.5px solid var(--dot-edge);transform:scale(1.08)}
+.row.answered .dot[aria-checked="false"]{opacity:.35}
+.opt small{display:none;font-size:.68rem;font-weight:600;color:var(--muted)}
+.c-rarely{--c:var(--rarely)}.c-sometimes{--c:var(--sometimes)}.c-often{--c:var(--often)}.c-usually{--c:var(--usually)}.c-always{--c:var(--always)}
+@media (prefers-reduced-motion:reduce){.dot{transition:none}}
+
+@media (max-width:720px){
+  .grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .legend{display:none}
+  .q{grid-column:1 / -1;border-bottom:0!important;padding:16px 14px 6px}
+  .opt{border-left:0;padding:6px 0 14px}
+  .opt small{display:block}
+}
+
+.board-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:18px 16px;background:#fff}
+.progress{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;color:var(--muted);font-variant-numeric:tabular-nums}
+.progress .track{width:140px;height:8px;background:var(--soft);border:1px solid var(--line)}
+.progress .fill{height:100%;width:0;background:var(--accent);transition:width .2s}
+
+/* results */
+.results{padding-block:clamp(56px,8vw,112px)}
+.results[hidden]{display:none}
+.results h2{font-size:clamp(2rem,4.6vw,3.4rem)}
+.res-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(28px,4vw,56px);margin-top:36px;align-items:start}
+@media (max-width:900px){.res-grid{grid-template-columns:1fr}}
+.column{border:1px solid var(--line)}
+.column-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 16px;border-bottom:1px solid var(--dot-edge);font-weight:600}
+.column-head span{font-family:var(--mono);font-weight:500;font-size:.75rem;letter-spacing:.04em;color:var(--muted)}
+.column ol{list-style:none;margin:0;padding:0}
+.column li{display:grid;grid-template-columns:minmax(0,1fr) 30px 28px;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font-size:.9rem;line-height:1.3}
+.column li:last-child{border-bottom:0}
+.column li i{width:24px;height:24px;border-radius:50%;background:var(--c);border:1px solid var(--dot-edge)}
+.arrow{width:26px;height:26px}
+.arrow path{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.arrow.up path{stroke:var(--up)}.arrow.same path{stroke:var(--same)}.arrow.down path{stroke:var(--down)}
+.arrow-key{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:.82rem;font-weight:600;color:var(--muted)}
+.arrow-key span{display:inline-flex;align-items:center;gap:6px}
+.arrow-key .arrow{width:20px;height:20px}
+
+.pillars{display:flex;flex-direction:column;gap:14px}
+.pillar{border:2px solid var(--pc);padding:16px 18px;border-radius:14px 18px 12px 20px/18px 12px 20px 14px;background:color-mix(in srgb,var(--pc) 7%,#fff)}
+.pillar.weak{box-shadow:0 0 0 4px color-mix(in srgb,var(--pc) 25%,transparent)}
+.p-value{--pc:var(--value)}.p-flow{--pc:var(--flow)}.p-learning{--pc:var(--learning)}
+.pillar-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.pillar h3{font-family:var(--hand);font-weight:500;font-size:1.6rem;line-height:1.1}
+.pillar .lvl{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pillar .dots{display:flex;gap:8px;margin-top:10px}
+.pillar .dots i{width:20px;height:20px;border-radius:50%;background:var(--c);border:1px solid var(--dot-edge)}
+.pillar .bar{margin-top:12px;height:10px;background:#fff;border:1px solid color-mix(in srgb,var(--pc) 50%,var(--line))}
+.pillar .bar b{display:block;height:100%;background:var(--pc)}
+.focus{margin-top:6px;background:var(--navy);color:var(--on-navy);padding:22px 22px 24px}
+.focus .eyebrow{color:var(--accent);margin-bottom:10px}
+.focus h3{color:#fff;font-size:1.35rem;text-transform:uppercase}
+.focus p{margin-top:10px;color:#C3CCDB;max-width:52ch}
+.focus .btn-row{margin-top:18px}
+.focus .btn-ghost{color:#fff}
+.focus .btn-ghost:hover{background:#fff;color:var(--navy)}
+.again{margin-top:22px;font-family:var(--hand);font-size:1.02rem;color:var(--muted);max-width:60ch}
+
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main>
+<section class="sa-hero">
+  <div class="wrap">
+    <span class="eyebrow">Self-reflection · 12 questions · 3 minutes</span>
+    <h1>How often do you <em>really</em> work this way?</h1>
+    <p class="lede">This is the self-reflection I run with teams in my Agility with Flow and Value training. For each question, pick the dot that matches how you work today, not how you'd like to.</p>
+    <p class="note">Your answers stay in this browser. Nothing is sent anywhere.</p>
+  </div>
+</section>
+
+<section class="board-band" aria-labelledby="board-title">
+  <div class="wrap">
+    <div class="board">
+      <div class="board-title" id="board-title">Self Reflection</div>
+      <div class="grid" id="grid" role="list">
+        <div class="legend" aria-hidden="true">
+          <div class="lg-q">How often do you…</div>
+          <div class="lg-o c-rarely"><i></i>Rarely</div>
+          <div class="lg-o c-sometimes"><i></i>Sometimes</div>
+          <div class="lg-o c-often"><i></i>Often</div>
+          <div class="lg-o c-usually"><i></i>Usually</div>
+          <div class="lg-o c-always"><i></i>Always</div>
+        </div>
+      </div>
+      <div class="board-foot">
+        <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><span id="count">0 of 12 answered</span></div>
+        <button class="btn btn-primary" id="show" type="button" disabled>See my reflection</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="results" id="results" hidden aria-labelledby="res-title" tabindex="-1">
+  <div class="wrap">
+    <span class="eyebrow">Your reflection</span>
+    <h2 id="res-title">Value, Learning <em>&amp;</em> Flow</h2>
+    <div class="res-grid">
+      <div>
+        <div class="column">
+          <div class="column-head">You <span id="when"></span></div>
+          <ol id="column"></ol>
+        </div>
+        <div class="arrow-key" id="arrow-key" hidden>
+          <span><svg class="arrow up" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>Improving</span>
+          <span><svg class="arrow same" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>Stable</span>
+          <span><svg class="arrow down" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>Getting worse</span>
+        </div>
+      </div>
+      <div class="pillars">
+        <div id="pillars" class="pillars"></div>
+        <div class="focus">
+          <span class="eyebrow" id="focus-label">Where to focus</span>
+          <h3 id="focus-title"></h3>
+          <p id="focus-text"></p>
+          <div class="btn-row">
+            <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Talk through your results</a>
+            <button class="btn btn-ghost" id="retake" type="button">Start again</button>
+          </div>
+        </div>
+        <p class="again" id="again">Come back in a few weeks and take it again. Arrows will show where you're improving, stable or getting worse, just like on the workshop board.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="https://www.youtube.com/@TheAgileBroadcast" target="_blank" rel="noopener">YouTube</a> &nbsp; <a href="https://www.linkedin.com/in/davidjmichel/" target="_blank" rel="noopener">LinkedIn</a> &nbsp; <a href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener">Leanpub</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var SCALE=[
+    {k:'rarely',label:'Rarely'},{k:'sometimes',label:'Sometimes'},{k:'often',label:'Often'},
+    {k:'usually',label:'Usually'},{k:'always',label:'Always'}
+  ];
+  var Q=[
+    {p:'value',t:'How often do you explicitly frame a hypothesis before starting work?'},
+    {p:'value',t:'How often do you assess your confidence level before proceeding with an idea?'},
+    {p:'learning',t:'How often do you do discovery activities?'},
+    {p:'value',t:'How often do you celebrate positive outcomes, rather than just the release of outputs?'},
+    {p:'learning',t:'How often do you review product/outcome metrics?'},
+    {p:'learning',t:'How often do you iterate on a feature based on learning/feedback/metrics?'},
+    {p:'value',t:'How often do you kill a feature or idea at any stage when you realise it is not valuable?'},
+    {p:'learning',t:'How often do you change your plan or backlog based on user feedback?'},
+    {p:'flow',t:'How often do you break down work into slices of value?'},
+    {p:'flow',t:'How often do you ensure you finish or unblock ongoing work before starting something new?'},
+    {p:'flow',t:'How often is your team actively managing flow, for example with WIP limits, explicit policies, or pull-based working?'},
+    {p:'flow',t:'How often do you adapt your process/ways of working based on retrospective learning?'}
+  ];
+  var PILLARS={
+    value:{name:'Value',title:'Start with the outcome',
+      text:'Treat each piece of work as a bet. Write down the hypothesis, say how confident you are, celebrate the outcomes rather than the release, and be willing to stop when it isn’t paying off.'},
+    learning:{name:'Learning',title:'Close the learning loop',
+      text:'Shipping is where learning starts. Go and look at what happened after release, talk to users, and let what you find change the plan and the backlog.'},
+    flow:{name:'Flow',title:'Stop starting, start finishing',
+      text:'Slice work into thin pieces of value, finish or unblock what’s in progress before pulling something new, and keep adjusting how you work from what your retros tell you.'}
+  };
+  var KEY='tab-self-reflection';
+  var answers=new Array(Q.length).fill(null);
+  var grid=document.getElementById('grid');
+  var store={get:function(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}},
+             set:function(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}};
+
+  Q.forEach(function(q,i){
+    var row=document.createElement('div');
+    row.className='row';row.setAttribute('role','listitem');
+    var id='q'+(i+1);
+    var h='<div class="q" id="'+id+'"><span class="num">'+String(i+1).padStart(2,'0')+'</span><span>'+q.t+'</span></div>';
+    SCALE.forEach(function(s,v){
+      h+='<div class="opt c-'+s.k+'"><button class="dot" type="button" role="radio" aria-checked="false" id="'+id+'-'+s.k+'" data-q="'+i+'" data-v="'+v+'" aria-label="'+s.label+'"></button><small aria-hidden="true">'+s.label+'</small></div>';
+    });
+    row.innerHTML=h;
+    row.setAttribute('aria-labelledby',id);
+    grid.appendChild(row);
+  });
+
+  grid.addEventListener('click',function(e){
+    var b=e.target.closest('.dot');if(!b)return;
+    var qi=+b.dataset.q, v=+b.dataset.v;
+    answers[qi]=v;
+    var row=b.closest('.row');row.classList.add('answered');
+    row.querySelectorAll('.dot').forEach(function(d){d.setAttribute('aria-checked',d===b?'true':'false')});
+    update();
+  });
+
+  function update(){
+    var n=answers.filter(function(a){return a!==null}).length;
+    document.getElementById('count').textContent=n+' of '+Q.length+' answered';
+    document.getElementById('fill').style.width=(n/Q.length*100)+'%';
+    document.getElementById('show').disabled=n<Q.length;
+  }
+
+  var ARROWS={
+    up:'<svg class="arrow up" viewBox="0 0 24 24" role="img" aria-label="Improving"><path d="M12 20V5M6 11l6-6 6 6"/></svg>',
+    same:'<svg class="arrow same" viewBox="0 0 24 24" role="img" aria-label="Stable"><path d="M4 12h15M13 6l6 6-6 6"/></svg>',
+    down:'<svg class="arrow down" viewBox="0 0 24 24" role="img" aria-label="Getting worse"><path d="M12 4v15M6 13l6 6 6-6"/></svg>'
+  };
+  var fmt=function(d){return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})};
+
+  document.getElementById('show').addEventListener('click',function(){
+    var prev=store.get();
+    var hasPrev=prev&&Array.isArray(prev.answers)&&prev.answers.length===Q.length;
+    var col='';
+    Q.forEach(function(q,i){
+      var a=answers[i], arrow='';
+      if(hasPrev){var d=a-prev.answers[i];arrow=d>0?ARROWS.up:(d<0?ARROWS.down:ARROWS.same)}
+      col+='<li><span>'+q.t+'</span><i class="c-'+SCALE[a].k+'" title="'+SCALE[a].label+'" aria-label="'+SCALE[a].label+'"></i><span>'+arrow+'</span></li>';
+    });
+    document.getElementById('column').innerHTML=col;
+    document.getElementById('arrow-key').hidden=!hasPrev;
+    document.getElementById('when').textContent=hasPrev?'vs '+fmt(prev.date):fmt(Date.now());
+    document.getElementById('again').hidden=!!hasPrev;
+
+    var scores={};
+    ['value','learning','flow'].forEach(function(p){
+      var vals=[];Q.forEach(function(q,i){if(q.p===p)vals.push(answers[i])});
+      var avg=vals.reduce(function(s,v){return s+v},0)/vals.length;
+      scores[p]={avg:avg,vals:vals};
+    });
+    var weakest=Object.keys(scores).sort(function(a,b){return scores[a].avg-scores[b].avg})[0];
+    var strong=scores[weakest].avg>=3;
+    var ph='';
+    ['value','learning','flow'].forEach(function(p){
+      var s=scores[p];
+      ph+='<div class="pillar p-'+p+(p===weakest&&!strong?' weak':'')+'"><div class="pillar-top"><h3>'+PILLARS[p].name+'</h3><span class="lvl">Mostly '+SCALE[Math.round(s.avg)].label.toLowerCase()+'</span></div>'+
+        '<div class="dots">'+s.vals.map(function(v){return '<i class="c-'+SCALE[v].k+'" title="'+SCALE[v].label+'"></i>'}).join('')+'</div>'+
+        '<div class="bar"><b style="width:'+Math.max(4,s.avg/4*100)+'%"></b></div></div>';
+    });
+    document.getElementById('pillars').innerHTML=ph;
+    if(strong){
+      document.getElementById('focus-label').textContent='Where to go next';
+      document.getElementById('focus-title').textContent='Make it stick beyond your team';
+      document.getElementById('focus-text').textContent='You’re working this way most of the time across value, learning and flow. The next step is usually getting leadership and neighbouring teams working the same way, so the system around you doesn’t pull you back.';
+    }else{
+      document.getElementById('focus-label').textContent='Where to focus: '+PILLARS[weakest].name;
+      document.getElementById('focus-title').textContent=PILLARS[weakest].title;
+      document.getElementById('focus-text').textContent=PILLARS[weakest].text;
+    }
+    store.set({date:Date.now(),answers:answers.slice()});
+    var r=document.getElementById('results');r.hidden=false;r.focus({preventScroll:true});
+    r.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  });
+
+  document.getElementById('retake').addEventListener('click',function(){
+    answers=new Array(Q.length).fill(null);
+    grid.querySelectorAll('.row').forEach(function(r){r.classList.remove('answered')});
+    grid.querySelectorAll('.dot').forEach(function(d){d.setAttribute('aria-checked','false')});
+    update();
+    document.getElementById('results').hidden=true;
+    document.getElementById('board-title').scrollIntoView({behavior:'smooth'});
+  });
+
+  document.getElementById('year').textContent=new Date().getFullYear();
+})();
+</script>
+</body>
+</html>

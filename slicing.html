@@ -11,15 +11,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
 <style>
 /* PROTOTYPE (branch slicing-game). Same banded system as the homepage and self-assessment page.
-   Mechanic: pick pieces of work -> group them into slices -> order them on a 12-week timeline.
-   Effort = width on the timeline. Value only lands when a slice finishes. Red = weeks passing with no value.
-   Each "nice-to-have" piece has an estimated value; the real value is revealed when it ships (the learning part). */
+   Version 1 mechanic: the visitor writes their own slice cards, giving each one an effort (weeks) and a value (per week once live),
+   then drags them into order. Effort = width on the timeline. Value only lands when a slice finishes. Red = weeks with no value. */
 :root{
   --navy:#12213B; --navy-2:#1C3157; --paper:#FFFFFF; --soft:#F1F3F7;
   --ink:#12213B; --muted:#56637A; --on-navy:#DCE3EF; --line:#D9DEE8;
   --accent:#F2A91E; --accent-ink:#B87700;
   --red:#C62828; --red-soft:#F7DADA; --green:#08712A;
-  --value:#16A37F; --flow:#3B9BEF; --learning:#E3A500;
   --display:"Archivo","Arial Black",system-ui,sans-serif;
   --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
@@ -30,7 +28,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
-a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-0.01em;text-wrap:balance;margin:0}
 h1,h2{text-transform:uppercase}
 h1 em,h2 em{font-style:normal;color:var(--accent)}
@@ -45,7 +43,6 @@ button{font:inherit;color:inherit}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-ghost{border-color:currentColor;color:var(--ink)}
 .btn-ghost:hover{background:var(--ink);color:#fff}
-.btn-sm{padding:10px 14px;font-size:.8rem}
 .btn-row{display:flex;flex-wrap:wrap;gap:12px}
 
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
@@ -81,65 +78,73 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:520px){.rules ol{grid-template-columns:1fr;gap:12px}}
 .rules li{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:.92rem;line-height:1.45}
 .rules li b{display:block;font-family:var(--hand);font-weight:500;font-size:1.15rem;margin-bottom:4px}
-.rules li .k{font-family:var(--mono);font-size:.75rem;color:var(--muted);letter-spacing:.04em}
 
 /* sections */
 .band{padding-block:clamp(40px,5vw,72px)}
-.band + .band{padding-top:0}
-.sec-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px 24px;margin-bottom:20px}
+.sec-head{margin-bottom:20px}
 .sec-head h2{font-size:clamp(1.6rem,3.4vw,2.4rem)}
-.sec-head p{color:var(--muted);font-size:.95rem;max-width:60ch;margin-top:8px}
-
-/* tray of pieces */
-.build-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(20px,3vw,40px);align-items:start}
-@media (max-width:860px){.build-grid{grid-template-columns:1fr}}
+.sec-head p{color:var(--muted);font-size:.95rem;max-width:62ch;margin-top:8px}
+.play-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(20px,3vw,40px);align-items:start}
+@media (max-width:900px){.play-grid{grid-template-columns:1fr}}
 .col-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:1rem;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--navy)}
 .col-h span{font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.04em;color:var(--muted);text-transform:none}
-.slices-col{position:sticky;top:calc(84px + env(safe-area-inset-top,0px))}
-@media (max-width:860px){.slices-col{position:static}}
-.tray{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;padding:4px;margin:-4px}
-.tray.over{outline:3px dashed var(--muted);outline-offset:2px}
-@media (max-width:380px){.tray{grid-template-columns:1fr}}
-.step h3{font-family:var(--mono);font-weight:500;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;line-height:1.3}
-.step .pieces{display:flex;flex-direction:column;gap:8px}
-.piece{appearance:none;text-align:left;cursor:grab;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;background:#fff;border:2px solid var(--line);padding:10px 12px 10px;display:flex;flex-direction:column;gap:6px;transition:border-color .12s,background .12s,transform .12s;position:relative}
-.piece:hover{border-color:var(--navy)}
-.piece[aria-pressed="true"]{border-color:var(--navy);background:#FFF6E2;box-shadow:inset 0 0 0 1px var(--navy)}
-.piece[aria-pressed="true"]::after{content:"✓";position:absolute;top:6px;right:8px;font-weight:700;font-size:.85rem}
-.piece.used{opacity:.38;cursor:default;border-style:dashed}
-.piece.used:hover{border-color:var(--line)}
-.piece .nm{font-weight:600;font-size:.92rem;line-height:1.25;padding-right:14px}
-.piece .meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-family:var(--mono);font-size:.7rem;letter-spacing:.02em;color:var(--muted)}
-.eff{display:inline-flex;gap:2px;align-items:center}
-.eff i{width:9px;height:9px;background:var(--navy);display:inline-block}
-.eff span{margin-left:4px}
-.tag{display:inline-block;padding:1px 6px;border:1px solid var(--line);background:var(--soft);color:var(--ink);white-space:nowrap}
-.tag.core{background:#E4F4EE;border-color:#A8DCC9}
-.tag.zero{background:var(--red-soft);border-color:#E9AFAF;color:#7A1B1B}
-.tag.up{background:#FFF1D2;border-color:#F3D28B}
-.tag.needs{background:#fff;border-style:dashed}
-.tag s{opacity:.6}
+.col-h span.over{color:var(--red)}
+.board-col{position:sticky;top:calc(84px + env(safe-area-inset-top,0px))}
+@media (max-width:900px){.board-col{position:static}}
 
-/* plan */
-.plan-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:clamp(20px,3vw,40px);align-items:start}
-@media (max-width:900px){.plan-grid{grid-template-columns:1fr}}
+/* slice cards */
+.slices{display:flex;flex-direction:column;gap:10px}
+.slice{border:1px solid var(--line);background:#fff;border-left:6px solid var(--navy);padding:6px 8px 10px 4px}
+.slice.novalue{border-left-color:var(--red)}
+.slice.shipped{background:var(--soft)}
+.slice.late{border-left-style:dashed}
+.slice-head{display:flex;align-items:center;gap:4px}
+.grip{appearance:none;border:0;background:none;cursor:grab;color:var(--muted);font-size:1rem;letter-spacing:-3px;padding:8px 8px 8px 4px;line-height:1;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.grip:hover{color:var(--ink)}
+.grip[disabled]{visibility:hidden}
+.sname{flex:1;min-width:0;font:600 1rem/1.3 var(--body);color:var(--ink);border:0;border-bottom:1px dashed var(--line);background:transparent;padding:6px 2px}
+.sname::placeholder{color:#9AA4B5;font-weight:400}
+.sname:focus{border-bottom-color:var(--navy);outline:0}
+.sname[readonly]{border-bottom-color:transparent}
+.icon{appearance:none;border:1px solid var(--line);background:#fff;width:32px;height:32px;display:inline-grid;place-items:center;cursor:pointer;font-size:.95rem;line-height:1;flex:none}
+.icon:hover:not(:disabled){border-color:var(--navy)}
+.icon:disabled{opacity:.3;cursor:default}
+.slice-nums{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:8px 0 0 28px}
+.num{display:flex;align-items:center;gap:6px}
+.num label{font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.num output{min-width:4.6ch;text-align:center;font-family:var(--mono);font-size:.9rem;font-weight:500;font-variant-numeric:tabular-nums}
+.num.v output{color:var(--accent-ink)}
+.slice.novalue .num.v output{color:var(--red)}
+.when{margin-left:auto;font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.03em;white-space:nowrap}
+.when.late{color:var(--red)}
+.new-slice{appearance:none;width:100%;border:2px dashed var(--navy);background:transparent;padding:14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer;color:var(--ink)}
+.new-slice:hover{background:var(--soft)}
+.empty-note{font-family:var(--hand);color:var(--muted);font-size:1rem;padding:6px 2px 12px}
+.slices-foot{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:12px;font-size:.85rem;color:var(--muted)}
+.linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.85rem}
+
+/* drag */
+.ghost{position:fixed;z-index:200;pointer-events:none;margin:0;opacity:.95;transform:rotate(-1.5deg) scale(1.02);box-shadow:0 14px 30px rgba(18,33,59,.3)}
+body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none;user-select:none}
+.dragsrc{opacity:.3}
+
+/* board */
 .board{background:#fff;border:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 18px 40px rgba(18,33,59,.08)}
 .board-title{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--line);text-transform:uppercase}
 .board-title b{color:var(--ink);font-weight:500}
 .chart-wrap{padding:14px 16px 6px;position:relative}
 .ylab{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
 .ylab .now{color:var(--ink)}
-.chart{position:relative;height:clamp(150px,22vw,210px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.chart{position:relative;height:clamp(160px,22vw,220px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink)}
 .chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .deadline{position:absolute;top:-6px;bottom:-1px;border-left:2px dashed var(--navy);pointer-events:none}
 .deadline span{position:absolute;top:-2px;right:6px;font-family:var(--hand);font-size:.85rem;white-space:nowrap;color:var(--navy);background:rgba(255,255,255,.85);padding:0 4px}
 .cursor{position:absolute;top:0;bottom:0;border-left:2px solid var(--accent-ink);pointer-events:none;transition:left .25s linear}
 .timeline{position:relative;height:46px;margin:10px 0 0;background:var(--soft);border:1px solid var(--line)}
-.blk{position:absolute;top:4px;bottom:4px;display:flex;align-items:center;justify-content:center;padding:0 4px;text-overflow:ellipsis;font-family:var(--mono);font-size:.72rem;font-weight:500;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
+.blk{position:absolute;top:4px;bottom:4px;display:flex;align-items:center;justify-content:center;padding:0 4px;font-family:var(--mono);font-size:.7rem;font-weight:500;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
+.blk span{overflow:hidden;text-overflow:ellipsis}
 .blk.novalue{background:repeating-linear-gradient(135deg,var(--red) 0 6px,#A11F1F 6px 12px)}
 .blk.late{opacity:.45}
-.blk.shipped::after{content:" ✓"}
-.blk.err{outline:2px solid var(--red);outline-offset:-2px;background:#fff;color:var(--red)}
 .ticks{position:relative;height:20px;font-family:var(--mono);font-size:.62rem;color:var(--muted)}
 .ticks span{position:absolute;top:3px;transform:translateX(-50%)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 16px 14px;font-size:.78rem;color:var(--muted)}
@@ -147,73 +152,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .legend .lv{background:var(--accent)}
 .legend .lr{background:var(--red-soft);border:1px solid var(--red)}
 .legend .ld{border-top:2px dashed var(--navy);height:0;width:16px}
-
-.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:#fff}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--line)}
 .controls .spacer{flex:1}
 .status{font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;color:var(--muted)}
-.status.bad{color:var(--red)}
-
-.slices{display:flex;flex-direction:column;gap:10px}
-.ghost{position:fixed;z-index:200;pointer-events:none;margin:0;opacity:.95;transform:rotate(-2deg) scale(1.03);box-shadow:0 14px 30px rgba(18,33,59,.3);background:#fff}
-body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none;user-select:none}
-.dragsrc{opacity:.35}
-.slice.over,.new-slice.over{outline:3px dashed var(--accent-ink);outline-offset:2px;background:#FFF6E2}
-.sname{flex:1;min-width:0;font:800 .95rem/1.2 var(--display);text-transform:uppercase;color:var(--ink);border:0;border-bottom:1px dashed transparent;background:transparent;padding:4px 2px}
-.sname::placeholder{color:#9AA4B5}
-.sname:hover,.sname:focus{border-bottom-color:var(--muted);outline:0}
-.grip{appearance:none;border:0;background:none;cursor:grab;color:var(--muted);font-size:1rem;letter-spacing:-3px;padding:6px 8px 6px 2px;line-height:1;touch-action:manipulation;-webkit-touch-callout:none;user-select:none}
-.grip:hover{color:var(--ink)}
-.slice-sub{display:flex;align-items:center;gap:8px;padding:0 12px 8px 32px}
-.drop-hint{flex:1;border:2px dashed var(--line);color:var(--muted);font-size:.82rem;padding:10px;text-align:center;font-family:var(--hand)}
-.addsel{appearance:none;flex:1;border:2px dashed var(--accent-ink);background:#FFF6E2;color:var(--accent-ink);font-weight:600;font-size:.82rem;padding:8px;cursor:pointer}
-.new-slice{appearance:none;width:100%;border:2px dashed var(--navy);background:transparent;padding:14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer;color:var(--ink)}
-.new-slice:hover{background:var(--soft)}
-.chip{cursor:grab;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-.slices .empty{border:2px dashed var(--line);padding:20px;color:var(--muted);font-size:.92rem;text-align:center;font-family:var(--hand)}
-.slice{border:1px solid var(--line);background:#fff;border-left:6px solid var(--navy)}
-.slice.novalue{border-left-color:var(--red)}
-.slice.shipped{background:var(--soft)}
-.slice.err{border-color:var(--red)}
-.slice-head{display:flex;align-items:center;gap:4px;padding:6px 8px 4px 6px}
-.slice-head b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.9rem}
-.slice-head .wk{font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.03em}
-.slice-head .gain{margin-left:auto;font-family:var(--mono);font-size:.72rem;padding:2px 6px;white-space:nowrap}
-.gain.pos{background:#FFF1D2;color:var(--accent-ink)}
-.gain.none{background:var(--red-soft);color:var(--red)}
-.gain.done{background:#E4F4EE;color:var(--green)}
-.icon{appearance:none;border:1px solid var(--line);background:#fff;width:30px;height:30px;display:inline-grid;place-items:center;cursor:pointer;font-size:.9rem;line-height:1;flex:none}
-.icon:hover:not(:disabled){border-color:var(--navy)}
-.icon:disabled{opacity:.3;cursor:default}
-.slice-body{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px 32px}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;background:var(--soft);border:1px solid var(--line);padding:3px 4px 3px 8px}
-.chip button{appearance:none;border:0;background:none;cursor:pointer;padding:0 4px;font-size:.9rem;color:var(--muted)}
-.chip button:hover{color:var(--red)}
-.chip .rev{font-family:var(--mono);font-size:.68rem}
-.chip .rev.worse{color:var(--red)}
-.chip .rev.better{color:var(--green)}
-.slice-err{padding:0 12px 10px 32px;font-size:.8rem;color:var(--red)}
-.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:.85rem;color:var(--muted);align-items:center}
-.linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.85rem}
-
-/* builder bar */
-.builder{position:fixed;left:0;right:0;bottom:0;z-index:30;visibility:hidden;background:var(--navy);color:#fff;transform:translateY(110%);transition:transform .2s;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -10px 30px rgba(0,0,0,.2)}
-.builder.on{transform:none;visibility:visible}
-.builder .wrap{display:flex;align-items:center;gap:14px;min-height:68px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
-.builder .sum{font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;color:var(--on-navy)}
-.builder .sum b{color:var(--accent);font-weight:500}
-.builder .spacer{flex:1}
-.builder .btn-ghost{color:#fff}
-.builder .btn-ghost:hover{background:#fff;color:var(--navy)}
-
-/* surprise / learning toast */
-.moment{margin:0 16px 14px;background:var(--navy);color:var(--on-navy);padding:16px 18px}
-.moment[hidden]{display:none}
-.moment .eyebrow{color:var(--accent);margin-bottom:6px}
-.moment h3{color:#fff;font-size:1.15rem;text-transform:uppercase}
-.moment p{margin-top:6px;color:#C3CCDB;font-size:.93rem}
-.moment .btn-row{margin-top:12px}
-.moment .btn-ghost{color:#fff}
-.moment .btn-ghost:hover{background:#fff;color:var(--navy)}
 
 /* results */
 .results{background:var(--navy);color:var(--on-navy);padding-block:clamp(48px,7vw,96px)}
@@ -223,20 +164,20 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .res-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);margin-top:32px}
 @media (max-width:900px){.res-grid{grid-template-columns:1fr}}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.stat{border:1px solid var(--navy-2);background:var(--navy-2);padding:14px}
+.stat{background:var(--navy-2);padding:14px}
 .stat b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3vw,2.2rem);color:#fff;line-height:1}
 .stat span{display:block;margin-top:6px;font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:#AEB9CC}
 .compare{margin-top:22px;display:flex;flex-direction:column;gap:10px}
-.cmp{display:grid;grid-template-columns:150px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:.88rem}
-@media (max-width:480px){.cmp{grid-template-columns:110px minmax(0,1fr) 38px;font-size:.8rem}}
+.cmp{display:grid;grid-template-columns:170px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:.88rem}
+@media (max-width:480px){.cmp{grid-template-columns:120px minmax(0,1fr) 38px;font-size:.8rem}}
 .cmp .bar{height:14px;background:var(--navy-2)}
 .cmp .bar b{display:block;height:100%;background:#8D9AB0}
 .cmp.you .bar b{background:var(--accent)}
 .cmp .n{font-family:var(--mono);text-align:right;color:#fff}
 .verdict{font-family:var(--hand);font-size:1.25rem;color:#fff;line-height:1.35}
-.learned{margin-top:18px;list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
-.learned li{border-left:3px solid var(--accent);padding:4px 0 4px 12px;font-size:.93rem;color:#C3CCDB}
-.learned li b{color:#fff;font-weight:600}
+.tips{margin-top:18px;list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
+.tips li{border-left:3px solid var(--accent);padding:4px 0 4px 12px;font-size:.93rem;color:#C3CCDB}
+.tips li b{color:#fff;font-weight:600}
 .results .btn-row{margin-top:26px}
 .results .btn-ghost{color:#fff}
 .results .btn-ghost:hover{background:#fff;color:var(--navy)}
@@ -245,8 +186,7 @@ footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:
 footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 footer.site a{color:#C3CCDB;text-decoration:none}
 footer.site a:hover{color:var(--accent)}
-body.has-builder{padding-bottom:84px}
-@media (prefers-reduced-motion:reduce){.builder,.cursor,.piece{transition:none}}
+@media (prefers-reduced-motion:reduce){.cursor{transition:none}}
 </style>
 </head>
 <body>
@@ -277,12 +217,12 @@ body.has-builder{padding-bottom:84px}
     <div>
       <span class="eyebrow">Slicing game · 12 weeks · about 5 minutes</span>
       <h1>Slice it <em>right</em></h1>
-      <p class="lede">Same work, same team, same twelve weeks. The only thing you choose is how to slice it. Watch when the value actually arrives.</p>
+      <p class="lede">Same work, same team, same twelve weeks. You decide how to slice it and in what order. Then watch when the value actually arrives.</p>
     </div>
     <div class="brief">
       <span class="eyebrow">The brief</span>
       <h2>“As a user, I want to be able to cancel an order by myself”</h2>
-      <p>On this ecommerce platform, cancelling an order means calling the call centre. The business wants self-service cancellation on the <b>website</b> and the <b>iOS and Android apps</b>. You have <b>12 weeks</b>, and there's <b>22 weeks</b> of work on the table. You won't build it all.</p>
+      <p>On this ecommerce platform, cancelling an order means calling the call centre. The business wants self-service cancellation on the <b>website</b> and the <b>iOS and Android apps</b>. You have <b>12 weeks</b>. How would you slice it to deliver value early, and learn or reduce risk?</p>
     </div>
   </div>
 </section>
@@ -290,76 +230,49 @@ body.has-builder{padding-bottom:84px}
 <section class="rules" aria-label="How it works">
   <div class="wrap">
     <ol>
-      <li><b>1. Make slice cards</b>Create a card for each slice and give it a name, like “Book by email”.</li>
-      <li><b>2. Drag work in</b>Drag pieces of work onto your cards, then drag the cards into order. On a phone, press and hold to drag.</li>
-      <li><b>3. Value lands at the end</b>Nothing counts until a slice ships. Customers only benefit when a capability is live <i>on the channel they use</i>. Across all customers: see if an order can be cancelled <span class="k">+1/wk</span>, request a cancellation <span class="k">+5/wk</span>, cancel it yourself <span class="k">+10/wk</span>.</li>
-      <li><b>4. Estimates lie</b>You assume customers are split evenly across web, iOS and Android, and that edge cases and polish are worth it. You find out what's true when things ship, or sooner if you test first.</li>
+      <li><b>1. Write your slices</b>Add a card for each slice and say what it is, like “Show on the website if an order can be cancelled”.</li>
+      <li><b>2. Size them</b>Give each slice its effort in weeks and the value it adds every week once it’s live, on top of what’s already there. Zero is allowed.</li>
+      <li><b>3. Put them in order</b>Drag the cards. Slices are built one after the other, and value only lands when a slice ships.</li>
+      <li><b>4. Run the 12 weeks</b>Effort is width, value is height. Red is time going by with nothing in customers’ hands.</li>
     </ol>
   </div>
 </section>
 
-<section class="band" aria-labelledby="pieces-title">
+<section class="band" aria-labelledby="play-title" id="play">
   <div class="wrap">
     <div class="sec-head">
-      <div>
-        <span class="eyebrow">Step 1</span>
-        <h2 id="pieces-title">Slice the work</h2>
-        <p>Drag pieces from the left onto your slice cards. The order of the cards is the order you build them in. Press and hold to drag on a phone, or tap pieces to select them.</p>
-      </div>
+      <span class="eyebrow">Your plan</span>
+      <h2 id="play-title">Slice the feature</h2>
+      <p>Value is in points per week, added on top of earlier slices: all your slices together might add up to 10, “every customer can cancel online and the calls stop”. Drag a card by its ⋮⋮ handle to reorder (press and hold on a phone).</p>
     </div>
-    <div class="build-grid">
-      <div class="tray-col">
-        <h3 class="col-h">The work <span>22 weeks in total</span></h3>
-        <div class="tray" id="tray"></div>
-      </div>
-      <div class="slices-col">
+    <div class="play-grid">
+      <div>
         <h3 class="col-h">Your slices <span id="planned">0 of 12 weeks</span></h3>
         <div class="slices" id="slices"></div>
-        <div class="presets" id="presets">
-          <button class="linkbtn" type="button" id="clear">Clear plan</button>
+        <div class="slices-foot" id="foot"></div>
+      </div>
+      <div class="board-col">
+        <div class="board">
+          <div class="board-title"><span>Value per week</span><b id="clock">Week 0 of 12</b></div>
+          <div class="chart-wrap">
+            <div class="ylab"><span>value / week</span><span class="now" id="now-rate"></span></div>
+            <div class="chart" id="chart">
+              <svg id="svg" preserveAspectRatio="none" aria-hidden="true"></svg>
+              <div class="deadline" id="deadline"><span>deadline</span></div>
+              <div class="cursor" id="cursor" hidden></div>
+            </div>
+            <div class="timeline" id="timeline" aria-label="Slices on the timeline"></div>
+            <div class="ticks" id="ticks" aria-hidden="true"></div>
+          </div>
+          <div class="legend" aria-hidden="true"><span><i class="lv"></i>value arriving</span><span><i class="lr"></i>no value yet</span><span><i class="ld"></i>your plan</span></div>
+          <div class="controls">
+            <span class="status" id="status"></span>
+            <span class="spacer"></span>
+            <button class="btn btn-primary" id="run" type="button" disabled>Run the 12 weeks</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="band" aria-labelledby="plan-title" id="plan">
-  <div class="wrap">
-    <div class="sec-head">
-      <div>
-        <span class="eyebrow">Step 2</span>
-        <h2 id="plan-title">Run your 12 weeks</h2>
-        <p>Effort is width. Value is height. Red is time going by with nothing in customers' hands.</p>
-      </div>
-    </div>
-      <div class="board">
-        <div class="board-title"><span>Value per week</span><b id="clock">Week 0 of 12</b></div>
-        <div class="chart-wrap">
-          <div class="ylab"><span>£ value / week</span><span class="now" id="now-rate"></span></div>
-          <div class="chart" id="chart">
-            <svg id="svg" preserveAspectRatio="none" aria-hidden="true"></svg>
-            <div class="deadline" id="deadline"><span>deadline</span></div>
-            <div class="cursor" id="cursor" hidden></div>
-          </div>
-          <div class="timeline" id="timeline" aria-label="Slices on the timeline"></div>
-          <div class="ticks" id="ticks" aria-hidden="true"></div>
-        </div>
-        <div class="legend" aria-hidden="true"><span><i class="lv"></i>value arriving</span><span><i class="lr"></i>no value yet</span><span><i class="ld"></i>expected (estimates)</span></div>
-        <div class="moment" id="moment" hidden role="status" aria-live="polite">
-          <span class="eyebrow" id="m-when"></span>
-          <h3 id="m-title"></h3>
-          <p id="m-text"></p>
-          <div class="btn-row">
-            <button class="btn btn-primary btn-sm" id="m-go" type="button">Keep going</button>
-            <button class="btn btn-ghost btn-sm" id="m-replan" type="button">Change the rest of my plan</button>
-          </div>
-        </div>
-        <div class="controls">
-          <span class="status" id="status">Add your first slice to start.</span>
-          <span class="spacer"></span>
-          <button class="btn btn-primary" id="run" type="button" disabled>Start the 12 weeks</button>
-        </div>
-      </div>
   </div>
 </section>
 
@@ -378,25 +291,16 @@ body.has-builder{padding-bottom:84px}
       </div>
       <div>
         <p class="verdict" id="verdict"></p>
-        <ul class="learned" id="learned"></ul>
+        <ul class="tips" id="tips"></ul>
         <div class="btn-row">
           <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Slice your real work with me</a>
-          <button class="btn btn-ghost" id="again" type="button">Play again</button>
+          <button class="btn btn-ghost" id="again" type="button">Change my plan</button>
         </div>
       </div>
     </div>
   </div>
 </section>
 </main>
-
-<div class="builder" id="builder" aria-live="polite">
-  <div class="wrap">
-    <span class="sum" id="b-sum"></span>
-    <span class="spacer"></span>
-    <button class="btn btn-ghost btn-sm" id="b-clear" type="button">Clear</button>
-    <button class="btn btn-primary btn-sm" id="b-add" type="button">New slice with these</button>
-  </div>
-</div>
 
 <footer class="site">
   <div class="wrap">
@@ -407,287 +311,138 @@ body.has-builder{padding-bottom:84px}
 
 <script>
 (function(){
-  /* ============ THE MODEL (edit here) ============
-     kind: 'core'    = needed for a customer to book (find + book + confirm)  -> +5/wk once all three steps are covered
-           'pay'     = lets you get paid (needs a bookable service)            -> +3/wk
-           'upgrade' = nice-to-have: est = what it looks like, actual = what really happens (revealed on shipping)
-           'enabler' = no value on its own
-     A piece can be several things (online payments: pay + upgrade). */
-  var HORIZON=12;
-  /* Value per week = (capability level) x (share of customers on the channels where it's live).
-     Levels, across all customers: see eligibility 1, request a cancellation 5, cancel directly 10 (+ edge cases).
-     Channel shares: everyone assumes a third each (est); the truth (actual) is revealed when the channel ships,
-     or straight away for all three when the fake door ships. Upgrades: est is the guess, actual is revealed on shipping. */
-  var STEPS=[
-    {k:'learn',  name:'Learn first'},
-    {k:'can',    name:'What customers can do'},
-    {k:'where',  name:'Where they can do it'},
-    {k:'polish', name:'Polish'}
-  ];
-  var PIECES=[
-    {id:'fake',    step:'learn', name:'“Fake door” cancel button (A/B test)', effort:1, kind:'learn',
-      note:'14% of people who wanted to cancel clicked it, so demand is real. And they weren’t split evenly: 60% on the website, 30% on iOS, 10% on Android.'},
-    {id:'elig',    step:'can',   name:'See if an order can be cancelled',   effort:2, kind:'cap', level:1},
-    {id:'request', step:'can',   name:'Request a cancellation online (call centre still does it)', effort:1, kind:'cap', level:5, needs:['elig']},
-    {id:'auto',    step:'can',   name:'Cancel eligible orders directly (self-service)', effort:5, kind:'cap', level:10, needs:['elig']},
-    {id:'edge',    step:'can',   name:'Handle every edge case automatically', effort:5, kind:'upgrade', est:3, actual:.5, needs:['auto'],
-      note:'Edge cases turn out to be about 5% of cancellations. The call centre was handling them fine.'},
-    {id:'web',     step:'where', name:'On the website',   effort:1, kind:'channel', est:1/3, actual:.6,
-      note:'60% of cancellations happen on the website. Much more than a third.'},
-    {id:'ios',     step:'where', name:'In the iOS app',   effort:3, kind:'channel', est:1/3, actual:.3,
-      note:'30% of cancellations come from iOS. A bit less than a third.'},
-    {id:'android', step:'where', name:'In the Android app', effort:3, kind:'channel', est:1/3, actual:.1,
-      note:'Only 10% of cancellations come from Android. Three weeks of work for a small slice of customers.'},
-    {id:'page',    step:'polish',name:'Redesigned “My orders” page', effort:2, kind:'upgrade', est:1, actual:0,
-      note:'It looks lovely. Nobody cancels any differently because of it.'}
-  ];
-  var P={};PIECES.forEach(function(p){P[p.id]=p});
-  var PRESETS={
-    cake:[['elig','auto','edge'],['web','ios','android','page']],
-    bigbang:[PIECES.map(function(p){return p.id})],
-    best:[['elig','web'],['request'],['auto']]
-  };
-  var fmt=function(n){return String(Math.round(n*10)/10)};
-  var pct=function(x){return Math.round(x*100)+'%'};
-
-  /* ============ STATE ============ */
-  var slices=[], selected=[], nextId=1;
-  var phase='plan';            // plan | running | paused | replan | done
-  var week=0, timer=null, revealed={}, learned=[];
+  var HORIZON=12, MAXE=12, MAXV=10, YMAX=10;
+  var slices=[], nextId=1, phase='plan', week=0, timer=null;   // phase: plan | running | done
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $=function(id){return document.getElementById(id)};
+  var PLACEHOLDERS=['e.g. Show on the website if an order can be cancelled','e.g. Request a cancellation online','e.g. Self-service cancel on the website','e.g. Same on iOS and Android'];
 
   /* ============ ENGINE ============ */
-  function effortOf(ids){return ids.reduce(function(s,id){return s+P[id].effort},0)}
-  function used(id){return slices.some(function(s){return s.pieces.indexOf(id)>=0})}
-  function schedule(list){
-    var t=0;return (list||slices).map(function(s){var o={s:s,start:t,end:t+effortOf(s.pieces)};t=o.end;return o});
-  }
-  function rateOf(set,reveal){
-    var has=function(id){return !!set[id]};
-    var lvl=0;
-    if(has('elig'))lvl=1;
-    if(has('elig')&&has('request'))lvl=5;
-    if(has('elig')&&has('auto'))lvl=10;
-    if(lvl>=10&&has('edge'))lvl+=reveal('edge')?P.edge.actual:P.edge.est;
-    if(lvl>0&&has('page'))lvl+=reveal('page')?P.page.actual:P.page.est;
-    var r=0;
-    ['web','ios','android'].forEach(function(c){if(has(c))r+=lvl*(reveal('share-'+c)?P[c].actual:P[c].est)});
-    return Math.round(r*10)/10;
-  }
-  // value per week for weeks 0..n-1; a slice ending at week e delivers from week index e
-  function rates(list,n,reveal){
+  function schedule(list){var t=0;return (list||slices).map(function(s){var o={s:s,start:t,end:t+s.effort};t=o.end;return o})}
+  function rates(list,n){
     var sch=schedule(list),out=[];
-    for(var w=0;w<n;w++){
-      var set={};sch.forEach(function(o){if(o.end<=w)o.s.pieces.forEach(function(id){set[id]=1})});
-      out.push(rateOf(set,reveal));
-    }
+    for(var w=0;w<n;w++){var r=0;sch.forEach(function(o){if(o.end<=w)r+=o.s.value});out.push(r)}
     return out;
   }
-  function gainOf(index,list,reveal){
-    var sch=schedule(list),before={},after={};
-    sch.forEach(function(o,i){if(i<index)o.s.pieces.forEach(function(id){before[id]=after[id]=1});if(i===index)o.s.pieces.forEach(function(id){after[id]=1})});
-    return rateOf(after,reveal)-rateOf(before,reveal);
-  }
-  function errorsOf(list){
-    var seen={},errs=[];
-    (list||slices).forEach(function(s,i){
-      s.pieces.forEach(function(id){seen[id]=1});
-      var miss=[];
-      s.pieces.forEach(function(id){(P[id].needs||[]).forEach(function(n){if(!seen[n]&&miss.indexOf(n)<0)miss.push(n)})});
-      errs[i]=miss;
-    });
-    return errs;
-  }
-  function score(list,reveal){return rates(list,HORIZON,reveal).reduce(function(a,b){return a+b},0)}
-  var isRevealed=function(id){return !!revealed[id]};
-  function shareRevealed(c){return !!revealed['share-'+c]}
-  var all=function(){return true};
+  function score(list){return rates(list,HORIZON).reduce(function(a,b){return a+b},0)}
+  function totalEffort(list){return (list||slices).reduce(function(a,s){return a+s.effort},0)}
+  // best order for these same slices: highest value per week of effort first (ties: smaller first)
+  function bestOrder(){return slices.slice().sort(function(a,b){return b.value/b.effort-a.value/a.effort||a.effort-b.effort})}
+  function oneRelease(){return [{effort:totalEffort(),value:slices.reduce(function(a,s){return a+s.value},0)}]}
 
   /* ============ RENDER ============ */
-  function effBlocks(n){var h='<span class="eff" title="'+n+' week'+(n>1?'s':'')+'">';for(var i=0;i<n;i++)h+='<i></i>';return h+'<span>'+n+' wk</span></span>'}
-  function valueTag(p){
-    if(p.kind==='learn')return '<span class="tag zero">no value, but you learn</span>';
-    if(p.kind==='cap')return '<span class="tag core">+'+p.level+'/wk if on every channel</span>';
-    if(p.kind==='channel')return shareRevealed(p.id)?'<span class="tag up"><s>⅓</s> '+pct(p.actual)+' of customers</span>':'<span class="tag up">⅓ of customers?</span>';
-    if(p.kind==='upgrade')return revealed[p.id]?'<span class="tag up"><s>+'+p.est+'</s> +'+fmt(p.actual)+'/wk</span>':'<span class="tag up">+'+p.est+'/wk?</span>';
-    return '';
-  }
-  function renderTray(){
-    var locked=phase==='running'||phase==='paused'||phase==='done';
-    $('tray').innerHTML=STEPS.map(function(st){
-      return '<div class="step"><h3>'+st.name+'</h3><div class="pieces">'+PIECES.filter(function(p){return p.step===st.k}).map(function(p){
-        var u=used(p.id),sel=selected.indexOf(p.id)>=0;
-        var NEED={elig:'eligibility',auto:'self-service'};var needs=(p.needs||[]).map(function(n){return '<span class="tag needs">needs '+(NEED[n]||n)+'</span>'}).join('');
-        return '<button type="button" class="piece'+(u?' used':'')+'" data-id="'+p.id+'" aria-pressed="'+(sel?'true':'false')+'"'+(u||locked?' disabled':'')+'>'+
-          '<span class="nm">'+p.name+'</span><span class="meta">'+effBlocks(p.effort)+valueTag(p)+needs+'</span></button>';
-      }).join('')+'</div></div>';
-    }).join('');
-  }
-  function renderBuilder(){
-    var on=selected.length>0&&(phase==='plan'||phase==='replan');
-    $('builder').classList.toggle('on',on);document.body.classList.toggle('has-builder',on);
-    if(on){var e=effortOf(selected);$('b-sum').innerHTML='<b>'+selected.length+'</b> piece'+(selected.length>1?'s':'')+' · <b>'+e+'</b> week'+(e>1?'s':'')}
-  }
   function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function label(s,i){return s.name&&s.name.trim()?s.name.trim():'Slice '+(i+1)}
   function renderSlices(){
-    var sch=schedule(),errs=errorsOf(),editable=phase==='plan'||phase==='replan';
-    var total=sch.length?sch[sch.length-1].end:0;
-    $('planned').textContent=total+' of '+HORIZON+' weeks'+(total>HORIZON?' · over by '+(total-HORIZON):'');
-    var h=sch.map(function(o,i){
-      var s=o.s,g=gainOf(i,null,isRevealed),err=errs[i].length,empty=!s.pieces.length;
-      var late=o.end>HORIZON;
-      var gain=empty?'':s.shipped?'<span class="gain done">shipped '+(g>0?'+'+fmt(g):g<0?fmt(g):'±0')+'/wk</span>'
-        :err?'<span class="gain none">can’t ship</span>'
-        :g>0?'<span class="gain pos">+'+fmt(g)+'/wk'+(late?' · too late':'')+'</span>':'<span class="gain none">no new value</span>';
-      var open=editable&&!s.shipped;
-      var head='<div class="slice-head">'+
-        (open?'<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder '+esc(label(s,i))+' (or use the arrow keys)">⋮⋮</button>':'<span class="grip" aria-hidden="true" style="visibility:hidden">⋮⋮</span>')+
-        (open?'<input class="sname" data-i="'+i+'" value="'+esc(s.name||'')+'" placeholder="Name slice '+(i+1)+'" aria-label="Name of slice '+(i+1)+'" maxlength="40" autocomplete="off">'
-             :'<b style="flex:1">'+esc(label(s,i))+'</b>')+
-        gain+
-        (open?'<button class="icon" type="button" data-act="del" data-i="'+i+'" aria-label="Remove '+esc(label(s,i))+'">×</button>':'')+
-        '</div>';
-      var sub='<div class="slice-sub"><span class="wk" style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">'+
-        (empty?'empty':'wk '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · '+(o.end-o.start)+' wk')+'</span></div>';
-      var body;
-      if(empty){
-        body='<div class="slice-sub">'+(open&&selected.length?'<button class="addsel" type="button" data-act="addsel" data-i="'+i+'">Add '+selected.length+' selected here</button>':'<div class="drop-hint">Drag pieces of work here</div>')+'</div>';
-      }else{
-        body='<div class="slice-body">'+s.pieces.map(function(id){
-          var p=P[id],rev='';
-          if((p.kind==='upgrade'&&revealed[id])||(p.kind==='channel'&&shareRevealed(id))){var c=p.actual<p.est?'worse':p.actual>p.est?'better':'';rev=' <span class="rev '+c+'">'+(p.kind==='channel'?pct(p.actual):'+'+fmt(p.actual))+'</span>'}
-          return '<span class="chip"'+(open?' data-id="'+id+'" data-i="'+i+'"':'')+'>'+p.name+' <span class="rev">'+p.effort+'w</span>'+rev+(open?'<button type="button" data-act="out" data-i="'+i+'" data-id="'+id+'" aria-label="Take '+p.name+' out of this slice">×</button>':'')+'</span>';
-        }).join('')+'</div>'+
-        (open&&selected.length?'<div class="slice-sub"><button class="addsel" type="button" data-act="addsel" data-i="'+i+'">Add '+selected.length+' selected here</button></div>':'');
-      }
-      return '<div class="slice'+(s.shipped?' shipped':'')+(err?' err':'')+(!empty&&!s.shipped&&!err&&g<=0?' novalue':'')+(drag&&drag.active&&drag.type==='slice'&&drag.sid===s.id?' dragsrc':'')+'" data-i="'+i+'">'+
-        head+sub+body+
-        (err?'<div class="slice-err">Needs '+errs[i].map(function(n){return '“'+P[n].name+'”'}).join(' and ')+' in this slice or an earlier one.</div>':'')+
+    var sch=schedule(),open=phase==='plan',total=totalEffort();
+    var pl=$('planned');pl.textContent=total+' of '+HORIZON+' weeks'+(total>HORIZON?' · '+(total-HORIZON)+' too many':'');pl.classList.toggle('over',total>HORIZON);
+    var h=sch.length?'':'<p class="empty-note">No slices yet. Start with the smallest thing that would help one customer.</p>';
+    h+=sch.map(function(o,i){
+      var s=o.s,late=o.end>HORIZON,shipped=phase!=='plan'&&o.end<=week;
+      var when=late?(o.start>=HORIZON?'after the deadline':'ships wk '+o.end+', too late'):'ships end of wk '+o.end;
+      return '<div class="slice'+(s.value<=0?' novalue':'')+(late?' late':'')+(shipped?' shipped':'')+(drag&&drag.active&&drag.sid===s.id?' dragsrc':'')+'" data-i="'+i+'">'+
+        '<div class="slice-head">'+
+          '<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder '+esc(label(s,i))+', or use the arrow keys"'+(open&&slices.length>1?'':' disabled')+'>⋮⋮</button>'+
+          '<input class="sname" data-i="'+i+'" value="'+esc(s.name)+'" placeholder="'+esc(PLACEHOLDERS[Math.min(i,PLACEHOLDERS.length-1)])+'" aria-label="What is slice '+(i+1)+'?" maxlength="80" autocomplete="off"'+(open?'':' readonly')+'>'+
+          (open?'<button class="icon" type="button" data-act="del" data-i="'+i+'" aria-label="Remove '+esc(label(s,i))+'">×</button>':'')+
+        '</div>'+
+        '<div class="slice-nums">'+
+          num(i,'effort','Effort',s.effort+' wk',s.effort<=1,s.effort>=MAXE,open)+
+          num(i,'value','Value',s.value+'/wk',s.value<=0,s.value>=MAXV,open,'v')+
+          '<span class="when'+(late?' late':'')+'">'+(shipped?'shipped ✓':when)+'</span>'+
+        '</div>'+
       '</div>';
     }).join('');
-    if(editable)h+='<button class="new-slice" type="button" id="new-slice">+ New slice card</button>';
+    if(open)h+='<button class="new-slice" type="button" id="new-slice">+ Add a slice</button>';
     $('slices').innerHTML=h;
+    $('foot').innerHTML=open&&slices.length?'<button class="linkbtn" type="button" id="clear">Clear all</button>':'';
+  }
+  function num(i,key,lab,shown,atMin,atMax,open,cls){
+    return '<span class="num '+(cls||'')+'"><label>'+lab+'</label>'+
+      (open?'<button class="icon" type="button" data-act="dec" data-key="'+key+'" data-i="'+i+'" aria-label="Less '+lab.toLowerCase()+'"'+(atMin?' disabled':'')+'>−</button>':'')+
+      '<output aria-live="polite">'+shown+'</output>'+
+      (open?'<button class="icon" type="button" data-act="inc" data-key="'+key+'" data-i="'+i+'" aria-label="More '+lab.toLowerCase()+'"'+(atMax?' disabled':'')+'>+</button>':'')+
+    '</span>';
   }
   function renderChart(){
-    var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
-    var S=Math.max(HORIZON,total),YMAX=14,W=S*10,H=120;
-    var y=function(r){return H-r*(H-10)/YMAX};
-    var started=phase!=='plan';
-    var rs=rates(null,S,isRevealed), errs=errorsOf(), bad=errs.some(function(e){return e.length});
-    var past=started?week:0, svg='';
+    var sch=schedule(),total=totalEffort(),S=Math.max(HORIZON,total),W=S*10,H=120;
+    var ymax=Math.max(YMAX,slices.reduce(function(a,s){return a+s.value},0));
+    var y=function(r){return H-r*(H-10)/ymax};
+    var started=phase!=='plan',past=started?week:0,rs=rates(null,S),svg='',w;
     svg+='<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#FBEAEA"/><line x1="0" y1="0" x2="0" y2="6" stroke="#E7A3A3" stroke-width="3"/></pattern></defs>';
-    // grid lines
-    [4,8].forEach(function(v){svg+='<line x1="0" x2="'+W+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>'});
-    // after deadline
     if(S>HORIZON)svg+='<rect x="'+HORIZON*10+'" y="0" width="'+(S-HORIZON)*10+'" height="'+H+'" fill="#EEF0F4"/>';
-    // red bands (no value) inside horizon
-    for(var w=0;w<HORIZON;w++){
-      if(rs[w]===0)svg+='<rect x="'+w*10+'" y="0" width="10.05" height="'+H+'" fill="'+(w<past?'#F4C7C7':'url(#hatch)')+'"/>';
-    }
-    // actual area (past)
+    for(w=0;w<HORIZON;w++)if(rs[w]===0)svg+='<rect x="'+w*10+'" y="0" width="10.05" height="'+H+'" fill="'+(w<past?'#F4C7C7':'url(#hatch)')+'"/>';
     if(past>0){
       var d='M0 '+H;for(w=0;w<past;w++)d+=' L'+w*10+' '+y(rs[w])+' L'+(w+1)*10+' '+y(rs[w]);d+=' L'+past*10+' '+H+' Z';
       svg+='<path d="'+d+'" fill="#F2A91E" fill-opacity=".85"/>';
       var l='M0 '+y(rs[0]);for(w=0;w<past;w++)l+=' L'+w*10+' '+y(rs[w])+' L'+(w+1)*10+' '+y(rs[w]);
       svg+='<path d="'+l+'" fill="none" stroke="#B87700" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
     }
-    // expected line (future)
-    if(!bad&&past<S){
+    if(past<S&&slices.length){
       var e='M'+past*10+' '+y(rs[past]);for(w=past;w<S;w++)e+=' L'+w*10+' '+y(rs[w])+' L'+(w+1)*10+' '+y(rs[w]);
       svg+='<path d="'+e+'" fill="none" stroke="#12213B" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
     }
     $('svg').setAttribute('viewBox','0 0 '+W+' '+H);$('svg').innerHTML=svg;
-    var pct=function(v){return (v/S*100)+'%'};
-    $('deadline').style.left=pct(HORIZON);
-    $('cursor').hidden=!started;$('cursor').style.left=pct(Math.min(week,S));
+    var pc=function(v){return (v/S*100)+'%'};
+    $('deadline').style.left=pc(HORIZON);
+    $('cursor').hidden=!started;$('cursor').style.left=pc(Math.min(week,S));
     $('timeline').innerHTML=sch.map(function(o,i){
-      var g=gainOf(i,null,isRevealed),err=errs[i].length;
-      if(!o.s.pieces.length)return '';
-      return '<div class="blk'+(err?' err':g<=0?' novalue':'')+(o.start>=HORIZON?' late':'')+(o.s.shipped?' shipped':'')+'" style="left:'+pct(o.start)+';width:'+pct(o.end-o.start)+'" title="'+esc(label(o.s,i))+'"><span style="overflow:hidden;text-overflow:ellipsis">'+esc(o.s.name&&o.s.name.trim()?o.s.name.trim():'S'+(i+1))+'</span></div>';
+      return '<div class="blk'+(o.s.value<=0?' novalue':'')+(o.start>=HORIZON?' late':'')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="'+esc(label(o.s,i))+'"><span>'+(i+1)+'</span></div>';
     }).join('');
-    var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pct(w-.5)+'">'+w+'</span>';
+    var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pc(w-.5)+'">'+w+'</span>';
     $('ticks').innerHTML=t;
     $('clock').textContent='Week '+Math.min(week,HORIZON)+' of '+HORIZON;
-    var cur=started&&week>0?rs[Math.min(week,S)-1]:null;
-    $('now-rate').textContent=cur===null?'':'now: '+fmt(cur)+'/wk';
+    $('now-rate').textContent=started&&week>0?'now: '+rs[Math.min(week,S)-1]+'/wk':'';
   }
   function renderControls(){
-    var errs=errorsOf(),bad=errs.some(function(e){return e.length}),open=slices.some(function(s){return !s.shipped});
-    var empties=slices.filter(function(s){return !s.pieces.length}).length;
-    var st=$('status'),run=$('run');st.classList.remove('bad');
-    var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
+    var st=$('status'),run=$('run');
     if(phase==='running'){run.disabled=true;run.textContent='Running…';st.textContent='Week '+week+'…';return}
-    if(phase==='paused'){run.disabled=true;run.textContent='Paused';st.textContent='Something just shipped.';return}
     if(phase==='done'){run.disabled=true;run.textContent='Done';st.textContent='Twelve weeks are up.';return}
-    run.textContent=phase==='replan'?'Continue from week '+week:'Start the 12 weeks';
-    if(!slices.some(function(s){return s.pieces.length})&&phase==='plan'){run.disabled=true;st.textContent='Make a slice card and drag some work onto it.';return}
-    if(empties){run.disabled=true;st.classList.add('bad');st.textContent=empties===1?'One slice card is empty: add work or remove it.':empties+' slice cards are empty.';return}
-    if(bad){run.disabled=true;st.classList.add('bad');st.textContent='One slice can’t ship yet: see the note in red.';return}
-    if(phase==='replan'&&!open){run.disabled=false;st.textContent='Nothing left planned. Continue to the end, or add a slice.';return}
+    run.textContent='Run the 12 weeks';
+    if(!slices.length){run.disabled=true;st.textContent='Add your first slice to start.';return}
     run.disabled=false;
-    st.textContent=total+' weeks planned · expected value: '+Math.round(score(null,isRevealed));
+    st.textContent='Planned value in 12 weeks: '+score();
   }
-  function renderAll(){renderTray();renderBuilder();renderSlices();renderChart();renderControls();
-    $('presets').style.display=phase==='plan'&&slices.length?'':'none'}
-  function editable(){return phase==='plan'||phase==='replan'}
-  function firstOpen(){var i=slices.findIndex(function(s){return !s.shipped});return i<0?slices.length:i}
-  function inTrayOrder(ids){return PIECES.map(function(p){return p.id}).filter(function(id){return ids.indexOf(id)>=0})}
-  function takeOut(id){slices.forEach(function(s){if(!s.shipped)s.pieces=s.pieces.filter(function(x){return x!==id})})}
-  function putIn(ids,i){ids.forEach(takeOut);slices[i].pieces=inTrayOrder(slices[i].pieces.concat(ids))}
-  function newSlice(ids){slices.push({id:nextId++,name:'',pieces:[],shipped:false});if(ids&&ids.length)putIn(ids,slices.length-1);return slices.length-1}
-  function focusName(i){var el=document.querySelector('.sname[data-i="'+i+'"]');if(el){el.focus({preventScroll:false})}}
+  function renderAll(){renderSlices();renderChart();renderControls()}
 
   /* ============ ACTIONS ============ */
   var suppressClick=false;
-  $('tray').addEventListener('click',function(e){
-    if(suppressClick)return;
-    var b=e.target.closest('.piece');if(!b||b.disabled)return;
-    var id=b.dataset.id,i=selected.indexOf(id);
-    if(i>=0)selected.splice(i,1);else selected.push(id);
-    renderTray();renderBuilder();renderSlices();
-  });
-  $('b-clear').addEventListener('click',function(){selected=[];renderAll()});
-  $('b-add').addEventListener('click',function(){
-    if(!selected.length)return;
-    var i=newSlice(selected);selected=[];renderAll();focusName(i);
-  });
-  $('slices').addEventListener('click',function(e){
-    if(suppressClick)return;
-    if(e.target.closest('#new-slice')){var n=newSlice(selected.length?selected:null);selected=[];renderAll();focusName(n);return}
+  function focusName(i){var el=document.querySelector('.sname[data-i="'+i+'"]');if(el)el.focus()}
+  $('play').addEventListener('click',function(e){
+    if(suppressClick||phase!=='plan')return;
+    if(e.target.closest('#new-slice')){slices.push({id:nextId++,name:'',effort:1,value:0});renderAll();focusName(slices.length-1);return}
+    if(e.target.closest('#clear')){slices=[];renderAll();return}
     var b=e.target.closest('button[data-act]');if(!b)return;
-    var i=+b.dataset.i,act=b.dataset.act;
+    var i=+b.dataset.i,act=b.dataset.act,s=slices[i];
     if(act==='del')slices.splice(i,1);
-    if(act==='out'){slices[i].pieces=slices[i].pieces.filter(function(id){return id!==b.dataset.id})}
-    if(act==='addsel'){putIn(selected,i);selected=[]}
+    if(act==='inc'||act==='dec'){
+      var k=b.dataset.key,d=act==='inc'?1:-1;
+      s[k]=k==='effort'?Math.min(MAXE,Math.max(1,s[k]+d)):Math.min(MAXV,Math.max(0,s[k]+d));
+    }
     renderAll();
+    if(act==='inc'||act==='dec'){var nb=document.querySelector('button[data-act="'+act+'"][data-key="'+b.dataset.key+'"][data-i="'+i+'"]');if(nb&&!nb.disabled)nb.focus()}
   });
   $('slices').addEventListener('input',function(e){
     var el=e.target.closest('.sname');if(!el)return;
-    slices[+el.dataset.i].name=el.value;renderChart();
+    var i=+el.dataset.i;slices[i].name=el.value;
+    var blk=$('timeline').querySelectorAll('.blk')[i];if(blk)blk.title=label(slices[i],i);
   });
   $('slices').addEventListener('keydown',function(e){
     var el=e.target.closest('.sname');
     if(el&&e.key==='Enter'){el.blur();return}
     var g=e.target.closest('.grip');if(!g)return;
     var i=+g.dataset.i,j=e.key==='ArrowUp'?i-1:e.key==='ArrowDown'?i+1:null;
-    if(j===null)return;e.preventDefault();
-    if(j<firstOpen()||j>=slices.length)return;
+    if(j===null||j<0||j>=slices.length)return;e.preventDefault();
     var t=slices[i];slices[i]=slices[j];slices[j]=t;renderAll();
     var ng=document.querySelector('.grip[data-i="'+j+'"]');if(ng)ng.focus();
   });
-  $('clear').addEventListener('click',function(){slices=[];selected=[];renderAll()});
 
-  /* ============ DRAG AND DROP (pointer events: mouse drags straight away, touch needs press-and-hold) ============ */
-  var drag=null, lastX=0, lastY=0, raf=0;
+  /* ============ DRAG TO REORDER (mouse drags straight away; touch needs press-and-hold) ============ */
+  var drag=null,lastX=0,lastY=0,raf=0;
   document.addEventListener('pointerdown',function(e){
-    if(!editable()||e.button>0||drag)return;
-    if(e.target.closest('input,.chip button,.icon,.addsel'))return;
-    var el=e.target.closest('#tray .piece:not(.used),.chip[data-id],.grip[data-i]');if(!el)return;
-    var d={el:el,x:e.clientX,y:e.clientY,pt:e.pointerType,active:false,timer:0};
-    if(el.classList.contains('grip')){var card=el.closest('.slice');d.type='slice';d.sid=slices[+el.dataset.i].id;d.src=card}
-    else{d.type='piece';d.id=el.dataset.id;d.from=el.dataset.i!=null?+el.dataset.i:null;d.src=el}
+    if(phase!=='plan'||e.button>0||drag)return;
+    var g=e.target.closest('.grip[data-i]');if(!g||g.disabled)return;
+    var card=g.closest('.slice'),d={sid:slices[+g.dataset.i].id,src:card,x:e.clientX,y:e.clientY,pt:e.pointerType,active:false,timer:0};
     drag=d;lastX=e.clientX;lastY=e.clientY;
     if(e.pointerType!=='mouse')d.timer=setTimeout(function(){if(drag===d)begin()},260);
   });
@@ -695,24 +450,20 @@ body.has-builder{padding-bottom:84px}
     if(!drag)return;lastX=e.clientX;lastY=e.clientY;
     if(!drag.active){
       var dist=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
-      if(drag.pt==='mouse'){if(dist>5)begin();else return}
-      else{if(dist>10)cancelDrag();return}
+      if(drag.pt==='mouse'){if(dist>5)begin();else return}else{if(dist>10)cancelDrag();return}
     }
     e.preventDefault();moveGhost();hover();
   },{passive:false});
-  // stop the page scrolling under a touch drag once it has started
   document.addEventListener('touchmove',function(e){if(drag&&drag.active)e.preventDefault()},{passive:false});
   document.addEventListener('contextmenu',function(e){if(drag)e.preventDefault()});
-  document.addEventListener('pointerup',function(){if(!drag)return;if(drag.active){drop();suppressClick=true;setTimeout(function(){suppressClick=false},0)}cancelDrag()});
+  document.addEventListener('pointerup',function(){if(!drag)return;if(drag.active){suppressClick=true;setTimeout(function(){suppressClick=false},0)}cancelDrag()});
   document.addEventListener('pointercancel',function(){if(drag&&!drag.active)cancelDrag()});
   addEventListener('blur',function(){if(drag)cancelDrag()});
-
   function begin(){
     if(!drag||drag.active)return;
     drag.active=true;clearTimeout(drag.timer);
     var r=drag.src.getBoundingClientRect(),g=drag.src.cloneNode(true);
-    g.classList.add('ghost');g.classList.remove('dragsrc','over');g.removeAttribute('id');
-    g.style.width=r.width+'px';g.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
+    g.classList.add('ghost');g.classList.remove('dragsrc');g.style.width=r.width+'px';
     drag.ox=drag.x-r.left;drag.oy=drag.y-r.top;drag.ghost=g;document.body.appendChild(g);
     drag.src.classList.add('dragsrc');document.body.classList.add('dragging');
     if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
@@ -720,137 +471,68 @@ body.has-builder{padding-bottom:84px}
     moveGhost();loop();
   }
   function moveGhost(){if(drag&&drag.ghost){drag.ghost.style.left=(lastX-drag.ox)+'px';drag.ghost.style.top=(lastY-drag.oy)+'px'}}
-  function loop(){ // edge auto-scroll while dragging
+  function loop(){
     cancelAnimationFrame(raf);
     raf=requestAnimationFrame(function step(){
       if(!drag||!drag.active)return;
-      var edge=70,v=0;
-      if(lastY<edge+72)v=-Math.ceil((edge+72-lastY)/6);else if(lastY>innerHeight-edge)v=Math.ceil((lastY-(innerHeight-edge))/6);
+      var top=140,bottom=70,v=0;
+      if(lastY<top)v=-Math.ceil((top-lastY)/6);else if(lastY>innerHeight-bottom)v=Math.ceil((lastY-(innerHeight-bottom))/6);
       if(v){scrollBy(0,v);hover()}
       raf=requestAnimationFrame(step);
     });
   }
-  function under(){var el=document.elementFromPoint(lastX,lastY);return el||document.body}
-  function clearOver(){document.querySelectorAll('.over').forEach(function(n){n.classList.remove('over')})}
-  function hover(){
-    clearOver();var el=under();
-    if(drag.type==='piece'){
-      var t=el.closest('.slice[data-i]:not(.shipped)')||el.closest('#new-slice')||(drag.from!=null&&el.closest('#tray'));
-      if(t)t.classList.add('over');drag.target=t||null;
-    }else{
-      // live reorder: the chart and timeline update as you drag
-      var cards=[].slice.call(document.querySelectorAll('#slices .slice[data-i]'));
-      var from=slices.findIndex(function(s){return s.id===drag.sid}),to=0;
-      cards.forEach(function(c,k){if(k===from)return;var r=c.getBoundingClientRect();if(lastY>r.top+r.height/2)to++});
-      to=Math.max(firstOpen(),Math.min(slices.length-1,to));
-      if(from>=0&&to!==from){
-        var s=slices.splice(from,1)[0];slices.splice(to,0,s);renderSlices();renderChart();renderControls();
-      }
-    }
-  }
-  function drop(){
-    clearOver();
-    if(drag.type==='piece'&&drag.target){
-      var t=drag.target;
-      if(t.id==='new-slice'){var n=newSlice([drag.id]);selected=[];renderAll();focusName(n);return}
-      if(t.id==='tray'){takeOut(drag.id)}
-      else{var i=+t.dataset.i;if(drag.from!==i)putIn([drag.id],i)}
-      selected=selected.filter(function(x){return x!==drag.id});
-    }
-    renderAll();
+  function hover(){ // live reorder: the chart updates as you drag
+    var cards=[].slice.call(document.querySelectorAll('#slices .slice[data-i]'));
+    var from=slices.findIndex(function(s){return s.id===drag.sid}),to=0;
+    cards.forEach(function(c,k){if(k===from)return;var r=c.getBoundingClientRect();if(lastY>r.top+r.height/2)to++});
+    to=Math.min(slices.length-1,to);
+    if(from>=0&&to!==from){var s=slices.splice(from,1)[0];slices.splice(to,0,s);renderAll()}
   }
   function cancelDrag(){
     if(!drag)return;clearTimeout(drag.timer);cancelAnimationFrame(raf);
     if(drag.ghost)drag.ghost.remove();
-    if(drag.src)drag.src.classList.remove('dragsrc');
-    document.body.classList.remove('dragging');clearOver();
-    var wasSlice=drag.active&&drag.type==='slice';drag=null;
-    if(wasSlice)renderSlices();
+    document.body.classList.remove('dragging');
+    var was=drag.active;drag=null;if(was)renderAll();
   }
 
-  function tick(){
-    week++;
-    var sch=schedule(),surprise=null;
-    var note=function(p){learned.push({id:p.id,week:week});if(!surprise)surprise=p};
-    sch.forEach(function(o){
-      if(!o.s.shipped&&o.end===week){
-        o.s.shipped=true;
-        o.s.pieces.forEach(function(id){
-          var p=P[id];revealed[id]=true;
-          if(p.kind==='learn'){var fresh=['web','ios','android'].some(function(c){return !shareRevealed(c)});
-            ['web','ios','android'].forEach(function(c){revealed['share-'+c]=true});if(fresh)note(p)}
-          if(p.kind==='channel'&&!shareRevealed(id)){revealed['share-'+id]=true;note(p)}
-          if(p.kind==='upgrade'&&p.actual!==p.est)note(p);
-        });
-      }
-    });
-    if(week>=HORIZON){finish();return}
-    if(surprise){pause(surprise);return}
-    renderAll();
-  }
-  function startRun(){
-    selected=[];phase='running';$('moment').hidden=true;renderAll();
-    var go=function(){tick();if(phase==='running')timer=setTimeout(go,reduce?0:420)};
-    timer=setTimeout(go,reduce?0:260);
-  }
-  function pause(p){
-    clearTimeout(timer);phase='paused';
-    var title,tail;
-    if(p.kind==='learn'){title='The fake door says: build for the website first';tail=' Does your plan still make sense?'}
-    else if(p.kind==='channel'){title=p.name+': '+pct(p.actual)+' of customers, not a third';tail=p.actual<p.est?' Is anything left in your plan that rests on the same guess?':' Could you get more onto this channel sooner?'}
-    else{title=p.name+': +'+fmt(p.actual)+'/wk, not +'+p.est;tail=p.actual<p.est?' Is anything left in your plan that rests on the same guess?':' Could you get more of this sooner?'}
-    $('m-when').textContent='Week '+week+' · you just learned something';
-    $('m-title').textContent=title;
-    $('m-text').textContent=p.note+tail;
-    $('moment').hidden=false;renderAll();
-  }
-  $('run').addEventListener('click',startRun);
-  $('m-go').addEventListener('click',startRun);
-  $('m-replan').addEventListener('click',function(){
-    phase='replan';$('moment').hidden=true;renderAll();
-    $('slices').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
+  /* ============ RUN ============ */
+  $('run').addEventListener('click',function(){
+    phase='running';week=0;$('results').hidden=true;renderAll();
+    var go=function(){week++;renderAll();if(week>=HORIZON){finish();return}timer=setTimeout(go,reduce?0:380)};
+    timer=setTimeout(go,reduce?0:250);
   });
-
   function finish(){
     clearTimeout(timer);phase='done';week=HORIZON;renderAll();
-    var rs=rates(null,HORIZON,isRevealed),total=rs.reduce(function(a,b){return a+b},0);
+    var rs=rates(null,HORIZON),total=score();
     var first=rs.findIndex(function(r){return r>0}),red=rs.filter(function(r){return r===0}).length;
-    $('r-total').textContent=Math.round(total);
+    $('r-total').textContent=total;
     $('r-first').textContent=first<0?'never':'week '+(first+1);
     $('r-red').textContent=red;
-    var mk=function(ids){return ids.map(function(x){return {pieces:x,shipped:false}})};
-    var thin=score(mk(PRESETS.best),all),cake=score(mk(PRESETS.cake),all),big=score(mk(PRESETS.bigbang),all);
-    var allShares=function(id){return true};
-    var max=Math.max(total,thin,1);
-    var rows=[['Your slices',total,'you'],['Best plan here',thin,''],['Layer cake',cake,''],['One big release',big,'']];
-    $('compare').innerHTML=rows.map(function(r){return '<div class="cmp '+r[2]+'"><span>'+r[0]+'</span><span class="bar"><b style="width:'+(r[1]/max*100)+'%"></b></span><span class="n">'+Math.round(r[1])+'</span></div>'}).join('');
+    var best=score(bestOrder()),big=score(oneRelease());
+    var max=Math.max(total,best,big,1);
+    var rows=[['Your order',total,'you'],['Same slices, best order',best,''],['Same work, one big release',big,'']];
+    $('compare').innerHTML=rows.map(function(r){return '<div class="cmp '+r[2]+'"><span>'+r[0]+'</span><span class="bar"><b style="width:'+(r[1]/max*100)+'%"></b></span><span class="n">'+r[1]+'</span></div>'}).join('');
     var v;
-    if(total===0)v='Twelve weeks of effort and every customer still has to phone the call centre. Every piece might be brilliant, but nobody got to use any of it.';
-    else if(total>=thin)v='That’s as good as it gets here: show eligibility on the website, let people request a cancellation, then make it self-service. Thin slices on the channel that matters most.';
-    else if(first>=0&&first<=4)v='Early value, nicely done. The gap to the best plan is mostly in what you built next, and when you found out it didn’t pay off.';
-    else v='Value arrived, but late. The first slice did too much. What’s the least you could ship so one customer, on one channel, doesn’t have to call?';
+    if(total===0)v='Twelve weeks of effort and every customer still has to phone the call centre. Nothing reached anyone in time.';
+    else if(total>=best&&first>=0&&first<=3)v='Value from week '+(first+1)+', in the best order for your slices. That’s what slicing is for.';
+    else if(total>=best)v='The best order for your slices. But the first value only lands in week '+(first+1)+': could your first slice be thinner?';
+    else v='Your slices could create '+(best-total)+' more value just by changing the order. Try putting the most value per week of effort first.';
     $('verdict').textContent=v;
-    var lh=learned.map(function(l){
-      var p=P[l.id],when=l.week<HORIZON?'week '+l.week:'the deadline';
-      if(p.kind==='learn')return '<li><b>Fake door</b>: by '+when+' you knew the real split (website 60%, iOS 30%, Android 10%) for one week of work.</li>';
-      if(p.kind==='channel')return '<li><b>'+p.name+'</b>: you assumed a third of customers, it was '+pct(p.actual)+'. You found out at '+when+'.</li>';
-      return '<li><b>'+p.name+'</b>: expected +'+p.est+'/wk, got +'+fmt(p.actual)+'. You found out at '+when+', after '+p.effort+' weeks of work.</li>';
-    });
-    var unseen=PIECES.filter(function(p){return p.kind==='upgrade'&&p.actual!==p.est&&!revealed[p.id]&&used(p.id)});
-    if(unseen.length)lh.push('<li>You never found out how <b>'+unseen.map(function(p){return p.name.toLowerCase()}).join(', ')+'</b> would land. It didn’t ship in time.</li>');
-    if(!learned.length&&total>0)lh.push('<li>No surprises this time.</li>');
-    if(!revealed.fake)lh.push('<li>You skipped the <b>fake door</b>. Demand turned out to be real, so that bet paid off this time. Without the test, you were building on a guess.</li>');
-    else lh.push('<li>The fake door cost a week of value here, because demand was real. Its job is to stop you spending twelve weeks on something nobody wants.</li>');
-    $('learned').innerHTML=lh.join('');
+    var tips=[];
+    var lateOnes=schedule().filter(function(o){return o.end>HORIZON});
+    if(lateOnes.length)tips.push('<li><b>'+lateOnes.length+' slice'+(lateOnes.length>1?'s':'')+'</b> didn’t ship before the deadline. Work in progress at the end is worth nothing to customers.</li>');
+    var zero=slices.filter(function(s){return s.value<=0});
+    if(zero.length)tips.push('<li><b>'+zero.length+' slice'+(zero.length>1?'s':'')+' with no value</b>. If it’s an experiment, like a fake door, it’s buying you learning: what would you stop doing if it came back negative?</li>');
+    var bigs=slices.filter(function(s){return s.effort>=5});
+    if(bigs.length)tips.push('<li><b>'+bigs.map(function(s){return esc(label(s,slices.indexOf(s)))}).join(', ')+'</b> '+(bigs.length>1?'take':'takes')+' 5 weeks or more. What’s the smallest piece a customer could use?</li>');
+    tips.push('<li>One big release of the same work would have created <b>'+big+'</b>. The difference is the value of slicing.</li>');
+    $('tips').innerHTML=tips.join('');
     var r=$('results');r.hidden=false;r.focus({preventScroll:true});r.scrollIntoView({behavior:reduce?'auto':'smooth'});
   }
-  function reset(){
-    clearTimeout(timer);slices.forEach(function(s){s.shipped=false});
-    phase='plan';week=0;revealed={};learned=[];selected=[];
-    $('results').hidden=true;$('moment').hidden=true;renderAll();
-    $('plan').scrollIntoView({behavior:reduce?'auto':'smooth'});
-  }
-  $('again').addEventListener('click',reset);
+  $('again').addEventListener('click',function(){
+    clearTimeout(timer);phase='plan';week=0;$('results').hidden=true;renderAll();
+    $('play').scrollIntoView({behavior:reduce?'auto':'smooth'});
+  });
 
   $('year').textContent=new Date().getFullYear();
   renderAll();

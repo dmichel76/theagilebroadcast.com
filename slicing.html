@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Slice It Right</title>
 <meta name="robots" content="noindex">
-<meta name="description" content="A slicing game: twelve weeks, a pile of work, and a value line that only moves when something real ships.">
+<meta name="description" content="A slicing game: self-service order cancellation, twelve weeks, and a value line that only moves when something real ships.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
@@ -281,8 +281,8 @@ body.has-builder{padding-bottom:84px}
     </div>
     <div class="brief">
       <span class="eyebrow">The brief</span>
-      <h2>Let people book a place on a training course</h2>
-      <p>A small training company takes bookings by phone. They want customers to book online. You have <b>12 weeks</b>, and there's <b>20 weeks</b> of work on the table. You won't build it all.</p>
+      <h2>“As a user, I want to be able to cancel an order by myself”</h2>
+      <p>On this ecommerce platform, cancelling an order means calling the call centre. The business wants self-service cancellation on the <b>website</b> and the <b>iOS and Android apps</b>. You have <b>12 weeks</b>, and there's <b>22 weeks</b> of work on the table. You won't build it all.</p>
     </div>
   </div>
 </section>
@@ -292,8 +292,8 @@ body.has-builder{padding-bottom:84px}
     <ol>
       <li><b>1. Make slice cards</b>Create a card for each slice and give it a name, like “Book by email”.</li>
       <li><b>2. Drag work in</b>Drag pieces of work onto your cards, then drag the cards into order. On a phone, press and hold to drag.</li>
-      <li><b>3. Value lands at the end</b>Nothing counts until a slice ships. A customer needs a way to <i>find</i>, <i>book</i> and <i>get confirmed</i> before anything is worth anything. <span class="k">+5/wk</span></li>
-      <li><b>4. Estimates lie</b>Getting paid adds <span class="k">+3/wk</span>. Nice-to-haves say <span class="k">+1/wk</span>, but that's a guess. You find out the real value when they ship.</li>
+      <li><b>3. Value lands at the end</b>Nothing counts until a slice ships. Customers only benefit when a capability is live <i>on the channel they use</i>. Across all customers: see if an order can be cancelled <span class="k">+1/wk</span>, request a cancellation <span class="k">+5/wk</span>, cancel it yourself <span class="k">+10/wk</span>.</li>
+      <li><b>4. Estimates lie</b>You assume customers are split evenly across web, iOS and Android, and that edge cases and polish are worth it. You find out what's true when things ship, or sooner if you test first.</li>
     </ol>
   </div>
 </section>
@@ -309,7 +309,7 @@ body.has-builder{padding-bottom:84px}
     </div>
     <div class="build-grid">
       <div class="tray-col">
-        <h3 class="col-h">The work <span>20 weeks in total</span></h3>
+        <h3 class="col-h">The work <span>22 weeks in total</span></h3>
         <div class="tray" id="tray"></div>
       </div>
       <div class="slices-col">
@@ -416,37 +416,43 @@ body.has-builder{padding-bottom:84px}
            'upgrade' = nice-to-have: est = what it looks like, actual = what really happens (revealed on shipping)
            'enabler' = no value on its own
      A piece can be several things (online payments: pay + upgrade). */
-  var HORIZON=12, BOOK=5, PAY=3;
+  var HORIZON=12;
+  /* Value per week = (capability level) x (share of customers on the channels where it's live).
+     Levels, across all customers: see eligibility 1, request a cancellation 5, cancel directly 10 (+ edge cases).
+     Channel shares: everyone assumes a third each (est); the truth (actual) is revealed when the channel ships,
+     or straight away for all three when the fake door ships. Upgrades: est is the guess, actual is revealed on shipping. */
   var STEPS=[
-    {k:'find',   name:'Find a course'},
-    {k:'book',   name:'Book a place'},
-    {k:'confirm',name:'Get confirmed'},
-    {k:'pay',    name:'Pay'},
-    {k:'behind', name:'Behind the scenes'}
+    {k:'learn',  name:'Learn first'},
+    {k:'can',    name:'What customers can do'},
+    {k:'where',  name:'Where they can do it'},
+    {k:'polish', name:'Polish'}
   ];
   var PIECES=[
-    {id:'page',     step:'find',    name:'One page listing courses and dates', effort:1, core:true},
-    {id:'catalogue',step:'find',    name:'Searchable course catalogue',        effort:3, upgrade:true, est:1, actual:0,
-      note:'They only run three courses. Nobody ever used the search.'},
-    {id:'email',    step:'book',    name:'“Email us to book” button',          effort:1, core:true},
-    {id:'form',     step:'book',    name:'Booking form with seat picker',      effort:3, upgrade:true, est:1, actual:1, needs:['db'],
-      note:'Customers like it. About what you expected.'},
-    {id:'accounts', step:'book',    name:'Customer accounts and login',        effort:3, upgrade:true, est:1, actual:-2, needs:['db'],
-      note:'Half the people who started booking gave up at the sign-up screen.'},
-    {id:'manual',   step:'confirm', name:'Confirm by hand with an email template', effort:1, core:true},
-    {id:'auto',     step:'confirm', name:'Automatic confirmation and calendar invite', effort:2, upgrade:true, est:1, actual:2, needs:['form'],
-      note:'Fewer no-shows and hours of admin saved every week. Better than you hoped.'},
-    {id:'invoice',  step:'pay',     name:'Send an invoice by hand',            effort:1, pay:true},
-    {id:'cards',    step:'pay',     name:'Online card payments',               effort:3, pay:true, upgrade:true, est:1, actual:0, needs:['form'],
-      note:'Most places are paid for by employers. They wanted an invoice anyway.'},
-    {id:'db',       step:'behind',  name:'Database and admin dashboard',       effort:2, enabler:true}
+    {id:'fake',    step:'learn', name:'“Fake door” cancel button (A/B test)', effort:1, kind:'learn',
+      note:'14% of people who wanted to cancel clicked it, so demand is real. And they weren’t split evenly: 60% on the website, 30% on iOS, 10% on Android.'},
+    {id:'elig',    step:'can',   name:'See if an order can be cancelled',   effort:2, kind:'cap', level:1},
+    {id:'request', step:'can',   name:'Request a cancellation online (call centre still does it)', effort:1, kind:'cap', level:5, needs:['elig']},
+    {id:'auto',    step:'can',   name:'Cancel eligible orders directly (self-service)', effort:5, kind:'cap', level:10, needs:['elig']},
+    {id:'edge',    step:'can',   name:'Handle every edge case automatically', effort:5, kind:'upgrade', est:3, actual:.5, needs:['auto'],
+      note:'Edge cases turn out to be about 5% of cancellations. The call centre was handling them fine.'},
+    {id:'web',     step:'where', name:'On the website',   effort:1, kind:'channel', est:1/3, actual:.6,
+      note:'60% of cancellations happen on the website. Much more than a third.'},
+    {id:'ios',     step:'where', name:'In the iOS app',   effort:3, kind:'channel', est:1/3, actual:.3,
+      note:'30% of cancellations come from iOS. A bit less than a third.'},
+    {id:'android', step:'where', name:'In the Android app', effort:3, kind:'channel', est:1/3, actual:.1,
+      note:'Only 10% of cancellations come from Android. Three weeks of work for a small slice of customers.'},
+    {id:'page',    step:'polish',name:'Redesigned “My orders” page', effort:2, kind:'upgrade', est:1, actual:0,
+      note:'It looks lovely. Nobody cancels any differently because of it.'}
   ];
   var P={};PIECES.forEach(function(p){P[p.id]=p});
   var PRESETS={
-    cake:[['db','accounts'],['catalogue','form'],['auto','cards','page','email','manual','invoice']],
+    cake:[['elig','auto','edge'],['web','ios','android','page']],
     bigbang:[PIECES.map(function(p){return p.id})],
-    thin:[['page','email','manual'],['invoice'],['db','form'],['auto']]
+    best:[['elig','web'],['request'],['auto']]
   };
+  var NAMES={cake:['The whole back end','All the front ends'],bigbang:['The whole thing']};
+  var fmt=function(n){return String(Math.round(n*10)/10)};
+  var pct=function(x){return Math.round(x*100)+'%'};
 
   /* ============ STATE ============ */
   var slices=[], selected=[], nextId=1;
@@ -463,12 +469,15 @@ body.has-builder{padding-bottom:84px}
   }
   function rateOf(set,reveal){
     var has=function(id){return !!set[id]};
-    var canBook=(has('page')||has('catalogue'))&&(has('email')||has('form'))&&(has('manual')||has('auto'));
-    if(!canBook)return 0;
-    var r=BOOK;
-    if(has('invoice')||has('cards'))r+=PAY;
-    Object.keys(set).forEach(function(id){var p=P[id];if(p.upgrade)r+=reveal(id)?p.actual:p.est});
-    return Math.max(0,r);
+    var lvl=0;
+    if(has('elig'))lvl=1;
+    if(has('elig')&&has('request'))lvl=5;
+    if(has('elig')&&has('auto'))lvl=10;
+    if(lvl>=10&&has('edge'))lvl+=reveal('edge')?P.edge.actual:P.edge.est;
+    if(lvl>0&&has('page'))lvl+=reveal('page')?P.page.actual:P.page.est;
+    var r=0;
+    ['web','ios','android'].forEach(function(c){if(has(c))r+=lvl*(reveal('share-'+c)?P[c].actual:P[c].est)});
+    return Math.round(r*10)/10;
   }
   // value per week for weeks 0..n-1; a slice ending at week e delivers from week index e
   function rates(list,n,reveal){
@@ -496,27 +505,24 @@ body.has-builder{padding-bottom:84px}
   }
   function score(list,reveal){return rates(list,HORIZON,reveal).reduce(function(a,b){return a+b},0)}
   var isRevealed=function(id){return !!revealed[id]};
+  function shareRevealed(c){return !!revealed['share-'+c]}
   var all=function(){return true};
 
   /* ============ RENDER ============ */
   function effBlocks(n){var h='<span class="eff" title="'+n+' week'+(n>1?'s':'')+'">';for(var i=0;i<n;i++)h+='<i></i>';return h+'<span>'+n+' wk</span></span>'}
   function valueTag(p){
-    if(p.core)return '<span class="tag core">needed to book</span>';
-    if(p.enabler)return '<span class="tag zero">no value on its own</span>';
-    var h='';
-    if(p.pay)h+='<span class="tag core">gets you paid</span>';
-    if(p.upgrade){
-      if(revealed[p.id]){var d=p.actual>=0?'+'+p.actual:p.actual;h+='<span class="tag up"><s>+'+p.est+'</s> '+d+'/wk</span>'}
-      else h+='<span class="tag up">+'+p.est+'/wk?</span>';
-    }
-    return h;
+    if(p.kind==='learn')return '<span class="tag zero">no value, but you learn</span>';
+    if(p.kind==='cap')return '<span class="tag core">+'+p.level+'/wk if on every channel</span>';
+    if(p.kind==='channel')return shareRevealed(p.id)?'<span class="tag up"><s>⅓</s> '+pct(p.actual)+' of customers</span>':'<span class="tag up">⅓ of customers?</span>';
+    if(p.kind==='upgrade')return revealed[p.id]?'<span class="tag up"><s>+'+p.est+'</s> +'+fmt(p.actual)+'/wk</span>':'<span class="tag up">+'+p.est+'/wk?</span>';
+    return '';
   }
   function renderTray(){
     var locked=phase==='running'||phase==='paused'||phase==='done';
     $('tray').innerHTML=STEPS.map(function(st){
       return '<div class="step"><h3>'+st.name+'</h3><div class="pieces">'+PIECES.filter(function(p){return p.step===st.k}).map(function(p){
         var u=used(p.id),sel=selected.indexOf(p.id)>=0;
-        var needs=(p.needs||[]).map(function(n){return '<span class="tag needs">needs '+P[n].name.split(' ')[0].toLowerCase()+(n==='form'?' form':'')+'</span>'}).join('');
+        var NEED={elig:'eligibility',auto:'self-service'};var needs=(p.needs||[]).map(function(n){return '<span class="tag needs">needs '+(NEED[n]||n)+'</span>'}).join('');
         return '<button type="button" class="piece'+(u?' used':'')+'" data-id="'+p.id+'" aria-pressed="'+(sel?'true':'false')+'"'+(u||locked?' disabled':'')+'>'+
           '<span class="nm">'+p.name+'</span><span class="meta">'+effBlocks(p.effort)+valueTag(p)+needs+'</span></button>';
       }).join('')+'</div></div>';
@@ -536,9 +542,9 @@ body.has-builder{padding-bottom:84px}
     var h=sch.map(function(o,i){
       var s=o.s,g=gainOf(i,null,isRevealed),err=errs[i].length,empty=!s.pieces.length;
       var late=o.end>HORIZON;
-      var gain=empty?'':s.shipped?'<span class="gain done">shipped '+(g>0?'+'+g:g<0?g:'±0')+'/wk</span>'
+      var gain=empty?'':s.shipped?'<span class="gain done">shipped '+(g>0?'+'+fmt(g):g<0?fmt(g):'±0')+'/wk</span>'
         :err?'<span class="gain none">can’t ship</span>'
-        :g>0?'<span class="gain pos">+'+g+'/wk'+(late?' · too late':'')+'</span>':'<span class="gain none">no new value</span>';
+        :g>0?'<span class="gain pos">+'+fmt(g)+'/wk'+(late?' · too late':'')+'</span>':'<span class="gain none">no new value</span>';
       var open=editable&&!s.shipped;
       var head='<div class="slice-head">'+
         (open?'<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder '+esc(label(s,i))+' (or use the arrow keys)">⋮⋮</button>':'<span class="grip" aria-hidden="true" style="visibility:hidden">⋮⋮</span>')+
@@ -555,7 +561,7 @@ body.has-builder{padding-bottom:84px}
       }else{
         body='<div class="slice-body">'+s.pieces.map(function(id){
           var p=P[id],rev='';
-          if(p.upgrade&&revealed[id]){var c=p.actual<p.est?'worse':p.actual>p.est?'better':'';rev=' <span class="rev '+c+'">'+(p.actual>=0?'+':'')+p.actual+'</span>'}
+          if((p.kind==='upgrade'&&revealed[id])||(p.kind==='channel'&&shareRevealed(id))){var c=p.actual<p.est?'worse':p.actual>p.est?'better':'';rev=' <span class="rev '+c+'">'+(p.kind==='channel'?pct(p.actual):'+'+fmt(p.actual))+'</span>'}
           return '<span class="chip"'+(open?' data-id="'+id+'" data-i="'+i+'"':'')+'>'+p.name+' <span class="rev">'+p.effort+'w</span>'+rev+(open?'<button type="button" data-act="out" data-i="'+i+'" data-id="'+id+'" aria-label="Take '+p.name+' out of this slice">×</button>':'')+'</span>';
         }).join('')+'</div>'+
         (open&&selected.length?'<div class="slice-sub"><button class="addsel" type="button" data-act="addsel" data-i="'+i+'">Add '+selected.length+' selected here</button></div>':'');
@@ -570,7 +576,7 @@ body.has-builder{padding-bottom:84px}
   }
   function renderChart(){
     var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
-    var S=Math.max(HORIZON,total),YMAX=12,W=S*10,H=120;
+    var S=Math.max(HORIZON,total),YMAX=14,W=S*10,H=120;
     var y=function(r){return H-r*(H-10)/YMAX};
     var started=phase!=='plan';
     var rs=rates(null,S,isRevealed), errs=errorsOf(), bad=errs.some(function(e){return e.length});
@@ -609,7 +615,7 @@ body.has-builder{padding-bottom:84px}
     $('ticks').innerHTML=t;
     $('clock').textContent='Week '+Math.min(week,HORIZON)+' of '+HORIZON;
     var cur=started&&week>0?rs[Math.min(week,S)-1]:null;
-    $('now-rate').textContent=cur===null?'':'now: '+cur+'/wk';
+    $('now-rate').textContent=cur===null?'':'now: '+fmt(cur)+'/wk';
   }
   function renderControls(){
     var errs=errorsOf(),bad=errs.some(function(e){return e.length}),open=slices.some(function(s){return !s.shipped});
@@ -625,7 +631,7 @@ body.has-builder{padding-bottom:84px}
     if(bad){run.disabled=true;st.classList.add('bad');st.textContent='One slice can’t ship yet: see the note in red.';return}
     if(phase==='replan'&&!open){run.disabled=false;st.textContent='Nothing left planned. Continue to the end, or add a slice.';return}
     run.disabled=false;
-    st.textContent=total+' weeks planned · expected value: '+score(null,isRevealed);
+    st.textContent=total+' weeks planned · expected value: '+Math.round(score(null,isRevealed));
   }
   function renderAll(){renderTray();renderBuilder();renderSlices();renderChart();renderControls();
     $('presets').style.display=phase==='plan'?'':'none'}
@@ -675,7 +681,6 @@ body.has-builder{padding-bottom:84px}
     var t=slices[i];slices[i]=slices[j];slices[j]=t;renderAll();
     var ng=document.querySelector('.grip[data-i="'+j+'"]');if(ng)ng.focus();
   });
-  var NAMES={cake:['Database and accounts','The front end','Everything else'],bigbang:['The whole thing']};
   document.querySelectorAll('[data-preset]').forEach(function(b){b.addEventListener('click',function(){
     var k=b.dataset.preset;
     slices=PRESETS[k].map(function(ids,n){return {id:nextId++,name:(NAMES[k]||[])[n]||'',pieces:ids.slice(),shipped:false}});selected=[];renderAll();
@@ -774,12 +779,16 @@ body.has-builder{padding-bottom:84px}
   function tick(){
     week++;
     var sch=schedule(),surprise=null;
+    var note=function(p){learned.push({id:p.id,week:week});if(!surprise)surprise=p};
     sch.forEach(function(o){
       if(!o.s.shipped&&o.end===week){
         o.s.shipped=true;
         o.s.pieces.forEach(function(id){
           var p=P[id];revealed[id]=true;
-          if(p.upgrade&&p.actual!==p.est){learned.push({id:id,week:week});if(!surprise)surprise=p}
+          if(p.kind==='learn'){var fresh=['web','ios','android'].some(function(c){return !shareRevealed(c)});
+            ['web','ios','android'].forEach(function(c){revealed['share-'+c]=true});if(fresh)note(p)}
+          if(p.kind==='channel'&&!shareRevealed(id)){revealed['share-'+id]=true;note(p)}
+          if(p.kind==='upgrade'&&p.actual!==p.est)note(p);
         });
       }
     });
@@ -794,10 +803,13 @@ body.has-builder{padding-bottom:84px}
   }
   function pause(p){
     clearTimeout(timer);phase='paused';
-    var d=p.actual-p.est;
+    var title,tail;
+    if(p.kind==='learn'){title='The fake door says: build for the website first';tail=' Does your plan still make sense?'}
+    else if(p.kind==='channel'){title=p.name+': '+pct(p.actual)+' of customers, not a third';tail=p.actual<p.est?' Is anything left in your plan that rests on the same guess?':' Could you get more onto this channel sooner?'}
+    else{title=p.name+': +'+fmt(p.actual)+'/wk, not +'+p.est;tail=p.actual<p.est?' Is anything left in your plan that rests on the same guess?':' Could you get more of this sooner?'}
     $('m-when').textContent='Week '+week+' · you just learned something';
-    $('m-title').textContent=p.name+': '+(p.actual>=0?'+':'')+p.actual+'/wk, not +'+p.est;
-    $('m-text').textContent=p.note+(d<0?' Is there anything left in your plan that rests on the same guess?':' Could you get more of this sooner?');
+    $('m-title').textContent=title;
+    $('m-text').textContent=p.note+tail;
     $('moment').hidden=false;renderAll();
   }
   $('run').addEventListener('click',startRun);
@@ -811,27 +823,32 @@ body.has-builder{padding-bottom:84px}
     clearTimeout(timer);phase='done';week=HORIZON;renderAll();
     var rs=rates(null,HORIZON,isRevealed),total=rs.reduce(function(a,b){return a+b},0);
     var first=rs.findIndex(function(r){return r>0}),red=rs.filter(function(r){return r===0}).length;
-    $('r-total').textContent=total;
+    $('r-total').textContent=Math.round(total);
     $('r-first').textContent=first<0?'never':'week '+(first+1);
     $('r-red').textContent=red;
     var mk=function(ids){return ids.map(function(x){return {pieces:x,shipped:false}})};
-    var thin=score(mk(PRESETS.thin),all),cake=score(mk(PRESETS.cake),all),big=score(mk(PRESETS.bigbang),all);
+    var thin=score(mk(PRESETS.best),all),cake=score(mk(PRESETS.cake),all),big=score(mk(PRESETS.bigbang),all);
+    var allShares=function(id){return true};
     var max=Math.max(total,thin,1);
-    var rows=[['Your slices',total,'you'],['Thinnest slices first',thin,''],['Layer cake',cake,''],['One big release',big,'']];
-    $('compare').innerHTML=rows.map(function(r){return '<div class="cmp '+r[2]+'"><span>'+r[0]+'</span><span class="bar"><b style="width:'+(r[1]/max*100)+'%"></b></span><span class="n">'+r[1]+'</span></div>'}).join('');
+    var rows=[['Your slices',total,'you'],['Best plan here',thin,''],['Layer cake',cake,''],['One big release',big,'']];
+    $('compare').innerHTML=rows.map(function(r){return '<div class="cmp '+r[2]+'"><span>'+r[0]+'</span><span class="bar"><b style="width:'+(r[1]/max*100)+'%"></b></span><span class="n">'+Math.round(r[1])+'</span></div>'}).join('');
     var v;
-    if(total===0)v='Twelve weeks of effort and not a single customer could book. Every piece might be brilliant, but nobody got to use any of it.';
-    else if(total>=thin)v='That’s as good as it gets here. You got something bookable out fast, then let what you learned steer the rest.';
+    if(total===0)v='Twelve weeks of effort and every customer still has to phone the call centre. Every piece might be brilliant, but nobody got to use any of it.';
+    else if(total>=thin)v='That’s as good as it gets here: show eligibility on the website, let people request a cancellation, then make it self-service. Thin slices on the channel that matters most.';
     else if(first>=0&&first<=4)v='Early value, nicely done. The gap to the best plan is mostly in what you built next, and when you found out it didn’t pay off.';
-    else v='Value arrived, but late. The first slice did too much. What’s the least you could ship for a customer to book a place?';
+    else v='Value arrived, but late. The first slice did too much. What’s the least you could ship so one customer, on one channel, doesn’t have to call?';
     $('verdict').textContent=v;
     var lh=learned.map(function(l){
       var p=P[l.id],when=l.week<HORIZON?'week '+l.week:'the deadline';
-      return '<li><b>'+p.name+'</b>: expected +'+p.est+'/wk, got '+(p.actual>=0?'+':'')+p.actual+'. You found out at '+when+', after '+p.effort+' week'+(p.effort>1?'s':'')+' of work.</li>';
+      if(p.kind==='learn')return '<li><b>Fake door</b>: by '+when+' you knew the real split (website 60%, iOS 30%, Android 10%) for one week of work.</li>';
+      if(p.kind==='channel')return '<li><b>'+p.name+'</b>: you assumed a third of customers, it was '+pct(p.actual)+'. You found out at '+when+'.</li>';
+      return '<li><b>'+p.name+'</b>: expected +'+p.est+'/wk, got +'+fmt(p.actual)+'. You found out at '+when+', after '+p.effort+' weeks of work.</li>';
     });
-    var unseen=PIECES.filter(function(p){return p.upgrade&&p.actual!==p.est&&!revealed[p.id]&&used(p.id)});
+    var unseen=PIECES.filter(function(p){return p.kind==='upgrade'&&p.actual!==p.est&&!revealed[p.id]&&used(p.id)});
     if(unseen.length)lh.push('<li>You never found out how <b>'+unseen.map(function(p){return p.name.toLowerCase()}).join(', ')+'</b> would land. It didn’t ship in time.</li>');
-    if(!learned.length&&total>0)lh.push('<li>No surprises this time: your plan didn’t lean on the nice-to-haves.</li>');
+    if(!learned.length&&total>0)lh.push('<li>No surprises this time.</li>');
+    if(!revealed.fake)lh.push('<li>You skipped the <b>fake door</b>. Demand turned out to be real, so that bet paid off this time. Without the test, you were building on a guess.</li>');
+    else lh.push('<li>The fake door cost a week of value here, because demand was real. Its job is to stop you spending twelve weeks on something nobody wants.</li>');
     $('learned').innerHTML=lh.join('');
     var r=$('results');r.hidden=false;r.focus({preventScroll:true});r.scrollIntoView({behavior:reduce?'auto':'smooth'});
   }

@@ -316,10 +316,7 @@ body.has-builder{padding-bottom:84px}
         <h3 class="col-h">Your slices <span id="planned">0 of 12 weeks</span></h3>
         <div class="slices" id="slices"></div>
         <div class="presets" id="presets">
-          Or load a ready-made plan:
-          <button class="linkbtn" type="button" data-preset="cake">the layer cake</button>
-          <button class="linkbtn" type="button" data-preset="bigbang">one big release</button>
-          <button class="linkbtn" type="button" id="clear">clear plan</button>
+          <button class="linkbtn" type="button" id="clear">Clear plan</button>
         </div>
       </div>
     </div>
@@ -450,7 +447,6 @@ body.has-builder{padding-bottom:84px}
     bigbang:[PIECES.map(function(p){return p.id})],
     best:[['elig','web'],['request'],['auto']]
   };
-  var NAMES={cake:['The whole back end','All the front ends'],bigbang:['The whole thing']};
   var fmt=function(n){return String(Math.round(n*10)/10)};
   var pct=function(x){return Math.round(x*100)+'%'};
 
@@ -634,7 +630,7 @@ body.has-builder{padding-bottom:84px}
     st.textContent=total+' weeks planned · expected value: '+Math.round(score(null,isRevealed));
   }
   function renderAll(){renderTray();renderBuilder();renderSlices();renderChart();renderControls();
-    $('presets').style.display=phase==='plan'?'':'none'}
+    $('presets').style.display=phase==='plan'&&slices.length?'':'none'}
   function editable(){return phase==='plan'||phase==='replan'}
   function firstOpen(){var i=slices.findIndex(function(s){return !s.shipped});return i<0?slices.length:i}
   function inTrayOrder(ids){return PIECES.map(function(p){return p.id}).filter(function(id){return ids.indexOf(id)>=0})}
@@ -681,10 +677,6 @@ body.has-builder{padding-bottom:84px}
     var t=slices[i];slices[i]=slices[j];slices[j]=t;renderAll();
     var ng=document.querySelector('.grip[data-i="'+j+'"]');if(ng)ng.focus();
   });
-  document.querySelectorAll('[data-preset]').forEach(function(b){b.addEventListener('click',function(){
-    var k=b.dataset.preset;
-    slices=PRESETS[k].map(function(ids,n){return {id:nextId++,name:(NAMES[k]||[])[n]||'',pieces:ids.slice(),shipped:false}});selected=[];renderAll();
-  })});
   $('clear').addEventListener('click',function(){slices=[];selected=[];renderAll()});
 
   /* ============ DRAG AND DROP (pointer events: mouse drags straight away, touch needs press-and-hold) ============ */

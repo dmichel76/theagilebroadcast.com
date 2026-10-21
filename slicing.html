@@ -311,25 +311,40 @@ footer.site a:hover{color:var(--accent)}
   function classify(t){
     t=t.toLowerCase();
     var k={};
-    if(/fake.?door|a\/b|\bab test|painted door|dummy|smoke test|coming soon/.test(t))k.fake=1;
-    if(/monitor|measure|track|analytics|how many|metric|data\b/.test(t))k.monitor=1;
+    var SUPPORT=/^(automated )?(confirmation|validat|verif|identity|refund|automate (money )?refund|automated refund|user enters|option for|type of|collect info|tracking of|build in|admin|kill.?switch|send the user a notification|have cancellation form ask|ask the user why|ways to make sure|automated order lookup|order lookup)/;
+    var MANUAL=/request|form\b|forms\b|e-?mail|mailto|staff|support team|customer service|call cent(re|er)|manual|human in the loop|forwarded|text box|ticket|google form|by hand|checks? (the )?db|every morning|concierge|wizard of oz|marks? the order|to be cancelled/;
+    var AUTO=/self.?serv|(automat\w*|functioning|directly|instant\w*)[^.]{0,45}cancel|cancel\w*[^.]{0,30}(automatic\w*|directly|itself|themselves|behind the scenes)|remove (the )?human|remove any remaining staff|remove .*staff oversi|wired (up )?to (the )?internal|one.?click|two.?tap|without (calling|staff)|automate cancel|automation of|away from (the )?manual|functioning (\(automated\) )?button|automated button/;
+    if(/fake.?door|a\/b|\bab test|painted door|dummy|smoke test|coming soon|mock button|does nothing|tracks interest|please call|phone number on/.test(t))k.fake=1;
+    if(/^(check|analy|track|look|find|measure)/.test(t)&&/(which|what) platform|most active|footfall|where (users|customers) (are|go|cancel)|disaggregated by (device|os)/.test(t))k.split=1;
+    if(/monitor|measure|track|analytics|how many|metric|usage|feedback|stats|before we start|check existing|understand why|research|interview/.test(t))k.monitor=1;
     if(/\bif (not|yes|no)\b|go.?no.?go|decide|decision|stop development|rethink|pivot|start implement/.test(t))k.decide=1;
-    if(/edge case|all orders|every (order|case)|partial|split|voucher|gift card|corner case|all .*cases/.test(t))k.edge=1;
-    if(/eligib|can (still )?be cancel|see if|check if|whether|status/.test(t))k.elig=1;
-    if(/request|ask (to|for)|form|ticket|contact|via the call|still done/.test(t))k.request=1;
-    if(/self.?serv|directly|automatic|instant|one.?click|two.?tap|themselves|by (my|them)sel|without (calling|the call)|cancel (an |the |their |eligible )?orders?|cancel button|cancel it/.test(t)&&!k.fake)k.auto=1;
-    if(k.request&&!/self.?serv|directly|automatic/.test(t))delete k.auto;
-    if(k.edge)k.auto=k.auto||1;
-    if(/redesign|polish|new design|look and feel|branding|my orders page|make it (look|pretty)/.test(t))k.polish=1;
-    if(/\bapi\b|back.?end|database|infrastructure|architecture|microservice|integration|platform work|data model|refactor/.test(t))k.backend=1;
-    if(/cancel/.test(t)&&!k.fake&&!k.monitor&&!k.decide&&!k.elig&&!k.request&&!k.auto&&!k.polish&&!k.backend)k.auto=1;
+    if(SUPPORT.test(t)&&!AUTO.test(t.replace(SUPPORT,''))){k.support=1;return {k:k,ch:channels(t)}}
+    if(/edge case|all orders|every (order|case)|partial|split|voucher|gift card|corner case|individual items?|every item|which orders|baskets|bulk/.test(t))k.edge=1;
+    if(/eligib|can (still )?be cancel|see if|check if|dispatch/.test(t))k.elig=1;
+    var internal=/internal tool|for the support team|for (the )?staff|support team to/.test(t);
+    if(AUTO.test(t)&&!internal)k.auto=1;
+    else if(MANUAL.test(t))k.request=1;
+    // a 'mock' button that actually sends something to a person is a working manual request, not a fake door
+    if(k.fake&&/sends|writes an email|notification to|email to/.test(t)){delete k.fake;delete k.auto;k.request=1}
+    if(k.fake||k.split){delete k.auto;delete k.request;delete k.edge}
+    if(k.edge&&k.request)delete k.edge;
+    if(k.edge&&!k.request)k.auto=1;
+    if(/\b(url|link|linking)\b/.test(t))k.link=1;
+    if(/redesign|polish|new design|look and feel|theming|branding|my orders page|look pretty|make it (look|pretty)/.test(t))k.polish=1;
+    if(/\bapi\b|back.?end|database|infrastructure|architecture|microservice|integration|platform work|data model|refactor|internal (system|process|tooling)|synchroni[sz]e|internal tool/.test(t)&&!k.auto&&!(k.request&&!internal))k.backend=1;
+    if(internal&&k.backend)delete k.request;
+    if(/cancel/.test(t)&&!/check|before we start/.test(t)&&!k.fake&&!k.split&&!k.monitor&&!k.decide&&!k.elig&&!k.request&&!k.auto&&!k.polish&&!k.backend)k.auto=1;
+    return {k:k,ch:channels(t)};
+  }
+  function channels(t){
     var ch={};
-    if(/web|site|desktop|browser|online/.test(t))ch.web=1;
+    if(/web|site|desktop|browser/.test(t))ch.web=1;
     if(/ios|iphone|apple/.test(t))ch.ios=1;
     if(/android/.test(t))ch.android=1;
-    if(/\bapps?\b|mobile/.test(t)&&!ch.ios&&!ch.android){ch.ios=1;ch.android=1}
-    if(/all (channels|platforms)|everywhere|every (channel|platform)|all three|web and (the )?apps/.test(t)){ch.web=ch.ios=ch.android=1}
-    return {k:k,ch:Object.keys(ch)};
+    if(/\bapps?\b|mobile/.test(t)&&!ch.ios&&!ch.android&&!/web app/.test(t)){ch.ios=1;ch.android=1}
+    if(/platform (that )?(users|customers) are most active|most (used|popular) platform/.test(t))ch.web=1;
+    if(/all (channels|platforms)|everywhere|every (channel|platform)|all three|web and (the )?apps|more platforms|other platforms?|one codebase for all/.test(t)){ch.web=ch.ios=ch.android=1}
+    return Object.keys(ch);
   }
   function evaluateStandIn(brief,texts){
     var caps={},chanCaps={web:{},ios:{},android:{}},live={},knowsSplit=false,decided=false,backendDone=false,lastCh=null,out=[];
@@ -345,15 +360,17 @@ footer.site a:hover{color:var(--accent)}
       if(facing.length){
         facing.forEach(function(x){if(!caps[x]){effort+=CAP_COST[x];caps[x]=1;newCaps.push(x)}});
         chans.forEach(function(ch){
-          if(!live[ch]){effort+=CH_COST[ch];live[ch]=1;newCh.push(ch)}
+          if(!live[ch]){effort+=k.link?1:CH_COST[ch];live[ch]=1;newCh.push(ch)}
           facing.forEach(function(x){chanCaps[ch][x]=1});
         });
         lastCh=chans;
       }
       if(k.fake){effort+=1}
-      if(k.monitor&&!k.fake){effort+=1}
+      if(k.split){effort+=1}
+      if(k.support){effort+=2}
+      if(k.monitor&&!k.fake&&!k.support){effort+=1}
       var moreBackend=backendDone;if(k.backend&&!facing.length){effort+=backendDone?1:2;backendDone=true}
-      if(!facing.length&&!k.fake&&!k.monitor&&!k.decide&&!k.backend)effort=2;
+      if(!facing.length&&!k.fake&&!k.split&&!k.support&&!k.monitor&&!k.decide&&!k.backend)effort=2;
       if(facing.length&&effort===0)effort=1;
       var after=rate(),gain=Math.round((after-before)*100);
       var lastChSet=i>0&&out.length&&texts.slice(0,i).some(function(x){return classify(x).ch.length});
@@ -363,6 +380,13 @@ footer.site a:hover{color:var(--accent)}
         cust='I clicked “Cancel order” and got a “coming soon” message. Fine, I’ll phone.';
         biz='14% of people who wanted to cancel clicked the fake button, so demand is real. 60% of them were on the website, 30% on iOS, 10% on Android.';
         knowsSplit=true;
+      }else if(k.split){
+        cust='Nothing’s changed for me.';
+        biz=knowsSplit?'We double-checked the numbers: still 60% website, 30% iOS, 10% Android.':'The data says 60% of cancellations start on the website, 30% on iOS and only 10% on Android. Now we know where to start.';
+        knowsSplit=true;
+      }else if(k.support){
+        cust=after>0?'Nice touch. It doesn’t change whether I can cancel online, though.':'Nice touch, but I still have to phone to cancel.';
+        biz=after>0?'Useful for the team, and it makes the experience better. The share of online cancellations doesn’t move.':'It makes something smoother for the team. But no customer can cancel online yet, so the calls keep coming.';
       }else if(k.decide&&!facing.length){
         cust=null;
         biz=!knowsSplit?'We say we’ll decide… but we haven’t measured anything yet, so what are we deciding on?':decided?'Agreed. The go/no-go is already made: we build, website first.':'Demand clears our 10% bar, so we don’t stop. We go ahead, and we know which channel to start with.';

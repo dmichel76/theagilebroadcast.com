@@ -515,7 +515,7 @@ body.has-builder{padding-bottom:84px}
         :g>0?'<span class="gain pos">+'+g+'/wk'+(late?' · too late':'')+'</span>':'<span class="gain none">no new value</span>';
       var canUp=editable&&!s.shipped&&i>firstOpen&&i>0, canDown=editable&&!s.shipped&&i<slices.length-1;
       return '<div class="slice'+(s.shipped?' shipped':'')+(err?' err':'')+(!s.shipped&&!err&&g<=0?' novalue':'')+'">'+
-        '<div class="slice-head"><b>Slice '+(i+1)+'</b><span class="wk">wk '+(o.start+1)+'–'+o.end+'</span>'+gain+
+        '<div class="slice-head"><b>Slice '+(i+1)+'</b><span class="wk">wk '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+'</span>'+gain+
         (editable&&!s.shipped?'<button class="icon" data-act="up" data-i="'+i+'" aria-label="Move slice '+(i+1)+' earlier"'+(canUp?'':' disabled')+'>↑</button>'+
           '<button class="icon" data-act="down" data-i="'+i+'" aria-label="Move slice '+(i+1)+' later"'+(canDown?'':' disabled')+'>↓</button>'+
           '<button class="icon" data-act="del" data-i="'+i+'" aria-label="Remove slice '+(i+1)+'">×</button>':'')+

@@ -414,6 +414,16 @@ footer.site a{color:#C3CCDB}
 .course-left .deck .deck-slide{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border-radius:8px;background:#fff;box-shadow:0 14px 30px rgba(0,0,0,.35);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s;transform-origin:50% 60%}
 .course.featured:hover .deck-slide.front{transform:none}
 @media (prefers-reduced-motion:reduce){.course-left .deck .deck-slide{transition:none}}
+
+/* speech bubble next to the hero portrait */
+.hero-photo{position:relative}
+.hello-bubble{position:absolute;top:6%;left:-4%;z-index:2;background:#fff;color:var(--navy);font-family:var(--hand);font-weight:500;font-size:clamp(1.15rem,2vw,1.6rem);line-height:1.1;padding:14px 22px;border:3px solid var(--navy);border-radius:28px 34px 26px 36px/30px 24px 34px 26px;box-shadow:6px 7px 0 var(--accent);transform:rotate(-4deg);white-space:nowrap;animation:bubble-pop .6s cubic-bezier(.2,1.4,.4,1) .4s both}
+.hello-bubble::before,.hello-bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid}
+.hello-bubble::before{right:22px;bottom:-22px;border-width:22px 0 0 22px;border-color:var(--navy) transparent transparent transparent}
+.hello-bubble::after{right:26px;bottom:-14px;border-width:15px 0 0 15px;border-color:#fff transparent transparent transparent}
+@keyframes bubble-pop{from{opacity:0;transform:rotate(-4deg) scale(.6)}to{opacity:1;transform:rotate(-4deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){.hello-bubble{animation:none}}
+@media (max-width:860px){.hello-bubble{left:-2%;top:0;font-size:1.05rem;padding:10px 16px}}
 </style>
 </head>
 <body>
@@ -454,6 +464,7 @@ footer.site a{color:#C3CCDB}
       </div>
       <figure class="hero-photo">
         <img src="assets/img/hero-david.webp" alt="Portrait of David Michel smiling with his arms crossed" width="1126" height="1397">
+        <span class="hello-bubble">Hey, I'm David!</span>
       </figure>
     </div>
   </div>

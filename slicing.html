@@ -91,13 +91,18 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .sec-head p{color:var(--muted);font-size:.95rem;max-width:60ch;margin-top:8px}
 
 /* tray of pieces */
-.tray{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
-@media (max-width:1000px){.tray{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:640px){.tray{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:400px){.tray{grid-template-columns:1fr}}
+.build-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(20px,3vw,40px);align-items:start}
+@media (max-width:860px){.build-grid{grid-template-columns:1fr}}
+.col-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:1rem;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--navy)}
+.col-h span{font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.04em;color:var(--muted);text-transform:none}
+.slices-col{position:sticky;top:calc(84px + env(safe-area-inset-top,0px))}
+@media (max-width:860px){.slices-col{position:static}}
+.tray{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;padding:4px;margin:-4px}
+.tray.over{outline:3px dashed var(--muted);outline-offset:2px}
+@media (max-width:380px){.tray{grid-template-columns:1fr}}
 .step h3{font-family:var(--mono);font-weight:500;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;line-height:1.3}
 .step .pieces{display:flex;flex-direction:column;gap:8px}
-.piece{appearance:none;text-align:left;cursor:pointer;background:#fff;border:2px solid var(--line);padding:10px 12px 10px;display:flex;flex-direction:column;gap:6px;transition:border-color .12s,background .12s,transform .12s;position:relative}
+.piece{appearance:none;text-align:left;cursor:grab;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;background:#fff;border:2px solid var(--line);padding:10px 12px 10px;display:flex;flex-direction:column;gap:6px;transition:border-color .12s,background .12s,transform .12s;position:relative}
 .piece:hover{border-color:var(--navy)}
 .piece[aria-pressed="true"]{border-color:var(--navy);background:#FFF6E2;box-shadow:inset 0 0 0 1px var(--navy)}
 .piece[aria-pressed="true"]::after{content:"✓";position:absolute;top:6px;right:8px;font-weight:700;font-size:.85rem}
@@ -130,7 +135,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .deadline span{position:absolute;top:-2px;right:6px;font-family:var(--hand);font-size:.85rem;white-space:nowrap;color:var(--navy);background:rgba(255,255,255,.85);padding:0 4px}
 .cursor{position:absolute;top:0;bottom:0;border-left:2px solid var(--accent-ink);pointer-events:none;transition:left .25s linear}
 .timeline{position:relative;height:46px;margin:10px 0 0;background:var(--soft);border:1px solid var(--line)}
-.blk{position:absolute;top:4px;bottom:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;font-weight:500;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
+.blk{position:absolute;top:4px;bottom:4px;display:flex;align-items:center;justify-content:center;padding:0 4px;text-overflow:ellipsis;font-family:var(--mono);font-size:.72rem;font-weight:500;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
 .blk.novalue{background:repeating-linear-gradient(135deg,var(--red) 0 6px,#A11F1F 6px 12px)}
 .blk.late{opacity:.45}
 .blk.shipped::after{content:" ✓"}
@@ -149,12 +154,27 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .status.bad{color:var(--red)}
 
 .slices{display:flex;flex-direction:column;gap:10px}
+.ghost{position:fixed;z-index:200;pointer-events:none;margin:0;opacity:.95;transform:rotate(-2deg) scale(1.03);box-shadow:0 14px 30px rgba(18,33,59,.3);background:#fff}
+body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none;user-select:none}
+.dragsrc{opacity:.35}
+.slice.over,.new-slice.over{outline:3px dashed var(--accent-ink);outline-offset:2px;background:#FFF6E2}
+.sname{flex:1;min-width:0;font:800 .95rem/1.2 var(--display);text-transform:uppercase;color:var(--ink);border:0;border-bottom:1px dashed transparent;background:transparent;padding:4px 2px}
+.sname::placeholder{color:#9AA4B5}
+.sname:hover,.sname:focus{border-bottom-color:var(--muted);outline:0}
+.grip{appearance:none;border:0;background:none;cursor:grab;color:var(--muted);font-size:1rem;letter-spacing:-3px;padding:6px 8px 6px 2px;line-height:1;touch-action:manipulation;-webkit-touch-callout:none;user-select:none}
+.grip:hover{color:var(--ink)}
+.slice-sub{display:flex;align-items:center;gap:8px;padding:0 12px 8px 32px}
+.drop-hint{flex:1;border:2px dashed var(--line);color:var(--muted);font-size:.82rem;padding:10px;text-align:center;font-family:var(--hand)}
+.addsel{appearance:none;flex:1;border:2px dashed var(--accent-ink);background:#FFF6E2;color:var(--accent-ink);font-weight:600;font-size:.82rem;padding:8px;cursor:pointer}
+.new-slice{appearance:none;width:100%;border:2px dashed var(--navy);background:transparent;padding:14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer;color:var(--ink)}
+.new-slice:hover{background:var(--soft)}
+.chip{cursor:grab;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .slices .empty{border:2px dashed var(--line);padding:20px;color:var(--muted);font-size:.92rem;text-align:center;font-family:var(--hand)}
 .slice{border:1px solid var(--line);background:#fff;border-left:6px solid var(--navy)}
 .slice.novalue{border-left-color:var(--red)}
 .slice.shipped{background:var(--soft)}
 .slice.err{border-color:var(--red)}
-.slice-head{display:flex;align-items:center;gap:8px;padding:8px 8px 6px 12px}
+.slice-head{display:flex;align-items:center;gap:4px;padding:6px 8px 4px 6px}
 .slice-head b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.9rem}
 .slice-head .wk{font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.03em}
 .slice-head .gain{margin-left:auto;font-family:var(--mono);font-size:.72rem;padding:2px 6px;white-space:nowrap}
@@ -164,14 +184,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .icon{appearance:none;border:1px solid var(--line);background:#fff;width:30px;height:30px;display:inline-grid;place-items:center;cursor:pointer;font-size:.9rem;line-height:1;flex:none}
 .icon:hover:not(:disabled){border-color:var(--navy)}
 .icon:disabled{opacity:.3;cursor:default}
-.slice-body{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
+.slice-body{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px 32px}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;background:var(--soft);border:1px solid var(--line);padding:3px 4px 3px 8px}
 .chip button{appearance:none;border:0;background:none;cursor:pointer;padding:0 4px;font-size:.9rem;color:var(--muted)}
 .chip button:hover{color:var(--red)}
 .chip .rev{font-family:var(--mono);font-size:.68rem}
 .chip .rev.worse{color:var(--red)}
 .chip .rev.better{color:var(--green)}
-.slice-err{padding:0 12px 10px;font-size:.8rem;color:var(--red)}
+.slice-err{padding:0 12px 10px 32px;font-size:.8rem;color:var(--red)}
 .presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:.85rem;color:var(--muted);align-items:center}
 .linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.85rem}
 
@@ -270,8 +290,8 @@ body.has-builder{padding-bottom:84px}
 <section class="rules" aria-label="How it works">
   <div class="wrap">
     <ol>
-      <li><b>1. Pick pieces</b>Tap the pieces you want in your first slice. Each one shows its effort in weeks.</li>
-      <li><b>2. Make slices</b>Group them into a slice, then do it again. Slices are built one after the other.</li>
+      <li><b>1. Make slice cards</b>Create a card for each slice and give it a name, like “Book by email”.</li>
+      <li><b>2. Drag work in</b>Drag pieces of work onto your cards, then drag the cards into order. On a phone, press and hold to drag.</li>
       <li><b>3. Value lands at the end</b>Nothing counts until a slice ships. A customer needs a way to <i>find</i>, <i>book</i> and <i>get confirmed</i> before anything is worth anything. <span class="k">+5/wk</span></li>
       <li><b>4. Estimates lie</b>Getting paid adds <span class="k">+3/wk</span>. Nice-to-haves say <span class="k">+1/wk</span>, but that's a guess. You find out the real value when they ship.</li>
     </ol>
@@ -283,11 +303,26 @@ body.has-builder{padding-bottom:84px}
     <div class="sec-head">
       <div>
         <span class="eyebrow">Step 1</span>
-        <h2 id="pieces-title">The work</h2>
-        <p>Tap pieces to select them, then add them as a slice.</p>
+        <h2 id="pieces-title">Slice the work</h2>
+        <p>Drag pieces from the left onto your slice cards. The order of the cards is the order you build them in. Press and hold to drag on a phone, or tap pieces to select them.</p>
       </div>
     </div>
-    <div class="tray" id="tray"></div>
+    <div class="build-grid">
+      <div class="tray-col">
+        <h3 class="col-h">The work <span>20 weeks in total</span></h3>
+        <div class="tray" id="tray"></div>
+      </div>
+      <div class="slices-col">
+        <h3 class="col-h">Your slices <span id="planned">0 of 12 weeks</span></h3>
+        <div class="slices" id="slices"></div>
+        <div class="presets" id="presets">
+          Or load a ready-made plan:
+          <button class="linkbtn" type="button" data-preset="cake">the layer cake</button>
+          <button class="linkbtn" type="button" data-preset="bigbang">one big release</button>
+          <button class="linkbtn" type="button" id="clear">clear plan</button>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -296,11 +331,10 @@ body.has-builder{padding-bottom:84px}
     <div class="sec-head">
       <div>
         <span class="eyebrow">Step 2</span>
-        <h2 id="plan-title">Your plan</h2>
+        <h2 id="plan-title">Run your 12 weeks</h2>
         <p>Effort is width. Value is height. Red is time going by with nothing in customers' hands.</p>
       </div>
     </div>
-    <div class="plan-grid">
       <div class="board">
         <div class="board-title"><span>Value per week</span><b id="clock">Week 0 of 12</b></div>
         <div class="chart-wrap">
@@ -329,16 +363,6 @@ body.has-builder{padding-bottom:84px}
           <button class="btn btn-primary" id="run" type="button" disabled>Start the 12 weeks</button>
         </div>
       </div>
-      <div>
-        <div class="slices" id="slices"></div>
-        <div class="presets" id="presets">
-          Or try a ready-made plan:
-          <button class="linkbtn" type="button" data-preset="cake">the layer cake</button>
-          <button class="linkbtn" type="button" data-preset="bigbang">one big release</button>
-          <button class="linkbtn" type="button" id="clear">clear plan</button>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -373,7 +397,7 @@ body.has-builder{padding-bottom:84px}
     <span class="sum" id="b-sum"></span>
     <span class="spacer"></span>
     <button class="btn btn-ghost btn-sm" id="b-clear" type="button">Clear</button>
-    <button class="btn btn-primary btn-sm" id="b-add" type="button">Add as slice</button>
+    <button class="btn btn-primary btn-sm" id="b-add" type="button">New slice with these</button>
   </div>
 </div>
 
@@ -503,30 +527,46 @@ body.has-builder{padding-bottom:84px}
     $('builder').classList.toggle('on',on);document.body.classList.toggle('has-builder',on);
     if(on){var e=effortOf(selected);$('b-sum').innerHTML='<b>'+selected.length+'</b> piece'+(selected.length>1?'s':'')+' · <b>'+e+'</b> week'+(e>1?'s':'')}
   }
+  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function label(s,i){return s.name&&s.name.trim()?s.name.trim():'Slice '+(i+1)}
   function renderSlices(){
     var sch=schedule(),errs=errorsOf(),editable=phase==='plan'||phase==='replan';
-    if(!slices.length){$('slices').innerHTML='<div class="empty">No slices yet. Pick some pieces and add them as a slice.</div>';return}
-    var firstOpen=slices.findIndex(function(s){return !s.shipped});
-    $('slices').innerHTML=sch.map(function(o,i){
-      var s=o.s,g=gainOf(i,null,isRevealed),err=errs[i].length;
+    var total=sch.length?sch[sch.length-1].end:0;
+    $('planned').textContent=total+' of '+HORIZON+' weeks'+(total>HORIZON?' · over by '+(total-HORIZON):'');
+    var h=sch.map(function(o,i){
+      var s=o.s,g=gainOf(i,null,isRevealed),err=errs[i].length,empty=!s.pieces.length;
       var late=o.end>HORIZON;
-      var gain=s.shipped?'<span class="gain done">shipped '+(g>0?'+'+g:g<0?g:'±0')+'/wk</span>'
+      var gain=empty?'':s.shipped?'<span class="gain done">shipped '+(g>0?'+'+g:g<0?g:'±0')+'/wk</span>'
         :err?'<span class="gain none">can’t ship</span>'
         :g>0?'<span class="gain pos">+'+g+'/wk'+(late?' · too late':'')+'</span>':'<span class="gain none">no new value</span>';
-      var canUp=editable&&!s.shipped&&i>firstOpen&&i>0, canDown=editable&&!s.shipped&&i<slices.length-1;
-      return '<div class="slice'+(s.shipped?' shipped':'')+(err?' err':'')+(!s.shipped&&!err&&g<=0?' novalue':'')+'">'+
-        '<div class="slice-head"><b>Slice '+(i+1)+'</b><span class="wk">wk '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+'</span>'+gain+
-        (editable&&!s.shipped?'<button class="icon" data-act="up" data-i="'+i+'" aria-label="Move slice '+(i+1)+' earlier"'+(canUp?'':' disabled')+'>↑</button>'+
-          '<button class="icon" data-act="down" data-i="'+i+'" aria-label="Move slice '+(i+1)+' later"'+(canDown?'':' disabled')+'>↓</button>'+
-          '<button class="icon" data-act="del" data-i="'+i+'" aria-label="Remove slice '+(i+1)+'">×</button>':'')+
-        '</div><div class="slice-body">'+s.pieces.map(function(id){
+      var open=editable&&!s.shipped;
+      var head='<div class="slice-head">'+
+        (open?'<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder '+esc(label(s,i))+' (or use the arrow keys)">⋮⋮</button>':'<span class="grip" aria-hidden="true" style="visibility:hidden">⋮⋮</span>')+
+        (open?'<input class="sname" data-i="'+i+'" value="'+esc(s.name||'')+'" placeholder="Name slice '+(i+1)+'" aria-label="Name of slice '+(i+1)+'" maxlength="40" autocomplete="off">'
+             :'<b style="flex:1">'+esc(label(s,i))+'</b>')+
+        gain+
+        (open?'<button class="icon" type="button" data-act="del" data-i="'+i+'" aria-label="Remove '+esc(label(s,i))+'">×</button>':'')+
+        '</div>';
+      var sub='<div class="slice-sub"><span class="wk" style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">'+
+        (empty?'empty':'wk '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · '+(o.end-o.start)+' wk')+'</span></div>';
+      var body;
+      if(empty){
+        body='<div class="slice-sub">'+(open&&selected.length?'<button class="addsel" type="button" data-act="addsel" data-i="'+i+'">Add '+selected.length+' selected here</button>':'<div class="drop-hint">Drag pieces of work here</div>')+'</div>';
+      }else{
+        body='<div class="slice-body">'+s.pieces.map(function(id){
           var p=P[id],rev='';
           if(p.upgrade&&revealed[id]){var c=p.actual<p.est?'worse':p.actual>p.est?'better':'';rev=' <span class="rev '+c+'">'+(p.actual>=0?'+':'')+p.actual+'</span>'}
-          return '<span class="chip">'+p.name+' <span class="rev">'+p.effort+'w</span>'+rev+(editable&&!s.shipped?'<button data-act="out" data-i="'+i+'" data-id="'+id+'" aria-label="Take '+p.name+' out of this slice">×</button>':'')+'</span>';
+          return '<span class="chip"'+(open?' data-id="'+id+'" data-i="'+i+'"':'')+'>'+p.name+' <span class="rev">'+p.effort+'w</span>'+rev+(open?'<button type="button" data-act="out" data-i="'+i+'" data-id="'+id+'" aria-label="Take '+p.name+' out of this slice">×</button>':'')+'</span>';
         }).join('')+'</div>'+
+        (open&&selected.length?'<div class="slice-sub"><button class="addsel" type="button" data-act="addsel" data-i="'+i+'">Add '+selected.length+' selected here</button></div>':'');
+      }
+      return '<div class="slice'+(s.shipped?' shipped':'')+(err?' err':'')+(!empty&&!s.shipped&&!err&&g<=0?' novalue':'')+(drag&&drag.active&&drag.type==='slice'&&drag.sid===s.id?' dragsrc':'')+'" data-i="'+i+'">'+
+        head+sub+body+
         (err?'<div class="slice-err">Needs '+errs[i].map(function(n){return '“'+P[n].name+'”'}).join(' and ')+' in this slice or an earlier one.</div>':'')+
       '</div>';
     }).join('');
+    if(editable)h+='<button class="new-slice" type="button" id="new-slice">+ New slice card</button>';
+    $('slices').innerHTML=h;
   }
   function renderChart(){
     var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
@@ -562,7 +602,8 @@ body.has-builder{padding-bottom:84px}
     $('cursor').hidden=!started;$('cursor').style.left=pct(Math.min(week,S));
     $('timeline').innerHTML=sch.map(function(o,i){
       var g=gainOf(i,null,isRevealed),err=errs[i].length;
-      return '<div class="blk'+(err?' err':g<=0?' novalue':'')+(o.start>=HORIZON?' late':'')+(o.s.shipped?' shipped':'')+'" style="left:'+pct(o.start)+';width:'+pct(o.end-o.start)+'" title="Slice '+(i+1)+'">S'+(i+1)+'</div>';
+      if(!o.s.pieces.length)return '';
+      return '<div class="blk'+(err?' err':g<=0?' novalue':'')+(o.start>=HORIZON?' late':'')+(o.s.shipped?' shipped':'')+'" style="left:'+pct(o.start)+';width:'+pct(o.end-o.start)+'" title="'+esc(label(o.s,i))+'"><span style="overflow:hidden;text-overflow:ellipsis">'+esc(o.s.name&&o.s.name.trim()?o.s.name.trim():'S'+(i+1))+'</span></div>';
     }).join('');
     var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pct(w-.5)+'">'+w+'</span>';
     $('ticks').innerHTML=t;
@@ -572,50 +613,163 @@ body.has-builder{padding-bottom:84px}
   }
   function renderControls(){
     var errs=errorsOf(),bad=errs.some(function(e){return e.length}),open=slices.some(function(s){return !s.shipped});
+    var empties=slices.filter(function(s){return !s.pieces.length}).length;
     var st=$('status'),run=$('run');st.classList.remove('bad');
     var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
     if(phase==='running'){run.disabled=true;run.textContent='Running…';st.textContent='Week '+week+'…';return}
     if(phase==='paused'){run.disabled=true;run.textContent='Paused';st.textContent='Something just shipped.';return}
     if(phase==='done'){run.disabled=true;run.textContent='Done';st.textContent='Twelve weeks are up.';return}
     run.textContent=phase==='replan'?'Continue from week '+week:'Start the 12 weeks';
-    if(!slices.length){run.disabled=true;st.textContent='Add your first slice to start.';return}
+    if(!slices.some(function(s){return s.pieces.length})&&phase==='plan'){run.disabled=true;st.textContent='Make a slice card and drag some work onto it.';return}
+    if(empties){run.disabled=true;st.classList.add('bad');st.textContent=empties===1?'One slice card is empty: add work or remove it.':empties+' slice cards are empty.';return}
     if(bad){run.disabled=true;st.classList.add('bad');st.textContent='One slice can’t ship yet: see the note in red.';return}
     if(phase==='replan'&&!open){run.disabled=false;st.textContent='Nothing left planned. Continue to the end, or add a slice.';return}
     run.disabled=false;
-    var est=score(null,isRevealed);
-    st.textContent=total+' weeks planned · expected value: '+est;
+    st.textContent=total+' weeks planned · expected value: '+score(null,isRevealed);
   }
   function renderAll(){renderTray();renderBuilder();renderSlices();renderChart();renderControls();
     $('presets').style.display=phase==='plan'?'':'none'}
+  function editable(){return phase==='plan'||phase==='replan'}
+  function firstOpen(){var i=slices.findIndex(function(s){return !s.shipped});return i<0?slices.length:i}
+  function inTrayOrder(ids){return PIECES.map(function(p){return p.id}).filter(function(id){return ids.indexOf(id)>=0})}
+  function takeOut(id){slices.forEach(function(s){if(!s.shipped)s.pieces=s.pieces.filter(function(x){return x!==id})})}
+  function putIn(ids,i){ids.forEach(takeOut);slices[i].pieces=inTrayOrder(slices[i].pieces.concat(ids))}
+  function newSlice(ids){slices.push({id:nextId++,name:'',pieces:[],shipped:false});if(ids&&ids.length)putIn(ids,slices.length-1);return slices.length-1}
+  function focusName(i){var el=document.querySelector('.sname[data-i="'+i+'"]');if(el){el.focus({preventScroll:false})}}
 
   /* ============ ACTIONS ============ */
+  var suppressClick=false;
   $('tray').addEventListener('click',function(e){
+    if(suppressClick)return;
     var b=e.target.closest('.piece');if(!b||b.disabled)return;
     var id=b.dataset.id,i=selected.indexOf(id);
     if(i>=0)selected.splice(i,1);else selected.push(id);
-    renderTray();renderBuilder();
+    renderTray();renderBuilder();renderSlices();
   });
-  $('b-clear').addEventListener('click',function(){selected=[];renderTray();renderBuilder()});
+  $('b-clear').addEventListener('click',function(){selected=[];renderAll()});
   $('b-add').addEventListener('click',function(){
     if(!selected.length)return;
-    // keep pieces in tray order inside a slice
-    var ids=PIECES.map(function(p){return p.id}).filter(function(id){return selected.indexOf(id)>=0});
-    slices.push({id:nextId++,pieces:ids,shipped:false});selected=[];renderAll();
-    if(innerWidth<900)$('plan').scrollIntoView({behavior:reduce?'auto':'smooth'});
+    var i=newSlice(selected);selected=[];renderAll();focusName(i);
   });
   $('slices').addEventListener('click',function(e){
+    if(suppressClick)return;
+    if(e.target.closest('#new-slice')){var n=newSlice(selected.length?selected:null);selected=[];renderAll();focusName(n);return}
     var b=e.target.closest('button[data-act]');if(!b)return;
     var i=+b.dataset.i,act=b.dataset.act;
-    if(act==='up'&&i>0){var t=slices[i-1];slices[i-1]=slices[i];slices[i]=t}
-    if(act==='down'&&i<slices.length-1){t=slices[i+1];slices[i+1]=slices[i];slices[i]=t}
     if(act==='del')slices.splice(i,1);
-    if(act==='out'){var s=slices[i];s.pieces=s.pieces.filter(function(id){return id!==b.dataset.id});if(!s.pieces.length)slices.splice(i,1)}
+    if(act==='out'){slices[i].pieces=slices[i].pieces.filter(function(id){return id!==b.dataset.id})}
+    if(act==='addsel'){putIn(selected,i);selected=[]}
     renderAll();
   });
+  $('slices').addEventListener('input',function(e){
+    var el=e.target.closest('.sname');if(!el)return;
+    slices[+el.dataset.i].name=el.value;renderChart();
+  });
+  $('slices').addEventListener('keydown',function(e){
+    var el=e.target.closest('.sname');
+    if(el&&e.key==='Enter'){el.blur();return}
+    var g=e.target.closest('.grip');if(!g)return;
+    var i=+g.dataset.i,j=e.key==='ArrowUp'?i-1:e.key==='ArrowDown'?i+1:null;
+    if(j===null)return;e.preventDefault();
+    if(j<firstOpen()||j>=slices.length)return;
+    var t=slices[i];slices[i]=slices[j];slices[j]=t;renderAll();
+    var ng=document.querySelector('.grip[data-i="'+j+'"]');if(ng)ng.focus();
+  });
+  var NAMES={cake:['Database and accounts','The front end','Everything else'],bigbang:['The whole thing']};
   document.querySelectorAll('[data-preset]').forEach(function(b){b.addEventListener('click',function(){
-    slices=PRESETS[b.dataset.preset].map(function(ids){return {id:nextId++,pieces:ids.slice(),shipped:false}});selected=[];renderAll();
+    var k=b.dataset.preset;
+    slices=PRESETS[k].map(function(ids,n){return {id:nextId++,name:(NAMES[k]||[])[n]||'',pieces:ids.slice(),shipped:false}});selected=[];renderAll();
   })});
   $('clear').addEventListener('click',function(){slices=[];selected=[];renderAll()});
+
+  /* ============ DRAG AND DROP (pointer events: mouse drags straight away, touch needs press-and-hold) ============ */
+  var drag=null, lastX=0, lastY=0, raf=0;
+  document.addEventListener('pointerdown',function(e){
+    if(!editable()||e.button>0||drag)return;
+    if(e.target.closest('input,.chip button,.icon,.addsel'))return;
+    var el=e.target.closest('#tray .piece:not(.used),.chip[data-id],.grip[data-i]');if(!el)return;
+    var d={el:el,x:e.clientX,y:e.clientY,pt:e.pointerType,active:false,timer:0};
+    if(el.classList.contains('grip')){var card=el.closest('.slice');d.type='slice';d.sid=slices[+el.dataset.i].id;d.src=card}
+    else{d.type='piece';d.id=el.dataset.id;d.from=el.dataset.i!=null?+el.dataset.i:null;d.src=el}
+    drag=d;lastX=e.clientX;lastY=e.clientY;
+    if(e.pointerType!=='mouse')d.timer=setTimeout(function(){if(drag===d)begin()},260);
+  });
+  document.addEventListener('pointermove',function(e){
+    if(!drag)return;lastX=e.clientX;lastY=e.clientY;
+    if(!drag.active){
+      var dist=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
+      if(drag.pt==='mouse'){if(dist>5)begin();else return}
+      else{if(dist>10)cancelDrag();return}
+    }
+    e.preventDefault();moveGhost();hover();
+  },{passive:false});
+  // stop the page scrolling under a touch drag once it has started
+  document.addEventListener('touchmove',function(e){if(drag&&drag.active)e.preventDefault()},{passive:false});
+  document.addEventListener('contextmenu',function(e){if(drag)e.preventDefault()});
+  document.addEventListener('pointerup',function(){if(!drag)return;if(drag.active){drop();suppressClick=true;setTimeout(function(){suppressClick=false},0)}cancelDrag()});
+  document.addEventListener('pointercancel',function(){if(drag&&!drag.active)cancelDrag()});
+  addEventListener('blur',function(){if(drag)cancelDrag()});
+
+  function begin(){
+    if(!drag||drag.active)return;
+    drag.active=true;clearTimeout(drag.timer);
+    var r=drag.src.getBoundingClientRect(),g=drag.src.cloneNode(true);
+    g.classList.add('ghost');g.classList.remove('dragsrc','over');g.removeAttribute('id');
+    g.style.width=r.width+'px';g.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
+    drag.ox=drag.x-r.left;drag.oy=drag.y-r.top;drag.ghost=g;document.body.appendChild(g);
+    drag.src.classList.add('dragsrc');document.body.classList.add('dragging');
+    if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+    if(navigator.vibrate&&drag.pt!=='mouse')try{navigator.vibrate(12)}catch(err){}
+    moveGhost();loop();
+  }
+  function moveGhost(){if(drag&&drag.ghost){drag.ghost.style.left=(lastX-drag.ox)+'px';drag.ghost.style.top=(lastY-drag.oy)+'px'}}
+  function loop(){ // edge auto-scroll while dragging
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(function step(){
+      if(!drag||!drag.active)return;
+      var edge=70,v=0;
+      if(lastY<edge+72)v=-Math.ceil((edge+72-lastY)/6);else if(lastY>innerHeight-edge)v=Math.ceil((lastY-(innerHeight-edge))/6);
+      if(v){scrollBy(0,v);hover()}
+      raf=requestAnimationFrame(step);
+    });
+  }
+  function under(){var el=document.elementFromPoint(lastX,lastY);return el||document.body}
+  function clearOver(){document.querySelectorAll('.over').forEach(function(n){n.classList.remove('over')})}
+  function hover(){
+    clearOver();var el=under();
+    if(drag.type==='piece'){
+      var t=el.closest('.slice[data-i]:not(.shipped)')||el.closest('#new-slice')||(drag.from!=null&&el.closest('#tray'));
+      if(t)t.classList.add('over');drag.target=t||null;
+    }else{
+      // live reorder: the chart and timeline update as you drag
+      var cards=[].slice.call(document.querySelectorAll('#slices .slice[data-i]'));
+      var from=slices.findIndex(function(s){return s.id===drag.sid}),to=0;
+      cards.forEach(function(c,k){if(k===from)return;var r=c.getBoundingClientRect();if(lastY>r.top+r.height/2)to++});
+      to=Math.max(firstOpen(),Math.min(slices.length-1,to));
+      if(from>=0&&to!==from){
+        var s=slices.splice(from,1)[0];slices.splice(to,0,s);renderSlices();renderChart();renderControls();
+      }
+    }
+  }
+  function drop(){
+    clearOver();
+    if(drag.type==='piece'&&drag.target){
+      var t=drag.target;
+      if(t.id==='new-slice'){var n=newSlice([drag.id]);selected=[];renderAll();focusName(n);return}
+      if(t.id==='tray'){takeOut(drag.id)}
+      else{var i=+t.dataset.i;if(drag.from!==i)putIn([drag.id],i)}
+      selected=selected.filter(function(x){return x!==drag.id});
+    }
+    renderAll();
+  }
+  function cancelDrag(){
+    if(!drag)return;clearTimeout(drag.timer);cancelAnimationFrame(raf);
+    if(drag.ghost)drag.ghost.remove();
+    if(drag.src)drag.src.classList.remove('dragsrc');
+    document.body.classList.remove('dragging');clearOver();
+    var wasSlice=drag.active&&drag.type==='slice';drag=null;
+    if(wasSlice)renderSlices();
+  }
 
   function tick(){
     week++;

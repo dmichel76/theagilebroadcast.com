@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slice It Right</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="A slicing game: twelve weeks, a pile of work, and a value line that only moves when something real ships.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
+<style>
+/* PROTOTYPE (branch slicing-game). Same banded system as the homepage and self-assessment page.
+   Mechanic: pick pieces of work -> group them into slices -> order them on a 12-week timeline.
+   Effort = width on the timeline. Value only lands when a slice finishes. Red = weeks passing with no value.
+   Each "nice-to-have" piece has an estimated value; the real value is revealed when it ships (the learning part). */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --paper:#FFFFFF; --soft:#F1F3F7;
+  --ink:#12213B; --muted:#56637A; --on-navy:#DCE3EF; --line:#D9DEE8;
+  --accent:#F2A91E; --accent-ink:#B87700;
+  --red:#C62828; --red-soft:#F7DADA; --green:#08712A;
+  --value:#16A37F; --flow:#3B9BEF; --learning:#E3A500;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+  --hand:"Shantell Sans","Comic Sans MS",cursive;
+  --maxw:1200px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-0.01em;text-wrap:balance;margin:0}
+h1,h2{text-transform:uppercase}
+h1 em,h2 em{font-style:normal;color:var(--accent)}
+p{margin:0}
+button{font:inherit;color:inherit}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+.eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.95rem;text-transform:uppercase;letter-spacing:.02em;padding:15px 22px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s,opacity .15s;background:none}
+.btn-primary{background:var(--accent);color:var(--navy)!important}
+.btn-primary:hover{background:#FFC04D}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{border-color:currentColor;color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:#fff}
+.btn-sm{padding:10px 14px;font-size:.8rem}
+.btn-row{display:flex;flex-wrap:wrap;gap:12px}
+
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+.brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+.brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+.brand span{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+.nav ul a{color:var(--on-navy);text-decoration:none}
+.nav ul a:hover{color:var(--accent)}
+.nav .btn{padding:10px 16px;font-size:.85rem}
+@media (max-width:980px){.nav ul{display:none}}
+@media (max-width:420px){.nav .btn{padding:9px 12px;font-size:.78rem}.brand span{display:none}}
+
+/* hero + brief */
+.hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(44px,6vw,80px)}
+.hero .eyebrow{color:var(--accent)}
+.hero h1{color:#fff;font-size:clamp(2.4rem,6vw,4.6rem);letter-spacing:-0.02em;line-height:.95}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,4vw,56px);align-items:end}
+@media (max-width:860px){.hero-grid{grid-template-columns:1fr}}
+.hero .lede{margin-top:20px;color:#C3CCDB;font-size:clamp(1.02rem,1.5vw,1.18rem);max-width:56ch}
+.brief{background:#fff;color:var(--ink);padding:20px 22px;transform:rotate(-1deg);box-shadow:0 18px 40px rgba(0,0,0,.25);border-top:6px solid var(--accent)}
+.brief .eyebrow{color:var(--accent-ink);margin-bottom:8px}
+.brief h2{font-size:1.45rem;line-height:1.05}
+.brief p{margin-top:10px;font-size:.95rem;color:var(--muted)}
+.brief p b{color:var(--ink)}
+
+/* rules */
+.rules{background:var(--soft);padding-block:clamp(32px,4vw,48px);border-bottom:1px solid var(--line)}
+.rules ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.rules ol{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.rules ol{grid-template-columns:1fr;gap:12px}}
+.rules li{background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:.92rem;line-height:1.45}
+.rules li b{display:block;font-family:var(--hand);font-weight:500;font-size:1.15rem;margin-bottom:4px}
+.rules li .k{font-family:var(--mono);font-size:.75rem;color:var(--muted);letter-spacing:.04em}
+
+/* sections */
+.band{padding-block:clamp(40px,5vw,72px)}
+.band + .band{padding-top:0}
+.sec-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px 24px;margin-bottom:20px}
+.sec-head h2{font-size:clamp(1.6rem,3.4vw,2.4rem)}
+.sec-head p{color:var(--muted);font-size:.95rem;max-width:60ch;margin-top:8px}
+
+/* tray of pieces */
+.tray{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+@media (max-width:1000px){.tray{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.tray{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:400px){.tray{grid-template-columns:1fr}}
+.step h3{font-family:var(--mono);font-weight:500;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;line-height:1.3}
+.step .pieces{display:flex;flex-direction:column;gap:8px}
+.piece{appearance:none;text-align:left;cursor:pointer;background:#fff;border:2px solid var(--line);padding:10px 12px 10px;display:flex;flex-direction:column;gap:6px;transition:border-color .12s,background .12s,transform .12s;position:relative}
+.piece:hover{border-color:var(--navy)}
+.piece[aria-pressed="true"]{border-color:var(--navy);background:#FFF6E2;box-shadow:inset 0 0 0 1px var(--navy)}
+.piece[aria-pressed="true"]::after{content:"✓";position:absolute;top:6px;right:8px;font-weight:700;font-size:.85rem}
+.piece.used{opacity:.38;cursor:default;border-style:dashed}
+.piece.used:hover{border-color:var(--line)}
+.piece .nm{font-weight:600;font-size:.92rem;line-height:1.25;padding-right:14px}
+.piece .meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-family:var(--mono);font-size:.7rem;letter-spacing:.02em;color:var(--muted)}
+.eff{display:inline-flex;gap:2px;align-items:center}
+.eff i{width:9px;height:9px;background:var(--navy);display:inline-block}
+.eff span{margin-left:4px}
+.tag{display:inline-block;padding:1px 6px;border:1px solid var(--line);background:var(--soft);color:var(--ink);white-space:nowrap}
+.tag.core{background:#E4F4EE;border-color:#A8DCC9}
+.tag.zero{background:var(--red-soft);border-color:#E9AFAF;color:#7A1B1B}
+.tag.up{background:#FFF1D2;border-color:#F3D28B}
+.tag.needs{background:#fff;border-style:dashed}
+.tag s{opacity:.6}
+
+/* plan */
+.plan-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:clamp(20px,3vw,40px);align-items:start}
+@media (max-width:900px){.plan-grid{grid-template-columns:1fr}}
+.board{background:#fff;border:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 18px 40px rgba(18,33,59,.08)}
+.board-title{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--line);text-transform:uppercase}
+.board-title b{color:var(--ink);font-weight:500}
+.chart-wrap{padding:14px 16px 6px;position:relative}
+.ylab{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ylab .now{color:var(--ink)}
+.chart{position:relative;height:clamp(150px,22vw,210px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.deadline{position:absolute;top:-6px;bottom:-1px;border-left:2px dashed var(--navy);pointer-events:none}
+.deadline span{position:absolute;top:-2px;right:6px;font-family:var(--hand);font-size:.85rem;white-space:nowrap;color:var(--navy);background:rgba(255,255,255,.85);padding:0 4px}
+.cursor{position:absolute;top:0;bottom:0;border-left:2px solid var(--accent-ink);pointer-events:none;transition:left .25s linear}
+.timeline{position:relative;height:46px;margin:10px 0 0;background:var(--soft);border:1px solid var(--line)}
+.blk{position:absolute;top:4px;bottom:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;font-weight:500;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
+.blk.novalue{background:repeating-linear-gradient(135deg,var(--red) 0 6px,#A11F1F 6px 12px)}
+.blk.late{opacity:.45}
+.blk.shipped::after{content:" ✓"}
+.blk.err{outline:2px solid var(--red);outline-offset:-2px;background:#fff;color:var(--red)}
+.ticks{position:relative;height:20px;font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.ticks span{position:absolute;top:3px;transform:translateX(-50%)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 16px 14px;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:middle}
+.legend .lv{background:var(--accent)}
+.legend .lr{background:var(--red-soft);border:1px solid var(--red)}
+.legend .ld{border-top:2px dashed var(--navy);height:0;width:16px}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:#fff}
+.controls .spacer{flex:1}
+.status{font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;color:var(--muted)}
+.status.bad{color:var(--red)}
+
+.slices{display:flex;flex-direction:column;gap:10px}
+.slices .empty{border:2px dashed var(--line);padding:20px;color:var(--muted);font-size:.92rem;text-align:center;font-family:var(--hand)}
+.slice{border:1px solid var(--line);background:#fff;border-left:6px solid var(--navy)}
+.slice.novalue{border-left-color:var(--red)}
+.slice.shipped{background:var(--soft)}
+.slice.err{border-color:var(--red)}
+.slice-head{display:flex;align-items:center;gap:8px;padding:8px 8px 6px 12px}
+.slice-head b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.9rem}
+.slice-head .wk{font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.03em}
+.slice-head .gain{margin-left:auto;font-family:var(--mono);font-size:.72rem;padding:2px 6px;white-space:nowrap}
+.gain.pos{background:#FFF1D2;color:var(--accent-ink)}
+.gain.none{background:var(--red-soft);color:var(--red)}
+.gain.done{background:#E4F4EE;color:var(--green)}
+.icon{appearance:none;border:1px solid var(--line);background:#fff;width:30px;height:30px;display:inline-grid;place-items:center;cursor:pointer;font-size:.9rem;line-height:1;flex:none}
+.icon:hover:not(:disabled){border-color:var(--navy)}
+.icon:disabled{opacity:.3;cursor:default}
+.slice-body{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;background:var(--soft);border:1px solid var(--line);padding:3px 4px 3px 8px}
+.chip button{appearance:none;border:0;background:none;cursor:pointer;padding:0 4px;font-size:.9rem;color:var(--muted)}
+.chip button:hover{color:var(--red)}
+.chip .rev{font-family:var(--mono);font-size:.68rem}
+.chip .rev.worse{color:var(--red)}
+.chip .rev.better{color:var(--green)}
+.slice-err{padding:0 12px 10px;font-size:.8rem;color:var(--red)}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:.85rem;color:var(--muted);align-items:center}
+.linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.85rem}
+
+/* builder bar */
+.builder{position:fixed;left:0;right:0;bottom:0;z-index:30;visibility:hidden;background:var(--navy);color:#fff;transform:translateY(110%);transition:transform .2s;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -10px 30px rgba(0,0,0,.2)}
+.builder.on{transform:none;visibility:visible}
+.builder .wrap{display:flex;align-items:center;gap:14px;min-height:68px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+.builder .sum{font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;color:var(--on-navy)}
+.builder .sum b{color:var(--accent);font-weight:500}
+.builder .spacer{flex:1}
+.builder .btn-ghost{color:#fff}
+.builder .btn-ghost:hover{background:#fff;color:var(--navy)}
+
+/* surprise / learning toast */
+.moment{margin:0 16px 14px;background:var(--navy);color:var(--on-navy);padding:16px 18px}
+.moment[hidden]{display:none}
+.moment .eyebrow{color:var(--accent);margin-bottom:6px}
+.moment h3{color:#fff;font-size:1.15rem;text-transform:uppercase}
+.moment p{margin-top:6px;color:#C3CCDB;font-size:.93rem}
+.moment .btn-row{margin-top:12px}
+.moment .btn-ghost{color:#fff}
+.moment .btn-ghost:hover{background:#fff;color:var(--navy)}
+
+/* results */
+.results{background:var(--navy);color:var(--on-navy);padding-block:clamp(48px,7vw,96px)}
+.results[hidden]{display:none}
+.results .eyebrow{color:var(--accent)}
+.results h2{color:#fff;font-size:clamp(2rem,4.6vw,3.4rem)}
+.res-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);margin-top:32px}
+@media (max-width:900px){.res-grid{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{border:1px solid var(--navy-2);background:var(--navy-2);padding:14px}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3vw,2.2rem);color:#fff;line-height:1}
+.stat span{display:block;margin-top:6px;font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:#AEB9CC}
+.compare{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+.cmp{display:grid;grid-template-columns:150px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:.88rem}
+@media (max-width:480px){.cmp{grid-template-columns:110px minmax(0,1fr) 38px;font-size:.8rem}}
+.cmp .bar{height:14px;background:var(--navy-2)}
+.cmp .bar b{display:block;height:100%;background:#8D9AB0}
+.cmp.you .bar b{background:var(--accent)}
+.cmp .n{font-family:var(--mono);text-align:right;color:#fff}
+.verdict{font-family:var(--hand);font-size:1.25rem;color:#fff;line-height:1.35}
+.learned{margin-top:18px;list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
+.learned li{border-left:3px solid var(--accent);padding:4px 0 4px 12px;font-size:.93rem;color:#C3CCDB}
+.learned li b{color:#fff;font-weight:600}
+.results .btn-row{margin-top:26px}
+.results .btn-ghost{color:#fff}
+.results .btn-ghost:hover{background:#fff;color:var(--navy)}
+
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;border-top:1px solid var(--navy-2)}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--accent)}
+body.has-builder{padding-bottom:84px}
+@media (prefers-reduced-motion:reduce){.builder,.cursor,.piece{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Slicing game · 12 weeks · about 5 minutes</span>
+      <h1>Slice it <em>right</em></h1>
+      <p class="lede">Same work, same team, same twelve weeks. The only thing you choose is how to slice it. Watch when the value actually arrives.</p>
+    </div>
+    <div class="brief">
+      <span class="eyebrow">The brief</span>
+      <h2>Let people book a place on a training course</h2>
+      <p>A small training company takes bookings by phone. They want customers to book online. You have <b>12 weeks</b>, and there's <b>20 weeks</b> of work on the table. You won't build it all.</p>
+    </div>
+  </div>
+</section>
+
+<section class="rules" aria-label="How it works">
+  <div class="wrap">
+    <ol>
+      <li><b>1. Pick pieces</b>Tap the pieces you want in your first slice. Each one shows its effort in weeks.</li>
+      <li><b>2. Make slices</b>Group them into a slice, then do it again. Slices are built one after the other.</li>
+      <li><b>3. Value lands at the end</b>Nothing counts until a slice ships. A customer needs a way to <i>find</i>, <i>book</i> and <i>get confirmed</i> before anything is worth anything. <span class="k">+5/wk</span></li>
+      <li><b>4. Estimates lie</b>Getting paid adds <span class="k">+3/wk</span>. Nice-to-haves say <span class="k">+1/wk</span>, but that's a guess. You find out the real value when they ship.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="pieces-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Step 1</span>
+        <h2 id="pieces-title">The work</h2>
+        <p>Tap pieces to select them, then add them as a slice.</p>
+      </div>
+    </div>
+    <div class="tray" id="tray"></div>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="plan-title" id="plan">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Step 2</span>
+        <h2 id="plan-title">Your plan</h2>
+        <p>Effort is width. Value is height. Red is time going by with nothing in customers' hands.</p>
+      </div>
+    </div>
+    <div class="plan-grid">
+      <div class="board">
+        <div class="board-title"><span>Value per week</span><b id="clock">Week 0 of 12</b></div>
+        <div class="chart-wrap">
+          <div class="ylab"><span>£ value / week</span><span class="now" id="now-rate"></span></div>
+          <div class="chart" id="chart">
+            <svg id="svg" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="deadline" id="deadline"><span>deadline</span></div>
+            <div class="cursor" id="cursor" hidden></div>
+          </div>
+          <div class="timeline" id="timeline" aria-label="Slices on the timeline"></div>
+          <div class="ticks" id="ticks" aria-hidden="true"></div>
+        </div>
+        <div class="legend" aria-hidden="true"><span><i class="lv"></i>value arriving</span><span><i class="lr"></i>no value yet</span><span><i class="ld"></i>expected (estimates)</span></div>
+        <div class="moment" id="moment" hidden role="status" aria-live="polite">
+          <span class="eyebrow" id="m-when"></span>
+          <h3 id="m-title"></h3>
+          <p id="m-text"></p>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-sm" id="m-go" type="button">Keep going</button>
+            <button class="btn btn-ghost btn-sm" id="m-replan" type="button">Change the rest of my plan</button>
+          </div>
+        </div>
+        <div class="controls">
+          <span class="status" id="status">Add your first slice to start.</span>
+          <span class="spacer"></span>
+          <button class="btn btn-primary" id="run" type="button" disabled>Start the 12 weeks</button>
+        </div>
+      </div>
+      <div>
+        <div class="slices" id="slices"></div>
+        <div class="presets" id="presets">
+          Or try a ready-made plan:
+          <button class="linkbtn" type="button" data-preset="cake">the layer cake</button>
+          <button class="linkbtn" type="button" data-preset="bigbang">one big release</button>
+          <button class="linkbtn" type="button" id="clear">clear plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="results" id="results" hidden aria-labelledby="res-title" tabindex="-1">
+  <div class="wrap">
+    <span class="eyebrow">After 12 weeks</span>
+    <h2 id="res-title">How did your slices <em>land?</em></h2>
+    <div class="res-grid">
+      <div>
+        <div class="stats">
+          <div class="stat"><b id="r-total">0</b><span>Value created</span></div>
+          <div class="stat"><b id="r-first">–</b><span>First value</span></div>
+          <div class="stat"><b id="r-red">0</b><span>Weeks with no value</span></div>
+        </div>
+        <div class="compare" id="compare"></div>
+      </div>
+      <div>
+        <p class="verdict" id="verdict"></p>
+        <ul class="learned" id="learned"></ul>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Slice your real work with me</a>
+          <button class="btn btn-ghost" id="again" type="button">Play again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="builder" id="builder" aria-live="polite">
+  <div class="wrap">
+    <span class="sum" id="b-sum"></span>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost btn-sm" id="b-clear" type="button">Clear</button>
+    <button class="btn btn-primary btn-sm" id="b-add" type="button">Add as slice</button>
+  </div>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="https://www.youtube.com/watch?v=jQg27pFGmWA" target="_blank" rel="noopener">Video: horizontal vs vertical slicing</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  /* ============ THE MODEL (edit here) ============
+     kind: 'core'    = needed for a customer to book (find + book + confirm)  -> +5/wk once all three steps are covered
+           'pay'     = lets you get paid (needs a bookable service)            -> +3/wk
+           'upgrade' = nice-to-have: est = what it looks like, actual = what really happens (revealed on shipping)
+           'enabler' = no value on its own
+     A piece can be several things (online payments: pay + upgrade). */
+  var HORIZON=12, BOOK=5, PAY=3;
+  var STEPS=[
+    {k:'find',   name:'Find a course'},
+    {k:'book',   name:'Book a place'},
+    {k:'confirm',name:'Get confirmed'},
+    {k:'pay',    name:'Pay'},
+    {k:'behind', name:'Behind the scenes'}
+  ];
+  var PIECES=[
+    {id:'page',     step:'find',    name:'One page listing courses and dates', effort:1, core:true},
+    {id:'catalogue',step:'find',    name:'Searchable course catalogue',        effort:3, upgrade:true, est:1, actual:0,
+      note:'They only run three courses. Nobody ever used the search.'},
+    {id:'email',    step:'book',    name:'“Email us to book” button',          effort:1, core:true},
+    {id:'form',     step:'book',    name:'Booking form with seat picker',      effort:3, upgrade:true, est:1, actual:1, needs:['db'],
+      note:'Customers like it. About what you expected.'},
+    {id:'accounts', step:'book',    name:'Customer accounts and login',        effort:3, upgrade:true, est:1, actual:-2, needs:['db'],
+      note:'Half the people who started booking gave up at the sign-up screen.'},
+    {id:'manual',   step:'confirm', name:'Confirm by hand with an email template', effort:1, core:true},
+    {id:'auto',     step:'confirm', name:'Automatic confirmation and calendar invite', effort:2, upgrade:true, est:1, actual:2, needs:['form'],
+      note:'Fewer no-shows and hours of admin saved every week. Better than you hoped.'},
+    {id:'invoice',  step:'pay',     name:'Send an invoice by hand',            effort:1, pay:true},
+    {id:'cards',    step:'pay',     name:'Online card payments',               effort:3, pay:true, upgrade:true, est:1, actual:0, needs:['form'],
+      note:'Most places are paid for by employers. They wanted an invoice anyway.'},
+    {id:'db',       step:'behind',  name:'Database and admin dashboard',       effort:2, enabler:true}
+  ];
+  var P={};PIECES.forEach(function(p){P[p.id]=p});
+  var PRESETS={
+    cake:[['db','accounts'],['catalogue','form'],['auto','cards','page','email','manual','invoice']],
+    bigbang:[PIECES.map(function(p){return p.id})],
+    thin:[['page','email','manual'],['invoice'],['db','form'],['auto']]
+  };
+
+  /* ============ STATE ============ */
+  var slices=[], selected=[], nextId=1;
+  var phase='plan';            // plan | running | paused | replan | done
+  var week=0, timer=null, revealed={}, learned=[];
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $=function(id){return document.getElementById(id)};
+
+  /* ============ ENGINE ============ */
+  function effortOf(ids){return ids.reduce(function(s,id){return s+P[id].effort},0)}
+  function used(id){return slices.some(function(s){return s.pieces.indexOf(id)>=0})}
+  function schedule(list){
+    var t=0;return (list||slices).map(function(s){var o={s:s,start:t,end:t+effortOf(s.pieces)};t=o.end;return o});
+  }
+  function rateOf(set,reveal){
+    var has=function(id){return !!set[id]};
+    var canBook=(has('page')||has('catalogue'))&&(has('email')||has('form'))&&(has('manual')||has('auto'));
+    if(!canBook)return 0;
+    var r=BOOK;
+    if(has('invoice')||has('cards'))r+=PAY;
+    Object.keys(set).forEach(function(id){var p=P[id];if(p.upgrade)r+=reveal(id)?p.actual:p.est});
+    return Math.max(0,r);
+  }
+  // value per week for weeks 0..n-1; a slice ending at week e delivers from week index e
+  function rates(list,n,reveal){
+    var sch=schedule(list),out=[];
+    for(var w=0;w<n;w++){
+      var set={};sch.forEach(function(o){if(o.end<=w)o.s.pieces.forEach(function(id){set[id]=1})});
+      out.push(rateOf(set,reveal));
+    }
+    return out;
+  }
+  function gainOf(index,list,reveal){
+    var sch=schedule(list),before={},after={};
+    sch.forEach(function(o,i){if(i<index)o.s.pieces.forEach(function(id){before[id]=after[id]=1});if(i===index)o.s.pieces.forEach(function(id){after[id]=1})});
+    return rateOf(after,reveal)-rateOf(before,reveal);
+  }
+  function errorsOf(list){
+    var seen={},errs=[];
+    (list||slices).forEach(function(s,i){
+      s.pieces.forEach(function(id){seen[id]=1});
+      var miss=[];
+      s.pieces.forEach(function(id){(P[id].needs||[]).forEach(function(n){if(!seen[n]&&miss.indexOf(n)<0)miss.push(n)})});
+      errs[i]=miss;
+    });
+    return errs;
+  }
+  function score(list,reveal){return rates(list,HORIZON,reveal).reduce(function(a,b){return a+b},0)}
+  var isRevealed=function(id){return !!revealed[id]};
+  var all=function(){return true};
+
+  /* ============ RENDER ============ */
+  function effBlocks(n){var h='<span class="eff" title="'+n+' week'+(n>1?'s':'')+'">';for(var i=0;i<n;i++)h+='<i></i>';return h+'<span>'+n+' wk</span></span>'}
+  function valueTag(p){
+    if(p.core)return '<span class="tag core">needed to book</span>';
+    if(p.enabler)return '<span class="tag zero">no value on its own</span>';
+    var h='';
+    if(p.pay)h+='<span class="tag core">gets you paid</span>';
+    if(p.upgrade){
+      if(revealed[p.id]){var d=p.actual>=0?'+'+p.actual:p.actual;h+='<span class="tag up"><s>+'+p.est+'</s> '+d+'/wk</span>'}
+      else h+='<span class="tag up">+'+p.est+'/wk?</span>';
+    }
+    return h;
+  }
+  function renderTray(){
+    var locked=phase==='running'||phase==='paused'||phase==='done';
+    $('tray').innerHTML=STEPS.map(function(st){
+      return '<div class="step"><h3>'+st.name+'</h3><div class="pieces">'+PIECES.filter(function(p){return p.step===st.k}).map(function(p){
+        var u=used(p.id),sel=selected.indexOf(p.id)>=0;
+        var needs=(p.needs||[]).map(function(n){return '<span class="tag needs">needs '+P[n].name.split(' ')[0].toLowerCase()+(n==='form'?' form':'')+'</span>'}).join('');
+        return '<button type="button" class="piece'+(u?' used':'')+'" data-id="'+p.id+'" aria-pressed="'+(sel?'true':'false')+'"'+(u||locked?' disabled':'')+'>'+
+          '<span class="nm">'+p.name+'</span><span class="meta">'+effBlocks(p.effort)+valueTag(p)+needs+'</span></button>';
+      }).join('')+'</div></div>';
+    }).join('');
+  }
+  function renderBuilder(){
+    var on=selected.length>0&&(phase==='plan'||phase==='replan');
+    $('builder').classList.toggle('on',on);document.body.classList.toggle('has-builder',on);
+    if(on){var e=effortOf(selected);$('b-sum').innerHTML='<b>'+selected.length+'</b> piece'+(selected.length>1?'s':'')+' · <b>'+e+'</b> week'+(e>1?'s':'')}
+  }
+  function renderSlices(){
+    var sch=schedule(),errs=errorsOf(),editable=phase==='plan'||phase==='replan';
+    if(!slices.length){$('slices').innerHTML='<div class="empty">No slices yet. Pick some pieces and add them as a slice.</div>';return}
+    var firstOpen=slices.findIndex(function(s){return !s.shipped});
+    $('slices').innerHTML=sch.map(function(o,i){
+      var s=o.s,g=gainOf(i,null,isRevealed),err=errs[i].length;
+      var late=o.end>HORIZON;
+      var gain=s.shipped?'<span class="gain done">shipped '+(g>0?'+'+g:g<0?g:'±0')+'/wk</span>'
+        :err?'<span class="gain none">can’t ship</span>'
+        :g>0?'<span class="gain pos">+'+g+'/wk'+(late?' · too late':'')+'</span>':'<span class="gain none">no new value</span>';
+      var canUp=editable&&!s.shipped&&i>firstOpen&&i>0, canDown=editable&&!s.shipped&&i<slices.length-1;
+      return '<div class="slice'+(s.shipped?' shipped':'')+(err?' err':'')+(!s.shipped&&!err&&g<=0?' novalue':'')+'">'+
+        '<div class="slice-head"><b>Slice '+(i+1)+'</b><span class="wk">wk '+(o.start+1)+'–'+o.end+'</span>'+gain+
+        (editable&&!s.shipped?'<button class="icon" data-act="up" data-i="'+i+'" aria-label="Move slice '+(i+1)+' earlier"'+(canUp?'':' disabled')+'>↑</button>'+
+          '<button class="icon" data-act="down" data-i="'+i+'" aria-label="Move slice '+(i+1)+' later"'+(canDown?'':' disabled')+'>↓</button>'+
+          '<button class="icon" data-act="del" data-i="'+i+'" aria-label="Remove slice '+(i+1)+'">×</button>':'')+
+        '</div><div class="slice-body">'+s.pieces.map(function(id){
+          var p=P[id],rev='';
+          if(p.upgrade&&revealed[id]){var c=p.actual<p.est?'worse':p.actual>p.est?'better':'';rev=' <span class="rev '+c+'">'+(p.actual>=0?'+':'')+p.actual+'</span>'}
+          return '<span class="chip">'+p.name+' <span class="rev">'+p.effort+'w</span>'+rev+(editable&&!s.shipped?'<button data-act="out" data-i="'+i+'" data-id="'+id+'" aria-label="Take '+p.name+' out of this slice">×</button>':'')+'</span>';
+        }).join('')+'</div>'+
+        (err?'<div class="slice-err">Needs '+errs[i].map(function(n){return '“'+P[n].name+'”'}).join(' and ')+' in this slice or an earlier one.</div>':'')+
+      '</div>';
+    }).join('');
+  }
+  function renderChart(){
+    var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
+    var S=Math.max(HORIZON,total),YMAX=12,W=S*10,H=120;
+    var y=function(r){return H-r*(H-10)/YMAX};
+    var started=phase!=='plan';
+    var rs=rates(null,S,isRevealed), errs=errorsOf(), bad=errs.some(function(e){return e.length});
+    var past=started?week:0, svg='';
+    svg+='<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#FBEAEA"/><line x1="0" y1="0" x2="0" y2="6" stroke="#E7A3A3" stroke-width="3"/></pattern></defs>';
+    // grid lines
+    [4,8].forEach(function(v){svg+='<line x1="0" x2="'+W+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>'});
+    // after deadline
+    if(S>HORIZON)svg+='<rect x="'+HORIZON*10+'" y="0" width="'+(S-HORIZON)*10+'" height="'+H+'" fill="#EEF0F4"/>';
+    // red bands (no value) inside horizon
+    for(var w=0;w<HORIZON;w++){
+      if(rs[w]===0)svg+='<rect x="'+w*10+'" y="0" width="10.05" height="'+H+'" fill="'+(w<past?'#F4C7C7':'url(#hatch)')+'"/>';
+    }
+    // actual area (past)
+    if(past>0){
+      var d='M0 '+H;for(w=0;w<past;w++)d+=' L'+w*10+' '+y(rs[w])+' L'+(w+1)*10+' '+y(rs[w]);d+=' L'+past*10+' '+H+' Z';
+      svg+='<path d="'+d+'" fill="#F2A91E" fill-opacity=".85"/>';
+      var l='M0 '+y(rs[0]);for(w=0;w<past;w++)l+=' L'+w*10+' '+y(rs[w])+' L'+(w+1)*10+' '+y(rs[w]);
+      svg+='<path d="'+l+'" fill="none" stroke="#B87700" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+    }
+    // expected line (future)
+    if(!bad&&past<S){
+      var e='M'+past*10+' '+y(rs[past]);for(w=past;w<S;w++)e+=' L'+w*10+' '+y(rs[w])+' L'+(w+1)*10+' '+y(rs[w]);
+      svg+='<path d="'+e+'" fill="none" stroke="#12213B" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>';
+    }
+    $('svg').setAttribute('viewBox','0 0 '+W+' '+H);$('svg').innerHTML=svg;
+    var pct=function(v){return (v/S*100)+'%'};
+    $('deadline').style.left=pct(HORIZON);
+    $('cursor').hidden=!started;$('cursor').style.left=pct(Math.min(week,S));
+    $('timeline').innerHTML=sch.map(function(o,i){
+      var g=gainOf(i,null,isRevealed),err=errs[i].length;
+      return '<div class="blk'+(err?' err':g<=0?' novalue':'')+(o.start>=HORIZON?' late':'')+(o.s.shipped?' shipped':'')+'" style="left:'+pct(o.start)+';width:'+pct(o.end-o.start)+'" title="Slice '+(i+1)+'">S'+(i+1)+'</div>';
+    }).join('');
+    var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pct(w-.5)+'">'+w+'</span>';
+    $('ticks').innerHTML=t;
+    $('clock').textContent='Week '+Math.min(week,HORIZON)+' of '+HORIZON;
+    var cur=started&&week>0?rs[Math.min(week,S)-1]:null;
+    $('now-rate').textContent=cur===null?'':'now: '+cur+'/wk';
+  }
+  function renderControls(){
+    var errs=errorsOf(),bad=errs.some(function(e){return e.length}),open=slices.some(function(s){return !s.shipped});
+    var st=$('status'),run=$('run');st.classList.remove('bad');
+    var sch=schedule(),total=sch.length?sch[sch.length-1].end:0;
+    if(phase==='running'){run.disabled=true;run.textContent='Running…';st.textContent='Week '+week+'…';return}
+    if(phase==='paused'){run.disabled=true;run.textContent='Paused';st.textContent='Something just shipped.';return}
+    if(phase==='done'){run.disabled=true;run.textContent='Done';st.textContent='Twelve weeks are up.';return}
+    run.textContent=phase==='replan'?'Continue from week '+week:'Start the 12 weeks';
+    if(!slices.length){run.disabled=true;st.textContent='Add your first slice to start.';return}
+    if(bad){run.disabled=true;st.classList.add('bad');st.textContent='One slice can’t ship yet: see the note in red.';return}
+    if(phase==='replan'&&!open){run.disabled=false;st.textContent='Nothing left planned. Continue to the end, or add a slice.';return}
+    run.disabled=false;
+    var est=score(null,isRevealed);
+    st.textContent=total+' weeks planned · expected value: '+est;
+  }
+  function renderAll(){renderTray();renderBuilder();renderSlices();renderChart();renderControls();
+    $('presets').style.display=phase==='plan'?'':'none'}
+
+  /* ============ ACTIONS ============ */
+  $('tray').addEventListener('click',function(e){
+    var b=e.target.closest('.piece');if(!b||b.disabled)return;
+    var id=b.dataset.id,i=selected.indexOf(id);
+    if(i>=0)selected.splice(i,1);else selected.push(id);
+    renderTray();renderBuilder();
+  });
+  $('b-clear').addEventListener('click',function(){selected=[];renderTray();renderBuilder()});
+  $('b-add').addEventListener('click',function(){
+    if(!selected.length)return;
+    // keep pieces in tray order inside a slice
+    var ids=PIECES.map(function(p){return p.id}).filter(function(id){return selected.indexOf(id)>=0});
+    slices.push({id:nextId++,pieces:ids,shipped:false});selected=[];renderAll();
+    if(innerWidth<900)$('plan').scrollIntoView({behavior:reduce?'auto':'smooth'});
+  });
+  $('slices').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-act]');if(!b)return;
+    var i=+b.dataset.i,act=b.dataset.act;
+    if(act==='up'&&i>0){var t=slices[i-1];slices[i-1]=slices[i];slices[i]=t}
+    if(act==='down'&&i<slices.length-1){t=slices[i+1];slices[i+1]=slices[i];slices[i]=t}
+    if(act==='del')slices.splice(i,1);
+    if(act==='out'){var s=slices[i];s.pieces=s.pieces.filter(function(id){return id!==b.dataset.id});if(!s.pieces.length)slices.splice(i,1)}
+    renderAll();
+  });
+  document.querySelectorAll('[data-preset]').forEach(function(b){b.addEventListener('click',function(){
+    slices=PRESETS[b.dataset.preset].map(function(ids){return {id:nextId++,pieces:ids.slice(),shipped:false}});selected=[];renderAll();
+  })});
+  $('clear').addEventListener('click',function(){slices=[];selected=[];renderAll()});
+
+  function tick(){
+    week++;
+    var sch=schedule(),surprise=null;
+    sch.forEach(function(o){
+      if(!o.s.shipped&&o.end===week){
+        o.s.shipped=true;
+        o.s.pieces.forEach(function(id){
+          var p=P[id];revealed[id]=true;
+          if(p.upgrade&&p.actual!==p.est){learned.push({id:id,week:week});if(!surprise)surprise=p}
+        });
+      }
+    });
+    if(week>=HORIZON){finish();return}
+    if(surprise){pause(surprise);return}
+    renderAll();
+  }
+  function startRun(){
+    selected=[];phase='running';$('moment').hidden=true;renderAll();
+    var go=function(){tick();if(phase==='running')timer=setTimeout(go,reduce?0:420)};
+    timer=setTimeout(go,reduce?0:260);
+  }
+  function pause(p){
+    clearTimeout(timer);phase='paused';
+    var d=p.actual-p.est;
+    $('m-when').textContent='Week '+week+' · you just learned something';
+    $('m-title').textContent=p.name+': '+(p.actual>=0?'+':'')+p.actual+'/wk, not +'+p.est;
+    $('m-text').textContent=p.note+(d<0?' Is there anything left in your plan that rests on the same guess?':' Could you get more of this sooner?');
+    $('moment').hidden=false;renderAll();
+  }
+  $('run').addEventListener('click',startRun);
+  $('m-go').addEventListener('click',startRun);
+  $('m-replan').addEventListener('click',function(){
+    phase='replan';$('moment').hidden=true;renderAll();
+    $('slices').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
+  });
+
+  function finish(){
+    clearTimeout(timer);phase='done';week=HORIZON;renderAll();
+    var rs=rates(null,HORIZON,isRevealed),total=rs.reduce(function(a,b){return a+b},0);
+    var first=rs.findIndex(function(r){return r>0}),red=rs.filter(function(r){return r===0}).length;
+    $('r-total').textContent=total;
+    $('r-first').textContent=first<0?'never':'week '+(first+1);
+    $('r-red').textContent=red;
+    var mk=function(ids){return ids.map(function(x){return {pieces:x,shipped:false}})};
+    var thin=score(mk(PRESETS.thin),all),cake=score(mk(PRESETS.cake),all),big=score(mk(PRESETS.bigbang),all);
+    var max=Math.max(total,thin,1);
+    var rows=[['Your slices',total,'you'],['Thinnest slices first',thin,''],['Layer cake',cake,''],['One big release',big,'']];
+    $('compare').innerHTML=rows.map(function(r){return '<div class="cmp '+r[2]+'"><span>'+r[0]+'</span><span class="bar"><b style="width:'+(r[1]/max*100)+'%"></b></span><span class="n">'+r[1]+'</span></div>'}).join('');
+    var v;
+    if(total===0)v='Twelve weeks of effort and not a single customer could book. Every piece might be brilliant, but nobody got to use any of it.';
+    else if(total>=thin)v='That’s as good as it gets here. You got something bookable out fast, then let what you learned steer the rest.';
+    else if(first>=0&&first<=4)v='Early value, nicely done. The gap to the best plan is mostly in what you built next, and when you found out it didn’t pay off.';
+    else v='Value arrived, but late. The first slice did too much. What’s the least you could ship for a customer to book a place?';
+    $('verdict').textContent=v;
+    var lh=learned.map(function(l){
+      var p=P[l.id],when=l.week<HORIZON?'week '+l.week:'the deadline';
+      return '<li><b>'+p.name+'</b>: expected +'+p.est+'/wk, got '+(p.actual>=0?'+':'')+p.actual+'. You found out at '+when+', after '+p.effort+' week'+(p.effort>1?'s':'')+' of work.</li>';
+    });
+    var unseen=PIECES.filter(function(p){return p.upgrade&&p.actual!==p.est&&!revealed[p.id]&&used(p.id)});
+    if(unseen.length)lh.push('<li>You never found out how <b>'+unseen.map(function(p){return p.name.toLowerCase()}).join(', ')+'</b> would land. It didn’t ship in time.</li>');
+    if(!learned.length&&total>0)lh.push('<li>No surprises this time: your plan didn’t lean on the nice-to-haves.</li>');
+    $('learned').innerHTML=lh.join('');
+    var r=$('results');r.hidden=false;r.focus({preventScroll:true});r.scrollIntoView({behavior:reduce?'auto':'smooth'});
+  }
+  function reset(){
+    clearTimeout(timer);slices.forEach(function(s){s.shipped=false});
+    phase='plan';week=0;revealed={};learned=[];selected=[];
+    $('results').hidden=true;$('moment').hidden=true;renderAll();
+    $('plan').scrollIntoView({behavior:reduce?'auto':'smooth'});
+  }
+  $('again').addEventListener('click',reset);
+
+  $('year').textContent=new Date().getFullYear();
+  renderAll();
+})();
+</script>
+</body>
+</html>

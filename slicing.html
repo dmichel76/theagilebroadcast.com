@@ -123,24 +123,38 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .panel-title b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1rem}
 .panel-title span{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.04em}
 .panel.alt{border-top:4px solid var(--navy)}
-.chart-wrap{padding:14px 16px 6px}
-.ylab{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
-.ylab b{color:var(--ink);font-weight:500}
-.chart{position:relative;height:clamp(150px,18vw,190px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.chart-wrap{padding:16px 16px 10px}
+.axis-t{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.plot{display:grid;grid-template-columns:34px minmax(0,1fr) 96px;column-gap:6px}
+.plot .ycol{position:relative}
+.yt{position:absolute;right:0;transform:translateY(-50%);font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+.chart{position:relative;height:clamp(160px,18vw,200px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:6px}
 .chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.yt{position:absolute;left:-4px;transform:translate(-100%,-50%);font-family:var(--mono);font-size:.6rem;color:var(--muted)}
-.chart-wrap{padding-left:40px}
-.deadline{position:absolute;top:-6px;bottom:-1px;border-left:2px dashed var(--navy);pointer-events:none}
-.deadline span{position:absolute;top:-2px;right:5px;font-family:var(--hand);font-size:.8rem;white-space:nowrap;background:rgba(255,255,255,.85);padding:0 3px}
-.mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .68rem/22px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);opacity:0;transform:scale(.4);transition:opacity .2s,transform .2s}
+.endlab{position:relative;margin-top:6px}
+.endlab span{position:absolute;left:0;transform:translateY(-50%);font-size:.74rem;line-height:1.15;font-weight:600;white-space:nowrap;transition:top .25s}
+.endlab span b{display:block;font-family:var(--display);font-weight:800;font-size:1rem}
+.endlab .c{color:var(--accent-ink)}
+.endlab .b{color:#0E7A5F}
+.zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;font-family:var(--hand);font-size:.8rem;line-height:1.2;color:var(--muted);pointer-events:none}
+.deadline{position:absolute;top:-8px;bottom:-1px;border-left:2px dashed var(--navy);pointer-events:none}
+.deadline span{position:absolute;top:-4px;right:5px;font-family:var(--hand);font-size:.8rem;white-space:nowrap;background:rgba(255,255,255,.9);padding:0 3px}
+.mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .68rem/18px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);opacity:0;transform:scale(.4);transition:opacity .2s,transform .2s}
 .mark.on{opacity:1;transform:none}
-.mark.zero{background:var(--red)}
-.timeline{position:relative;height:30px;margin-top:8px;background:var(--soft);border:1px solid var(--line)}
+.mark.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.row-t{margin:14px 0 4px}
+.timeline{position:relative;height:30px;background:var(--soft);border:1px solid var(--line)}
 .blk{position:absolute;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.66rem;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
-.blk.zero{background:repeating-linear-gradient(135deg,var(--red) 0 6px,#A11F1F 6px 12px)}
-.blk.late{opacity:.4}
-.ticks{position:relative;height:18px;font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+.blk.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.blk.late{opacity:.35}
+.ticks{position:relative;height:16px;font-family:var(--mono);font-size:.6rem;color:var(--muted)}
 .ticks span{position:absolute;top:2px;transform:translateX(-50%)}
+.xt{text-align:right;margin-top:2px}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:18px;height:12px}
+.key .k-v{background:var(--navy)}
+.key .k-z{border:2px dashed var(--navy);background:#fff}
+.key .k-l{background:var(--navy);opacity:.35}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
 @media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}}
 .stat b.c{color:var(--accent-ink)}.stat b.b{color:#0E7A5F}
@@ -158,7 +172,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .story li.on{opacity:1;transform:none}
 .story .when{display:flex;align-items:baseline;gap:8px;font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin:10px 0 6px}
 .story .when i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:.62rem}
-.story .when i.zero{background:var(--red)}
+.story .when i.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
 .story .what{display:block;font-weight:600;font-size:.92rem;line-height:1.35;margin:0 0 4px 28px}
 .story .gain{margin-left:auto;white-space:nowrap}
 .story .gain.up{color:var(--accent-ink)}
@@ -256,7 +270,7 @@ footer.site a:hover{color:var(--accent)}
       <div>
         <span class="eyebrow">Twelve weeks later</span>
         <h2 id="out-title">How your plan <em>played out</em></h2>
-        <p>Two kinds of value. <b>Customers</b>: the share of cancellations they can do online instead of phoning. <b>Business</b>: the share of call-centre work that goes away. Both only move when a slice is live.</p>
+        <p>Two lines: <b style="color:var(--accent-ink)">customers</b>, the share of cancellations they can do online instead of phoning, and <b style="color:#0E7A5F">business</b>, the share of call-centre work that goes away. Both only step up when a slice goes live.</p>
       </div>
     </div>
     <div class="tabs" role="tablist" id="tabs">
@@ -536,46 +550,64 @@ footer.site a:hover{color:var(--accent)}
   }
   var pct=function(v){return Math.round(v*100)+'%'};
   function panelHTML(id,title,plan){
-    var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0,S=Math.max(HORIZON,total);
+    var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0;
+    var lane=function(inner){return '<div class="plot"><div></div><div>'+inner+'</div><div></div></div>'};
     return '<div class="panel-title"><b>'+title+'</b><span>'+plan.length+' slices · '+total+' weeks of work</span></div>'+
-      '<div class="chart-wrap"><div class="ylab"><span class="lg"><i class="lc"></i>Customers: done online <i class="lb"></i>Business: call-centre work saved</span><b id="'+id+'-now"></b></div>'+
-      '<div class="chart" id="'+id+'-chart"><svg preserveAspectRatio="none" aria-hidden="true"></svg>'+
-        '<span class="yt" style="top:'+(100-100/1*0)+'%">0</span><span class="yt" style="top:'+(100-((100-8)*.5+0))+'%">50%</span><span class="yt" style="top:8%">100%</span>'+
-        '<div class="deadline" style="left:'+(HORIZON/S*100)+'%"><span>week 12</span></div></div>'+
-      '<div class="timeline" id="'+id+'-tl"></div><div class="ticks" id="'+id+'-ticks"></div></div>'+
+      '<div class="chart-wrap">'+
+      lane('<div class="axis-t">Share of cancellations</div>')+
+      '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100%</span><span class="yt" style="top:calc(6px + 50%)">50%</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+        '<div class="chart" id="'+id+'-chart"><svg preserveAspectRatio="none" aria-hidden="true"></svg></div>'+
+        '<div class="endlab" id="'+id+'-end"></div></div>'+
+      lane('<div class="axis-t row-t">Slices, in the order they’re built</div><div class="timeline" id="'+id+'-tl"></div><div class="ticks" id="'+id+'-ticks"></div><div class="axis-t xt">weeks →</div>')+
+      lane('<div class="key"><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds no value on its own</span><span><i class="k-l"></i>not finished by week 12</span></div>')+
+      '</div>'+
       '<div class="stats" id="'+id+'-stats"></div>'+
       '<ul class="story" id="'+id+'-story"></ul>';
   }
   function drawChart(id,plan,upTo){
     var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0,S=Math.max(HORIZON,total),W=S*10,H=100;
-    var y=function(v){return H-v*(H-8)};
+    var y=function(v){return H-v*H};
     var vals=[],bv=[];for(var w=0;w<S;w++){var v=0,v2=0;sch.forEach(function(o){if(o.end<=w){v=o.p.value;v2=o.p.bval||0}});vals.push(v);bv.push(v2)}
-    var past=Math.min(upTo,S),svg='<defs><pattern id="h-'+id+'" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#FBEAEA"/><line x1="0" y1="0" x2="0" y2="6" stroke="#E7A3A3" stroke-width="3"/></pattern></defs>';
-    if(S>HORIZON)svg+='<rect x="'+HORIZON*10+'" y="0" width="'+(S-HORIZON)*10+'" height="'+H+'" fill="#EEF0F4"/>';
-    for(w=0;w<Math.min(past,HORIZON);w++)if(vals[w]===0&&bv[w]===0)svg+='<rect x="'+w*10+'" y="0" width="10.05" height="'+H+'" fill="#F4C7C7"/>';
+    var past=Math.min(upTo,S),svg='';
+    // gridlines
+    svg+='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>';
+    if(S>HORIZON)svg+='<rect x="'+HORIZON*10+'" y="0" width="'+(S-HORIZON)*10+'" height="'+H+'" fill="#F1F3F7"/>';
     if(past>0){
-      var d='M0 '+H;for(w=0;w<past;w++)d+=' L'+w*10+' '+y(vals[w])+' L'+(w+1)*10+' '+y(vals[w]);d+=' L'+past*10+' '+H+' Z';
-      svg+='<path d="'+d+'" fill="#F2A91E" fill-opacity=".85"/>';
-      var l='M0 '+y(vals[0]);for(w=0;w<past;w++)l+=' L'+w*10+' '+y(vals[w])+' L'+(w+1)*10+' '+y(vals[w]);
-      svg+='<path d="'+l+'" fill="none" stroke="#B87700" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
-      var bl='M0 '+y(bv[0]);for(w=0;w<past;w++)bl+=' L'+w*10+' '+y(bv[w])+' L'+(w+1)*10+' '+y(bv[w]);
-      svg+='<path d="'+bl+'" fill="none" stroke="#0E7A5F" stroke-width="3" stroke-dasharray="7 4" vector-effect="non-scaling-stroke"/>';
+      var line=function(arr){var d='M0 '+y(arr[0]);for(var w=0;w<past;w++)d+=' L'+w*10+' '+y(arr[w])+' L'+(w+1)*10+' '+y(arr[w]);return d};
+      var area='M0 '+H;for(w=0;w<past;w++)area+=' L'+w*10+' '+y(vals[w])+' L'+(w+1)*10+' '+y(vals[w]);area+=' L'+past*10+' '+H+' Z';
+      svg+='<path d="'+area+'" fill="#F2A91E" fill-opacity=".18"/>';
+      svg+='<path d="'+line(bv)+'" fill="none" stroke="#0E7A5F" stroke-width="3" vector-effect="non-scaling-stroke"/>';
+      svg+='<path d="'+line(vals)+'" fill="none" stroke="#D99000" stroke-width="3" vector-effect="non-scaling-stroke"/>';
     }
     var chart=$(id+'-chart');chart.querySelector('svg').setAttribute('viewBox','0 0 '+W+' '+H);chart.querySelector('svg').innerHTML=svg;
-    chart.querySelectorAll('.mark').forEach(function(m){m.remove()});
+    chart.querySelectorAll('.mark,.zone,.deadline').forEach(function(m){m.remove()});
     var pc=function(v){return (v/S*100)+'%'};
+    // label the stretch before anything is live
+    var firstLive=vals.findIndex(function(v,i){return v>0||bv[i]>0});if(firstLive<0)firstLive=S;
+    var nothingTo=Math.min(firstLive,HORIZON,past);
+    if(nothingTo>=2){var z=document.createElement('div');z.className='zone';z.style.left='0';z.style.width=pc(nothingTo);
+      z.textContent='Nothing live yet';chart.appendChild(z)}
+    if(S>HORIZON&&S-HORIZON>=2){var z2=document.createElement('div');z2.className='zone';z2.style.left=pc(HORIZON);z2.style.width=pc(S-HORIZON);z2.textContent='too late';chart.appendChild(z2)}
+    var dl=document.createElement('div');dl.className='deadline';dl.style.left=pc(HORIZON);dl.innerHTML='<span>12-week deadline</span>';chart.appendChild(dl);
     sch.forEach(function(o,i){
-      if(o.end>S)return;var m=document.createElement('span');
-      m.className='mark'+(o.p.value<=(i?sch[i-1].p.value:0)&&(o.p.bval||0)<=(i?sch[i-1].p.bval||0:0)?' zero':'')+(o.end<=upTo&&o.end<=HORIZON?' on':'');
-      m.style.left=pc(o.end);m.style.top=(y(o.p.value)/H*100)+'%';m.textContent=i+1;chart.appendChild(m);
+      if(o.end>HORIZON)return;var m=document.createElement('span');
+      var prevC=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,adds=o.p.value>prevC||(o.p.bval||0)>prevB;
+      m.className='mark'+(adds?'':' zero')+(o.end<=upTo?' on':'');
+      m.title='Slice '+(i+1)+' goes live';
+      m.style.left=pc(o.end);m.style.top=(y(Math.max(o.p.value,o.p.bval||0))/H*100)+'%';m.textContent=i+1;chart.appendChild(m);
     });
     $(id+'-tl').innerHTML=sch.map(function(o,i){
-      if(!o.p.effort)return '';var prev=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0;
-      return '<div class="blk'+(o.p.value<=prev&&(o.p.bval||0)<=prevB?' zero':'')+(o.start>=HORIZON?' late':'')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="'+esc(o.p.text)+'">'+(i+1)+'</div>';
+      if(!o.p.effort)return '';var prevC=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,adds=o.p.value>prevC||(o.p.bval||0)>prevB;
+      return '<div class="blk'+(adds?'':' zero')+(o.end>HORIZON?' late':'')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(i+1)+': '+esc(o.p.text)+'">'+(i+1)+'</div>';
     }).join('');
     var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pc(w-.5)+'">'+w+'</span>';
     $(id+'-ticks').innerHTML=t;
-    $(id+'-now').textContent=upTo>0?'wk '+Math.min(upTo,HORIZON)+': '+pct(vals[Math.min(upTo,S)-1])+' / '+pct(bv[Math.min(upTo,S)-1]):'';
+    // direct labels at the end of each line
+    var at=past>0?Math.min(past,S)-1:0,cv=past>0?vals[at]:0,bvv=past>0?bv[at]:0;
+    var G=36,yc=y(cv),yb=y(bvv);if(Math.abs(yc-yb)<G){var mid=(yc+yb)/2;if(cv>=bvv){yc=mid-G/2;yb=mid+G/2}else{yc=mid+G/2;yb=mid-G/2}}
+    var lo=Math.min(yc,yb),hi=Math.max(yc,yb);if(lo<14){yc+=14-lo;yb+=14-lo}if(hi>H-14){yc-=hi-(H-14);yb-=hi-(H-14)}
+    $(id+'-end').innerHTML='<span class="c" style="top:'+yc+'%"><b>'+pct(cv)+'</b>Customers<br>done online</span>'+
+      '<span class="b" style="top:'+yb+'%"><b>'+pct(bvv)+'</b>Business<br>work saved</span>';
   }
   function storyHTML(plan){
     var sch=schedule(plan),h='';
@@ -600,7 +632,7 @@ footer.site a:hover{color:var(--accent)}
     return '<div class="stat"><b>'+(s.first?'week '+s.first:'never')+'</b><span>First value</span></div>'+
       '<div class="stat"><b class="c">'+pct(s.end)+'</b><span>Customers: online by wk 12</span></div>'+
       '<div class="stat"><b class="b">'+pct(s.endB)+'</b><span>Business: work saved by wk 12</span></div>'+
-      '<div class="stat"><b>'+s.red+'</b><span>Weeks with nothing</span></div>';
+      '<div class="stat"><b>'+s.red+'</b><span>Weeks with nothing live</span></div>';
   }
   function play(id,plan,done){
     // reveal week by week: line grows, markers and story items appear as slices ship
@@ -663,7 +695,7 @@ footer.site a:hover{color:var(--accent)}
       row('Customers: average over 12 weeks',pct(a.avg),pct(b.avg))+
       row('Business: work saved by week 12',pct(a.endB),pct(b.endB))+
       row('Business: average over 12 weeks',pct(a.avgB),pct(b.avgB))+
-      row('Weeks with nothing',a.red,b.red)+
+      row('Weeks with nothing live',a.red,b.red)+
       '</tbody></table><p>'+v+'</p>'+
       '<div class="btn-row"><a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Slice your real work with me</a></div>';
   }

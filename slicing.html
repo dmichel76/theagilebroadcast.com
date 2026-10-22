@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Slice It Right</title>
 <meta name="robots" content="noindex">
-<meta name="description" content="A slicing game: write your slices for self-service order cancellation and see how your plan plays out over twelve weeks.">
+<meta name="description" content="A slicing game: write your slices for self-service order cancellation and see how your plan plays out, week by week.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
@@ -136,6 +136,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .endlab .c{color:var(--accent-ink)}
 .endlab .b{color:#0E7A5F}
 .zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;font-family:var(--hand);font-size:.8rem;line-height:1.2;color:var(--muted);pointer-events:none}
+.zone.top{align-items:flex-start;padding-top:6px}
 .deadline{position:absolute;top:-8px;bottom:-1px;border-left:2px dashed var(--navy);pointer-events:none}
 .deadline span{position:absolute;top:-4px;right:5px;font-family:var(--hand);font-size:.8rem;white-space:nowrap;background:rgba(255,255,255,.9);padding:0 3px}
 .mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .68rem/18px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);opacity:0;transform:scale(.4);transition:opacity .2s,transform .2s}
@@ -154,7 +155,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .key i{display:inline-block;width:18px;height:12px}
 .key .k-v{background:var(--navy)}
 .key .k-z{border:2px dashed var(--navy);background:#fff}
-.key .k-l{background:var(--navy);opacity:.35}
+.key .k-n{background:#F4C7C7}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
 @media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}}
 .stat b.c{color:var(--accent-ink)}.stat b.b{color:#0E7A5F}
@@ -235,14 +236,14 @@ footer.site a:hover{color:var(--accent)}
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow">Slicing game · 12 weeks · about 5 minutes</span>
+      <span class="eyebrow">Slicing game · about 5 minutes</span>
       <h1>Slice it <em>right</em></h1>
-      <p class="lede">Write how you’d slice this feature, put the slices in order, and see how your plan plays out over twelve weeks: for customers, and for the business.</p>
+      <p class="lede">Write how you’d slice this feature, put the slices in order, and see how your plan plays out week by week: for customers, and for the business.</p>
     </div>
     <div class="brief">
       <span class="eyebrow">The brief</span>
       <h2>“As a user, I want to be able to cancel an order by myself”</h2>
-      <p>On this ecommerce platform, cancelling an order means calling the call centre. The business wants self-service cancellation on the <b>website</b> and the <b>iOS and Android apps</b>. You have <b>12 weeks</b>. How would you slice it to deliver value early, and learn or reduce risk?</p>
+      <p>On this ecommerce platform, cancelling an order means calling the call centre. The business wants self-service cancellation on the <b>website</b> and the <b>iOS and Android apps</b>. How would you slice it to deliver value early, and learn or reduce risk?</p>
     </div>
   </div>
 </section>
@@ -268,7 +269,7 @@ footer.site a:hover{color:var(--accent)}
   <div class="wrap">
     <div class="out-head">
       <div>
-        <span class="eyebrow">Twelve weeks later</span>
+        <span class="eyebrow">Week by week</span>
         <h2 id="out-title">How your plan <em>played out</em></h2>
         <p>Two lines: <b style="color:var(--accent-ink)">customers</b>, the share of cancellations they can do online instead of phoning, and <b style="color:#0E7A5F">business</b>, the share of call-centre work that goes away. Both only step up when a slice goes live.</p>
       </div>
@@ -300,7 +301,6 @@ footer.site a:hover{color:var(--accent)}
 
 <script>
 (function(){
-  var HORIZON=12;
   var $=function(id){return document.getElementById(id)};
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -541,12 +541,17 @@ footer.site a:hover{color:var(--accent)}
 
   /* ================= OUTCOME ================= */
   function schedule(plan){var t=0;return plan.map(function(p){var o={p:p,start:t,end:t+p.effort};t=o.end;return o})}
-  function weekly(plan,key){key=key||'value';var sch=schedule(plan),out=[];for(var w=0;w<HORIZON;w++){var v=0;sch.forEach(function(o){if(o.end<=w)v=o.p[key]||0});out.push(v)}return out}
-  function stats(plan){
-    var c=weekly(plan,'value'),b=weekly(plan,'bval'),first=c.findIndex(function(v,i){return v>0||b[i]>0});
-    var avg=function(a){return a.reduce(function(x,y){return x+y},0)/HORIZON};
-    var fin={value:0,bval:0};schedule(plan).forEach(function(o){if(o.end<=HORIZON)fin=o.p});
-    return {first:first<0?null:first+1,end:fin.value||0,endB:fin.bval||0,avg:avg(c),avgB:avg(b),red:c.filter(function(v,i){return v===0&&b[i]===0}).length};
+  function totalWeeks(plan){var t=0;plan.forEach(function(p){t+=p.effort});return t}
+  function weekly(plan,key,span){var sch=schedule(plan),out=[];for(var w=0;w<span;w++){var v=0;sch.forEach(function(o){if(o.end<=w)v=o.p[key]||0});out.push(v)}return out}
+  // span = how many weeks to look at; defaults to the plan's own length. Comparisons use the longer of the two plans,
+  // so a plan that finishes early keeps delivering its value while the other is still being built.
+  function stats(plan,span){
+    var T=totalWeeks(plan);span=Math.max(span||T,1);
+    var c=weekly(plan,'value',span),b=weekly(plan,'bval',span),first=c.findIndex(function(v,i){return v>0||b[i]>0});
+    var avg=function(a){return a.reduce(function(x,y){return x+y},0)/span};
+    var fin=plan.length?plan[plan.length-1]:{value:0,bval:0};
+    return {weeks:T,span:span,first:first<0?null:first+1,end:fin.value||0,endB:fin.bval||0,avg:avg(c),avgB:avg(b),
+      red:first<0?T:first};
   }
   var pct=function(v){return Math.round(v*100)+'%'};
   function panelHTML(id,title,plan){
@@ -559,19 +564,20 @@ footer.site a:hover{color:var(--accent)}
         '<div class="chart" id="'+id+'-chart"><svg preserveAspectRatio="none" aria-hidden="true"></svg></div>'+
         '<div class="endlab" id="'+id+'-end"></div></div>'+
       lane('<div class="axis-t row-t">Slices, in the order they’re built</div><div class="timeline" id="'+id+'-tl"></div><div class="ticks" id="'+id+'-ticks"></div><div class="axis-t xt">weeks →</div>')+
-      lane('<div class="key"><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds no value on its own</span><span><i class="k-l"></i>not finished by week 12</span></div>')+
+      lane('<div class="key"><span><i class="k-n"></i>weeks with nothing live: customers still have to phone</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds no value on its own</span></div>')+
       '</div>'+
       '<div class="stats" id="'+id+'-stats"></div>'+
       '<ul class="story" id="'+id+'-story"></ul>';
   }
-  function drawChart(id,plan,upTo){
-    var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0,S=Math.max(HORIZON,total),W=S*10,H=100;
+  function drawChart(id,plan,upTo,span){
+    var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0,S=Math.max(span||total+1,4),W=S*10,H=100;
     var y=function(v){return H-v*H};
     var vals=[],bv=[];for(var w=0;w<S;w++){var v=0,v2=0;sch.forEach(function(o){if(o.end<=w){v=o.p.value;v2=o.p.bval||0}});vals.push(v);bv.push(v2)}
     var past=Math.min(upTo,S),svg='';
     // gridlines
     svg+='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>';
-    if(S>HORIZON)svg+='<rect x="'+HORIZON*10+'" y="0" width="'+(S-HORIZON)*10+'" height="'+H+'" fill="#F1F3F7"/>';
+    for(w=0;w<Math.min(upTo,total);w++)if(vals[w]===0&&bv[w]===0)svg+='<rect x="'+w*10+'" y="0" width="10.05" height="'+H+'" fill="#F4C7C7"/>';
+    if(S>total)svg+='<rect x="'+total*10+'" y="0" width="'+(S-total)*10+'" height="'+H+'" fill="#F7F8FA"/>';
     if(past>0){
       var line=function(arr){var d='M0 '+y(arr[0]);for(var w=0;w<past;w++)d+=' L'+w*10+' '+y(arr[w])+' L'+(w+1)*10+' '+y(arr[w]);return d};
       var area='M0 '+H;for(w=0;w<past;w++)area+=' L'+w*10+' '+y(vals[w])+' L'+(w+1)*10+' '+y(vals[w]);area+=' L'+past*10+' '+H+' Z';
@@ -584,13 +590,12 @@ footer.site a:hover{color:var(--accent)}
     var pc=function(v){return (v/S*100)+'%'};
     // label the stretch before anything is live
     var firstLive=vals.findIndex(function(v,i){return v>0||bv[i]>0});if(firstLive<0)firstLive=S;
-    var nothingTo=Math.min(firstLive,HORIZON,past);
-    if(nothingTo>=2){var z=document.createElement('div');z.className='zone';z.style.left='0';z.style.width=pc(nothingTo);
+    var nothingTo=Math.min(firstLive,past);
+    if(nothingTo>=1&&chart.clientWidth*nothingTo/S>=64){var z=document.createElement('div');z.className='zone';z.style.left='0';z.style.width=pc(nothingTo);
       z.textContent='Nothing live yet';chart.appendChild(z)}
-    if(S>HORIZON&&S-HORIZON>=2){var z2=document.createElement('div');z2.className='zone';z2.style.left=pc(HORIZON);z2.style.width=pc(S-HORIZON);z2.textContent='too late';chart.appendChild(z2)}
-    var dl=document.createElement('div');dl.className='deadline';dl.style.left=pc(HORIZON);dl.innerHTML='<span>12-week deadline</span>';chart.appendChild(dl);
+    if(S>total&&S-total>=2&&past>=total){var z2=document.createElement('div');z2.className='zone top';z2.style.left=pc(total);z2.style.width=pc(S-total);z2.textContent='all slices done';chart.appendChild(z2)}
     sch.forEach(function(o,i){
-      if(o.end>HORIZON)return;var m=document.createElement('span');
+      var m=document.createElement('span');
       var prevC=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,adds=o.p.value>prevC||(o.p.bval||0)>prevB;
       m.className='mark'+(adds?'':' zero')+(o.end<=upTo?' on':'');
       m.title='Slice '+(i+1)+' goes live';
@@ -598,7 +603,7 @@ footer.site a:hover{color:var(--accent)}
     });
     $(id+'-tl').innerHTML=sch.map(function(o,i){
       if(!o.p.effort)return '';var prevC=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,adds=o.p.value>prevC||(o.p.bval||0)>prevB;
-      return '<div class="blk'+(adds?'':' zero')+(o.end>HORIZON?' late':'')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(i+1)+': '+esc(o.p.text)+'">'+(i+1)+'</div>';
+      return '<div class="blk'+(adds?'':' zero')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(i+1)+': '+esc(o.p.text)+'">'+(i+1)+'</div>';
     }).join('');
     var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pc(w-.5)+'">'+w+'</span>';
     $(id+'-ticks').innerHTML=t;
@@ -612,10 +617,10 @@ footer.site a:hover{color:var(--accent)}
   function storyHTML(plan){
     var sch=schedule(plan),h='';
     sch.forEach(function(o,i){
-      var prev=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,g=Math.round((o.p.value-prev)*100),gb=Math.round(((o.p.bval||0)-prevB)*100),late=o.end>HORIZON;
-      var when=late?'Not live by week 12':'Week '+o.end;
+      var prev=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,g=Math.round((o.p.value-prev)*100),gb=Math.round(((o.p.bval||0)-prevB)*100),late=false;
+      var when='Week '+o.end;
       var none=g<=0&&gb<=0;
-      h+='<li data-w="'+(late?HORIZON:o.end)+'"'+(late?' class="end"':'')+'><div class="when"><i class="'+(none?'zero':'')+'">'+(i+1)+'</i>'+when+
+      h+='<li data-w="'+o.end+'"'+(late?' class="end"':'')+'><div class="when"><i class="'+(none?'zero':'')+'">'+(i+1)+'</i>'+when+
         (late?'':none?'<span class="gain none">no change</span>':'<span class="gain up">'+(g>0?'<span class="gc">+'+g+'% online</span>':'')+(gb>0?' <span class="gb">+'+gb+'% work saved</span>':'')+'</span>')+'</div><span class="what">'+esc(o.p.text)+'</span>';
       if(late){
         h+='<div class="say c"><span class="who" aria-hidden="true">🙂</span><p><small>Customer</small>Still phoning to cancel'+(prev>0?' on the channels that aren’t done yet.':'.')+'</p></div>'+
@@ -630,19 +635,20 @@ footer.site a:hover{color:var(--accent)}
   }
   function statsHTML(s){
     return '<div class="stat"><b>'+(s.first?'week '+s.first:'never')+'</b><span>First value</span></div>'+
-      '<div class="stat"><b class="c">'+pct(s.end)+'</b><span>Customers: online by wk 12</span></div>'+
-      '<div class="stat"><b class="b">'+pct(s.endB)+'</b><span>Business: work saved by wk 12</span></div>'+
+      '<div class="stat"><b class="c">'+pct(s.end)+'</b><span>Customers: done online at the end</span></div>'+
+      '<div class="stat"><b class="b">'+pct(s.endB)+'</b><span>Business: work saved at the end</span></div>'+
       '<div class="stat"><b>'+s.red+'</b><span>Weeks with nothing live</span></div>';
   }
-  function play(id,plan,done){
+  function play(id,plan,done,span){
+    var T=totalWeeks(plan);span=span||T+1;
     // reveal week by week: line grows, markers and story items appear as slices ship
     $(id+'-stats').innerHTML=statsHTML(stats(plan));
     $(id+'-story').innerHTML=storyHTML(plan);
     var items=[].slice.call($(id+'-story').children),w=0;
     function step(){
-      drawChart(id,plan,w);
+      drawChart(id,plan,w,span);
       items.forEach(function(li){if(+li.dataset.w<=w)li.classList.add('on')});
-      if(w>=HORIZON){items.forEach(function(li){li.classList.add('on')});if(done)done();return}
+      if(w>=span){items.forEach(function(li){li.classList.add('on')});if(done)done();return}
       w++;setTimeout(step,reduce?0:320);
     }
     step();
@@ -669,9 +675,10 @@ footer.site a:hover{color:var(--accent)}
     var p=$('p-alt');p.hidden=false;p.innerHTML=panelHTML('alt','David’s plan',SOLUTION);
     $('show-alt').hidden=true;
     setTab('alt');
-    play('alt',SOLUTION,function(){compare()});
-    // keep your chart drawn when the layout changes
-    drawChart('you',mine,HORIZON);
+    var span=Math.max(totalWeeks(mine),totalWeeks(SOLUTION))+1;
+    play('alt',SOLUTION,function(){compare()},span);
+    // redraw yours on the same week scale so the two charts line up
+    drawChart('you',mine,span,span);
   });
   function setTab(t){
     document.querySelectorAll('#tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false')});
@@ -679,23 +686,24 @@ footer.site a:hover{color:var(--accent)}
   }
   $('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-tab]');if(b)setTab(b.dataset.tab)});
   function compare(){
-    var a=stats(mine),b=stats(SOLUTION);
+    var span=Math.max(totalWeeks(mine),totalWeeks(SOLUTION))+1,a=stats(mine,span),b=stats(SOLUTION,span);
     var row=function(label,x,y){return '<tr><td>'+label+'</td><td class="num">'+x+'</td><td class="num">'+y+'</td></tr>'};
     var v;
-    if(a.avg>=b.avg-0.005&&a.avgB>=b.avgB-0.005)v='Your plan did as well as mine, or better, for customers and the business. Nicely sliced.';
+    if(!a.first)v='Nothing you built reached a customer: every slice depended on the next one. Thin slices on the channel most people use get value out much sooner.';
+    else if(a.avg>=b.avg-0.005&&a.avgB>=b.avgB-0.005)v='Your plan did as well as mine, or better, for customers and the business. Nicely sliced.';
     else if(a.avg>b.avg+0.005&&a.avgB<b.avgB-0.005)v='Customers got more out of your plan than mine, but the business got less: staff are still doing the work by hand. Both kinds of value count.';
     else if(a.avgB>b.avgB+0.005&&a.avg<b.avg-0.005)v='Your plan saved the business more work, but customers waited longer. Both kinds of value count.';
-    else if(a.first&&b.first&&a.first<=b.first)v='You got value out early. The difference is in what came next: which slices moved the line most for the effort?';
-    else if(!a.first)v='In twelve weeks, nothing you built reached a customer. Thin slices on the channel most people use get you there much sooner.';
+    else if(a.first<=b.first)v='You got value out early. The difference is in what came next: which slices moved the lines most for the effort?';
     else v='Value arrived in week '+a.first+' for you, week '+b.first+' for me. What’s the smallest thing that would help one customer, on the channel most of them use?';
     var c=$('compare');c.hidden=false;
     c.innerHTML='<h3>Side by side</h3><table><thead><tr><th></th><th class="num">You</th><th class="num">David</th></tr></thead><tbody>'+
       row('First value',a.first?'week '+a.first:'never',b.first?'week '+b.first:'never')+
-      row('Customers: online by week 12',pct(a.end),pct(b.end))+
-      row('Customers: average over 12 weeks',pct(a.avg),pct(b.avg))+
-      row('Business: work saved by week 12',pct(a.endB),pct(b.endB))+
-      row('Business: average over 12 weeks',pct(a.avgB),pct(b.avgB))+
       row('Weeks with nothing live',a.red,b.red)+
+      row('Weeks of work in total',a.weeks,b.weeks)+
+      row('Customers: done online at the end',pct(a.end),pct(b.end))+
+      row('Business: work saved at the end',pct(a.endB),pct(b.endB))+
+      row('Customers: average over '+span+' weeks',pct(a.avg),pct(b.avg))+
+      row('Business: average over '+span+' weeks',pct(a.avgB),pct(b.avgB))+
       '</tbody></table><p>'+v+'</p>'+
       '<div class="btn-row"><a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Slice your real work with me</a></div>';
   }
@@ -703,7 +711,7 @@ footer.site a:hover{color:var(--accent)}
 
   $('year').textContent=new Date().getFullYear();
   renderPlan();
-  window.__slicing={classify:classify,evaluate:function(t){return evaluateStandIn('',t)},panelHTML:panelHTML,drawChart:drawChart,storyHTML:storyHTML,statsHTML:statsHTML,stats:stats,SOLUTION:SOLUTION}; // for testing
+  window.__slicing={classify:classify,evaluate:function(t){return evaluateStandIn('',t)},panelHTML:panelHTML,drawChart:drawChart,storyHTML:storyHTML,statsHTML:statsHTML,stats:stats,totalWeeks:totalWeeks,SOLUTION:SOLUTION}; // for testing
 })();
 </script>
 </body>

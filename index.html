@@ -424,6 +424,21 @@ footer.site a{color:#C3CCDB}
 @keyframes bubble-pop{from{opacity:0;transform:rotate(-4deg) scale(.6)}to{opacity:1;transform:rotate(-4deg) scale(1)}}
 @media (prefers-reduced-motion:reduce){.hello-bubble{animation:none}}
 @media (max-width:860px){.hello-bubble{left:-2%;top:0;font-size:1.05rem;padding:10px 16px}}
+
+/* tools */
+#tools .tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:44px}
+@media (max-width:760px){#tools .tools{grid-template-columns:1fr}}
+.tool{display:flex;flex-direction:column;gap:12px;padding:26px;background:var(--soft);border-radius:12px;text-decoration:none;color:var(--ink);border-top:5px solid var(--c);transition:transform .15s,box-shadow .15s}
+.tool:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(18,33,59,.12)}
+.tool-reflect{--c:#16A37F}
+.tool-slice{--c:var(--accent)}
+.tool .tool-art{height:56px;display:flex;align-items:flex-end}
+.tool .tool-dots{display:flex;gap:8px}
+.tool .tool-dots i{width:22px;height:22px;border-radius:50%;border:1px solid #2B2B2B}
+.tool h3{text-transform:uppercase;font-size:1.3rem}
+.tool p{color:var(--muted)}
+.tool .tool-meta{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-top:auto}
+@media (prefers-reduced-motion:reduce){.tool{transition:none}}
 </style>
 <script defer src="assets/js/track.js?v=2026-10-24b"></script>
 </head>
@@ -440,6 +455,7 @@ footer.site a{color:#C3CCDB}
         <li><a href="#training">Training</a></li>
         <li><a href="#coaching">Coaching</a></li>
         <li><a href="#speaking">Speaking</a></li>
+        <li><a href="#tools">Tools</a></li>
         <li><a href="#book">Book</a></li>
         <li><a href="#videos">Videos</a></li>
         <li><a href="#about">About</a></li>
@@ -665,6 +681,32 @@ footer.site a{color:#C3CCDB}
       <img src="assets/img/speaking-aotb-2019.jpg" alt="David on stage at Agile on the Beach 2019 in front of a sketch of a fox and a hen" width="1400" height="788" loading="lazy">
       <img src="assets/img/speaking-aotb-extroverts.jpg" alt="David on the main stage at Agile on the Beach 2019 presenting Is Agile designed for extroverts" width="1400" height="1050" loading="lazy">
       <img src="assets/img/speaking-aotb-stage.jpg" alt="David on stage at Agile on the Beach explaining incremental and iterative delivery with the Mona Lisa" width="1000" height="990" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Try it yourself</span>
+        <h2>Tools</h2>
+        <p class="lede" style="margin-top:20px">Free, short exercises from my training. Use them on your own or with your team. Nothing you enter is stored or sent anywhere.</p>
+      </div>
+    </div>
+    <div class="tools">
+      <a class="tool tool-reflect" href="self-assessment.html">
+        <span class="tool-art" aria-hidden="true"><span class="tool-dots"><i style="background:#BE1111"></i><i style="background:#F89A4C"></i><i style="background:#FFDA45"></i><i style="background:#AEEBC9"></i><i style="background:#08712A"></i></span></span>
+        <h3>Agility self-reflection</h3>
+        <p>Twelve questions on how often you really work with value, learning and flow. See where to focus next.</p>
+        <span class="tool-meta">12 questions · 3 minutes →</span>
+      </a>
+      <a class="tool tool-slice" href="slicing.html">
+        <span class="tool-art" aria-hidden="true"><svg width="120" height="56" viewBox="0 0 120 56"><path d="M2 54 H22 V40 H42 V30 H62 V20 H92 V6 H118" fill="none" stroke="#D99000" stroke-width="4"/><line x1="2" y1="54" x2="118" y2="54" stroke="#12213B" stroke-width="2"/></svg></span>
+        <h3>Slice it right</h3>
+        <p>Slice a real feature into releases and see when value reaches customers. Get a slicing score, then compare with a reference solution.</p>
+        <span class="tool-meta">Slicing exercise · 5 minutes →</span>
+      </a>
     </div>
   </div>
 </section>

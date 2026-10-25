@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Slice It Right</title>
-<meta name="robots" content="noindex">
 <meta name="description" content="A slicing game: slice self-service order cancellation into releases and see when value becomes available.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -290,6 +289,7 @@ footer.site a:hover{color:var(--accent)}
         <li><a href="./#training">Training</a></li>
         <li><a href="./#coaching">Coaching</a></li>
         <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#tools">Tools</a></li>
         <li><a href="./#book">Book</a></li>
         <li><a href="./#videos">Videos</a></li>
         <li><a href="./#about">About</a></li>
@@ -330,6 +330,7 @@ footer.site a:hover{color:var(--accent)}
       <div class="plan-foot">
         <button class="btn btn-primary" id="run" type="button" disabled>See when value arrives</button>
         <span class="hint" id="hint"></span>
+        <a class="linkbtn" id="ref-link" href="slicing-reference.html" target="_blank" rel="noopener">Stuck? See the reference solution ↗</a>
       </div>
     </div>
 
@@ -359,13 +360,13 @@ footer.site a:hover{color:var(--accent)}
         </ul>
         <div class="btn-row">
           <button class="btn btn-primary btn-sm" id="revise" type="button">Revise my slices</button>
-          <button class="btn btn-ghost btn-sm" id="compare" type="button">See an alternative solution</button>
+          <button class="btn btn-ghost btn-sm" id="compare" type="button">See the reference solution</button>
         </div>
       </div>
       <div class="alt" id="alt" hidden>
         <div class="sec-head">
-          <span class="eyebrow">An alternative solution</span>
-          <h2>Here is <em>another way</em> to slice it</h2>
+          <span class="eyebrow">The reference solution</span>
+          <h2>Here is <em>the reference</em> solution</h2>
           <p>David’s plan does the highest-value, smallest slices first, so value arrives fast and then tails off. Compare the two value paths over time.</p>
         </div>
         <div class="panel" id="alt-panel"></div>
@@ -675,7 +676,7 @@ $('run').addEventListener('click',()=>{
     rounds++;current={plan,m:measures(plan)};
     renderResult();updateRun();
     $('rubric').hidden=false;
-    $('res-eyebrow').textContent=rounds===1?'Your first try':'Round '+rounds;
+    $('res-eyebrow').textContent=REF_MODE&&rounds===1?'Reference solution':rounds===1?'Your first try':'Round '+rounds;
     updateSimChoice();
   });
 });
@@ -690,9 +691,9 @@ function sliceList(m,withWhy){
       '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
 }
 function renderResult(){
-  const runs=[{key:'you',label:rounds>1?'This round':'Your plan',m:current.m}];
+  const runs=[{key:'you',label:REF_MODE&&rounds===1?'Reference':rounds>1?'This round':'Your plan',m:current.m}];
   if(previous)runs.push({key:'prev',label:'Previous round',m:previous.m});
-  let h='<div class="panel-title"><b>'+(rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
+  let h='<div class="panel-title"><b>'+(REF_MODE&&rounds===1?'The reference solution':rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
     scoreHTML(current.m)+chartBlock('p1',runs,runs[0]);
   if(runs.length===1)h+=statTiles(current.m);
   else{
@@ -706,19 +707,19 @@ function renderResult(){
   if(comparing)renderAlt();
 }
 function renderAlt(){
-  const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Alternative',m:dm};
+  const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Reference',m:dm};
   const row=(l,a,b)=>'<tr><td>'+l+'</td><td class="n">'+a+'</td><td class="n">'+b+'</td></tr>';
   const ys=scoreOf(current.m),ds=scoreOf(dm);
-  let h='<div class="panel-title"><b>Your plan vs the alternative</b><span>potential value over time</span></div>'+
-    chartBlock('p2',[you,alt],alt,{barTitle:'The alternative’s slices, in order'})+
-    '<table class="cmp"><thead><tr><th></th><th class="n">Your plan</th><th class="n">Alternative</th></tr></thead><tbody>'+
+  let h='<div class="panel-title"><b>Your plan vs the reference</b><span>potential value over time</span></div>'+
+    chartBlock('p2',[you,alt],alt,{barTitle:'The reference solution’s slices, in order'})+
+    '<table class="cmp"><thead><tr><th></th><th class="n">Your plan</th><th class="n">Reference</th></tr></thead><tbody>'+
     row('Slicing score',ys.overall,ds.overall)+row('1 · Slice by usable value',ys.usable,ds.usable)+row('2 · Get value out early',ys.early,ds.early)+row('3 · Avoid long waits',ys.waits,ds.waits)+
     row('Highest value reached',current.m.M,dm.M)+row('Weeks to reach it',current.m.T||'–',dm.T)+row('First value',current.m.first?'week '+current.m.first:'never','week '+dm.first)+
     '</tbody></table>'+sliceList(dm,false);
   $('alt-panel').innerHTML=h;
 }
 $('revise').addEventListener('click',()=>{$('view-slice').scrollIntoView({behavior:reduce?'auto':'smooth'});const t=document.querySelector('.stext');if(t)t.focus({preventScroll:true})});
-$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide the alternative':'See an alternative solution';$('alt').hidden=!comparing;if(comparing){renderAlt();$('alt').scrollIntoView({behavior:reduce?'auto':'smooth'})}});
+$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide the reference solution':'See the reference solution';$('alt').hidden=!comparing;if(comparing){renderAlt();$('alt').scrollIntoView({behavior:reduce?'auto':'smooth'})}});
 
 /* ======================= TABS ======================= */
 function setTab(t){
@@ -965,6 +966,8 @@ const PRESETS={
         'Cancellation page on the website with all options: whole orders, selected items, complex orders','Confirmation and refund emails','Analytics dashboard to track cancellations']
 };
 const QS=new URLSearchParams(location.search);
+const REF_MODE=QS.get('prefill')==='reference';
+if(REF_MODE){$('ref-link').hidden=true;$('compare').hidden=true}
 if(PRESETS[QS.get('prefill')]){stickies=PRESETS[QS.get('prefill')].map(t=>({id:nextId++,text:t}))}
 renderPlan();updateSimChoice();
 if(QS.get('run')==='1'&&filled().length)$('run').click();

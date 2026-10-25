@@ -958,13 +958,10 @@ if($('sim-side'))$('sim-side').addEventListener('click',e=>{
 
 /* ======================= INIT ======================= */
 $('year').textContent=new Date().getFullYear();
-// TESTING ONLY: ?prefill=david fills Part 1 with David's slices
+// ?prefill=reference (David's plan) or ?prefill=basic (a weak, layered plan); add &run=1 to run straight away
 const PRESETS={
-  david:DAVID.map(d=>d.text),
-  best:['Customers can see if an order is cancellable and request cancellation online; staff process it (this also tests demand)',
-        'Customers can automatically cancel single-item orders','Customers can automatically cancel entire multi-item orders',
-        'Customers can cancel selected items within an order','Handle all eligible orders, including complex and marketplace orders'],
-  poor:['Design the database for cancellations','Build the cancellation API','Internal admin screen for the support team',
+  reference:DAVID.map(d=>d.text),
+  basic:['Design the database for cancellations','Build the cancellation API','Internal admin screen for the support team',
         'Cancellation page on the website with all options: whole orders, selected items, complex orders','Confirmation and refund emails','Analytics dashboard to track cancellations']
 };
 const QS=new URLSearchParams(location.search);

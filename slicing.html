@@ -932,6 +932,8 @@ $('sim-side').addEventListener('click',e=>{
 
 /* ======================= INIT ======================= */
 $('year').textContent=new Date().getFullYear();
+// TESTING ONLY: ?prefill=david fills Part 1 with David's slices
+if(new URLSearchParams(location.search).get('prefill')==='david'){stickies=DAVID.map(d=>({id:nextId++,text:d.text}))}
 renderPlan();updateSimChoice();
 if(location.hash==='#simulate')setTab('sim');
 window.__slicing={classify,evaluate,measures,DAVID,SIM,weekResult,adoption,startSim:()=>startSim(),state:()=>G}; // for testing

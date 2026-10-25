@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slice It Right</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="A slicing game: slice self-service order cancellation into releases and see when value becomes available.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
+<style>
+/* PROTOTYPE (branch slicing-game). Built from brief/slicing-game docs 04 (exercise) and 05 (simulation).
+   Tab 1 "Slice it": stickies -> capabilities on the fixed 6-step scale -> potential-value staircase + 3 measures.
+   Tab 2 "Simulate": the same plan meets simulated customers in one of five hidden worlds; continue / stop / pivot / roll back.
+   Slices are read by a keyword stand-in (classify) until the AI proxy exists. All model numbers live in CONFIG below. */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --paper:#FFFFFF; --soft:#F1F3F7;
+  --ink:#12213B; --muted:#56637A; --on-navy:#DCE3EF; --line:#D9DEE8;
+  --accent:#F2A91E; --accent-ink:#B87700; --amber-line:#D99000;
+  --red:#C62828; --pink:#F4C7C7; --green:#0E7A5F;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+  --hand:"Shantell Sans","Comic Sans MS",cursive;
+  --maxw:1200px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+a:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.05;letter-spacing:-0.01em;text-wrap:balance;margin:0}
+h1,h2{text-transform:uppercase}
+h1 em,h2 em{font-style:normal;color:var(--accent)}
+p{margin:0}
+button,textarea{font:inherit;color:inherit}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+.eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.92rem;text-transform:uppercase;letter-spacing:.02em;padding:14px 20px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s,opacity .15s;background:none}
+.btn-primary{background:var(--accent);color:var(--navy)!important}
+.btn-primary:hover{background:#FFC04D}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{border-color:currentColor;color:var(--ink)}
+.btn-ghost:hover:not(:disabled){background:var(--ink);color:#fff}
+.btn-sm{padding:10px 14px;font-size:.8rem}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px}
+.linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.9rem}
+
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+.brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+.brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+.brand span{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+.nav ul a{color:var(--on-navy);text-decoration:none}
+.nav ul a:hover{color:var(--accent)}
+.nav .btn{padding:10px 16px;font-size:.85rem}
+@media (max-width:980px){.nav ul{display:none}}
+@media (max-width:420px){.nav .btn{padding:9px 12px;font-size:.78rem}.brand span{display:none}}
+
+/* hero */
+.hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(40px,6vw,72px)}
+.hero .eyebrow{color:var(--accent)}
+.hero h1{color:#fff;font-size:clamp(2.4rem,6vw,4.4rem);letter-spacing:-0.02em;line-height:.95}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,4vw,56px);align-items:end}
+@media (max-width:860px){.hero-grid{grid-template-columns:1fr}}
+.hero .lede{margin-top:18px;color:#C3CCDB;font-size:clamp(1.02rem,1.5vw,1.15rem);max-width:56ch}
+.brief{background:#fff;color:var(--ink);padding:20px 22px;transform:rotate(-1deg);box-shadow:0 18px 40px rgba(0,0,0,.25);border-top:6px solid var(--accent)}
+.brief .eyebrow{margin-bottom:8px}
+.brief h2{font-size:1.35rem;line-height:1.05}
+.brief p{margin-top:10px;font-size:.95rem;color:var(--muted)}
+.brief p b{color:var(--ink)}
+
+/* tabs */
+.tabbar{background:var(--soft);border-bottom:1px solid var(--line)}
+.tabbar .wrap{display:flex;gap:0}
+.tab{appearance:none;border:0;background:none;padding:16px 18px 14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer;border-bottom:4px solid transparent;color:var(--muted)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);background:#fff}
+.tab small{display:block;font:500 .66rem var(--mono);letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+@media (max-width:520px){.tab{padding:12px 10px 10px;font-size:.78rem}}
+
+.band{padding-block:clamp(32px,4.5vw,64px)}
+.sec-head{margin-bottom:20px}
+.sec-head h2{font-size:clamp(1.5rem,3.2vw,2.2rem)}
+.sec-head p{color:var(--muted);font-size:.95rem;max-width:64ch;margin-top:8px}
+.proto{margin-top:18px;font-size:.76rem;color:var(--muted);font-family:var(--mono);letter-spacing:.02em}
+
+/* stickies */
+.plan{max-width:760px}
+.slices{display:flex;flex-direction:column;gap:10px}
+.slice{display:flex;align-items:flex-start;gap:4px;border:1px solid #EAD9A6;background:#FFF9E8;border-left:6px solid var(--accent);padding:8px 8px 8px 2px}
+.slice .n{flex:none;font-family:var(--mono);font-size:.75rem;color:var(--muted);padding:12px 2px 0 4px;width:2.4ch;text-align:right}
+.grip{appearance:none;border:0;background:none;cursor:grab;color:var(--muted);font-size:1rem;letter-spacing:-3px;padding:10px 6px 10px 4px;line-height:1;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.grip[disabled]{visibility:hidden}
+.stext{flex:1;min-width:0;resize:none;overflow:hidden;font:500 1rem/1.4 var(--body);color:var(--ink);border:0;border-bottom:1px dashed #E3C77E;background:transparent;padding:8px 4px;min-height:2.4em}
+.stext::placeholder{color:#A99A72;font-weight:400}
+.stext:focus{outline:0;border-bottom-color:var(--accent-ink)}
+.icon{appearance:none;border:1px solid var(--line);background:#fff;width:32px;height:32px;display:inline-grid;place-items:center;cursor:pointer;font-size:.95rem;line-height:1;flex:none;margin-top:4px}
+.icon:hover{border-color:var(--navy)}
+.new-slice{appearance:none;width:100%;border:2px dashed var(--navy);background:transparent;padding:14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer}
+.new-slice:hover{background:var(--soft)}
+.plan-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:20px}
+.plan-foot .hint{font-size:.85rem;color:var(--muted)}
+.ghost{position:fixed;z-index:200;pointer-events:none;margin:0;opacity:.95;transform:rotate(-1.5deg) scale(1.02);box-shadow:0 14px 30px rgba(18,33,59,.3)}
+body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none;user-select:none}
+.dragsrc{opacity:.3}
+
+/* panels and charts */
+.panel{background:#fff;border:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 18px 40px rgba(18,33,59,.06)}
+.panel-title{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.panel-title b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1rem}
+.panel-title span{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.04em}
+.chart-wrap{padding:16px 16px 10px}
+.axis-t{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.plot{display:grid;grid-template-columns:34px minmax(0,1fr) 92px;column-gap:6px}
+.ycol{position:relative}
+.yt{position:absolute;right:0;transform:translateY(-50%);font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+.chart{position:relative;height:clamp(170px,20vw,230px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:6px}
+.chart.short{height:clamp(140px,16vw,180px)}
+.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.endlab{position:relative;margin-top:6px}
+.endlab span{position:absolute;left:0;transform:translateY(-50%);font-size:.72rem;line-height:1.15;font-weight:600;white-space:nowrap}
+.endlab span b{display:block;font-family:var(--display);font-weight:800;font-size:1rem}
+.mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .66rem/18px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.mark.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;font-family:var(--hand);font-size:.8rem;line-height:1.2;color:#8A4B4B;pointer-events:none}
+.gap{position:absolute;top:-12px;height:8px;border:2px solid var(--red);border-bottom:0;pointer-events:none;z-index:2}
+.gap span{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 .66rem var(--mono);color:var(--red);background:#fff;padding:0 4px}
+.target{position:absolute;left:0;right:0;border-top:2px dashed var(--navy);pointer-events:none}
+.target span{position:absolute;right:4px;top:-18px;font:600 .66rem var(--mono);color:var(--navy);background:rgba(255,255,255,.9);padding:0 3px}
+.row-t{margin:14px 0 22px}
+.timeline{position:relative;height:30px;background:var(--soft);border:1px solid var(--line)}
+.blk{position:absolute;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.66rem;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
+.blk.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.blk.inv{background:repeating-linear-gradient(135deg,#E6E9F0 0 5px,#fff 5px 10px);color:var(--muted);border:1px solid var(--line)}
+.ticks{position:relative;height:16px;font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+.ticks span{position:absolute;top:2px;transform:translateX(-50%)}
+.xt{text-align:right;margin-top:2px}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:18px;height:12px;flex:none}
+.k-pink{background:var(--pink)}
+.k-v{background:var(--navy)}
+.k-z{border:2px dashed var(--navy);background:#fff}
+.k-you{border-top:3px solid var(--amber-line);height:0!important}
+.k-prev{border-top:3px solid #A7B0C0;height:0!important}
+.k-david{border-top:3px dashed var(--navy);height:0!important}
+.k-c{border-top:3px solid var(--amber-line);height:0!important}
+.k-b{border-top:3px solid var(--green);height:0!important}
+.k-gap{border:2px solid var(--red);border-bottom:0;height:8px!important}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.stat{padding:12px 14px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(1.3rem,2.4vw,1.8rem);line-height:1}
+.stat span{display:block;margin-top:5px;font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.cmp{width:100%;border-collapse:collapse;font-size:.88rem;border-top:1px solid var(--line)}
+.cmp th,.cmp td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line)}
+.cmp th{font:500 .66rem var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.cmp td.n,.cmp th.n{text-align:right;font-family:var(--mono)}
+.slist{list-style:none;margin:0;padding:6px 16px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.slist li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding-top:8px}
+.slist .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font:600 .64rem var(--mono);margin-top:2px}
+.slist .num.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.slist .txt{font-weight:600;font-size:.93rem;line-height:1.35}
+.slist .why{grid-column:2/4;font-size:.84rem;color:var(--muted);line-height:1.4}
+.slist .pts{font:600 .72rem var(--mono);white-space:nowrap;text-align:right}
+.slist .pts.up{color:var(--accent-ink)}
+.slist .pts.none{color:var(--muted)}
+.slist .wk{font:500 .66rem var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:2px;font-weight:500}
+.results-actions{margin-top:18px}
+.thinking{display:flex;align-items:center;gap:12px;padding:28px 16px;font-family:var(--hand);font-size:1.05rem;color:var(--muted)}
+.thinking i{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite alternate}
+@keyframes pulse{from{opacity:.25}to{opacity:1}}
+
+/* rubric reveal */
+.rubric{margin-top:28px;background:var(--navy);color:var(--on-navy);padding:22px}
+.rubric h3{color:#fff;text-transform:uppercase;font-size:1.2rem}
+.rubric p{color:#C3CCDB;font-size:.93rem;margin-top:8px;max-width:70ch}
+.rubric table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.92rem}
+.rubric td{padding:8px 6px;border-bottom:1px solid var(--navy-2);vertical-align:top}
+.rubric td.p{font:800 1.05rem var(--display);color:var(--accent);width:56px;text-align:right;padding-right:14px}
+.rubric ul{margin:14px 0 0;padding-left:18px;color:#C3CCDB;font-size:.88rem}
+.rubric .btn-row{margin-top:16px}
+.rubric .btn-ghost{color:#fff}
+.rubric .btn-ghost:hover{background:#fff;color:var(--navy)}
+.score{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);border-bottom:1px solid var(--line)}
+@media (max-width:700px){.score{grid-template-columns:1fr}}
+.score-total{padding:18px 16px;background:var(--soft);border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+@media (max-width:700px){.score-total{border-right:0;border-bottom:1px solid var(--line)}}
+.score-total b{font:800 clamp(2.6rem,6vw,3.6rem)/1 var(--display)}
+.score-total b small{font-size:.4em;color:var(--muted);margin-left:4px}
+.score-total span{font:500 .68rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.score-total p{font-size:.85rem;color:var(--muted);margin-top:8px}
+.score-parts{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.sp-head{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:.92rem}
+.sp-head b{font:800 1rem var(--display)}
+.sp-bar{height:8px;background:var(--soft);margin-top:4px}
+.sp-bar i{display:block;height:100%;background:var(--accent)}
+.sp-bar i.lo{background:var(--red)}
+.sp-bar i.hi{background:var(--green)}
+.sp-why{font-size:.8rem;color:var(--muted);margin-top:3px}
+.alt{margin-top:28px}
+.alt .sec-head{margin-bottom:14px}
+.sim-cta{margin-top:32px;background:var(--navy);color:var(--on-navy);padding:clamp(24px,4vw,40px);display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:20px;align-items:center;border-top:6px solid var(--accent)}
+@media (max-width:760px){.sim-cta{grid-template-columns:1fr}}
+.sim-cta h2{color:#fff;font-size:clamp(1.6rem,3.6vw,2.6rem)}
+.sim-cta p{color:#C3CCDB;margin-top:10px;max-width:56ch}
+.sim-cta .btn{font-size:1.05rem;padding:18px 24px;justify-self:start}
+.closing{margin-top:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;max-width:70ch}
+.closing p{font-size:.95rem;color:var(--muted)}
+.closing p+p{margin-top:8px}
+
+/* simulation */
+.sim-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(18px,3vw,32px);align-items:start}
+@media (max-width:960px){.sim-grid{grid-template-columns:1fr}}
+.setup{max-width:760px}
+.choice{display:flex;flex-direction:column;gap:10px;margin:14px 0 18px}
+.choice label{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);padding:12px 14px;cursor:pointer;background:#fff}
+.choice label:has(input:checked){border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+.choice label.off{opacity:.5;cursor:not-allowed}
+.choice input{margin-top:5px;accent-color:var(--navy)}
+.choice b{display:block}
+.choice small{color:var(--muted);font-size:.85rem}
+.target-box{background:#FFF6E2;border:1px solid #F3D28B;padding:12px 14px;font-size:.93rem}
+.target-box b{font-family:var(--display);text-transform:uppercase}
+.side{display:flex;flex-direction:column;gap:14px}
+.dash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line)}
+.dash div{padding:10px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.dash div:nth-child(2n){border-right:0}
+.dash b{display:block;font:800 1.2rem var(--display)}
+.dash span{font:500 .62rem var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.dash b.bad{color:var(--red)}
+.card{border:1px solid var(--line);background:#fff;border-left:5px solid var(--navy);padding:14px 16px}
+.card.warn{border-left-color:var(--red)}
+.card.good{border-left-color:var(--green)}
+.card.info{border-left-color:var(--accent)}
+.card .eyebrow{margin-bottom:6px}
+.card h3{font-size:1.02rem;text-transform:uppercase}
+.card p{margin-top:6px;font-size:.92rem}
+.card ul{margin:8px 0 0;padding-left:18px;font-size:.88rem}
+.decide{background:var(--navy);color:var(--on-navy);padding:16px}
+.decide h3{color:#fff;text-transform:uppercase;font-size:1rem}
+.decide p{font-size:.88rem;color:#C3CCDB;margin-top:4px}
+.decide .btn-row{margin-top:12px}
+.decide .btn-ghost{color:#fff}
+.decide .btn-ghost:hover:not(:disabled){background:#fff;color:var(--navy)}
+.decide .sub{margin-top:14px;padding-top:12px;border-top:1px solid var(--navy-2)}
+.decide .sub b{display:block;font:500 .66rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.opt{display:block;width:100%;text-align:left;appearance:none;border:1px solid var(--navy-2);background:var(--navy-2);color:#fff;padding:9px 12px;margin-top:6px;cursor:pointer;font-size:.88rem;line-height:1.35}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{opacity:.4;cursor:not-allowed}
+.opt small{display:block;color:#AEB9CC;font-size:.78rem}
+.log{list-style:none;margin:0;padding:10px 16px 14px;border-top:1px solid var(--line);font-size:.86rem;display:flex;flex-direction:column;gap:6px}
+.log li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px}
+.log li span{font:500 .68rem var(--mono);color:var(--muted);padding-top:2px}
+.summary{background:var(--navy);color:var(--on-navy);padding:22px}
+.summary h3{color:#fff;font-size:1.3rem;text-transform:uppercase}
+.summary p{margin-top:8px;color:#C3CCDB;font-size:.93rem}
+.summary .world{font-family:var(--hand);font-size:1.15rem;color:#fff;margin-top:10px}
+.summary table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.9rem}
+.summary td{padding:7px 6px;border-bottom:1px solid var(--navy-2)}
+.summary td.n{text-align:right;font-family:var(--mono);color:#fff}
+.summary .btn-row{margin-top:16px}
+.summary .btn-ghost{color:#fff}
+.summary .btn-ghost:hover{background:#fff;color:var(--navy)}
+.sim-tag{display:inline-block;font:500 .62rem var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#FFF1D2;color:var(--accent-ink);padding:1px 6px;margin-left:6px;vertical-align:middle}
+
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.thinking i{animation:none}}
+</style>
+<script defer src="assets/js/track.js?v=2026-10-24b"></script>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Slicing game · about 5 minutes</span>
+      <h1>Slice it <em>right</em></h1>
+      <p class="lede">Slice a real feature into releases and see when value becomes available. A good plan gets usable value out early and avoids long waits with nothing new.</p>
+    </div>
+    <div class="brief">
+      <span class="eyebrow">The brief</span>
+      <h2>“As a customer, I want to cancel an order by myself”</h2>
+      <p>An online retailer sells through <b>its website</b>. Today, customers who want to cancel an order have to <b>phone the contact centre</b>, where staff handle it. The business wants self-service cancellation on the website, to cut cancellation calls and the cost of handling them.</p>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ===================== PART 1: SLICE IT ===================== -->
+<section class="band" id="view-slice">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Your slices</span>
+      <h2>How would you slice it?</h2>
+      <p>One sticky per slice, in the order you’d release them. Say what customers can do once it’s live. Drag the ⋮⋮ handle to reorder (press and hold on a phone).</p>
+    </div>
+    <div class="plan">
+      <div class="slices" id="slices"></div>
+      <div class="plan-foot">
+        <button class="btn btn-primary" id="run" type="button" disabled>See when value arrives</button>
+        <span class="hint" id="hint"></span>
+      </div>
+    </div>
+
+    <div id="result" hidden tabindex="-1" style="margin-top:40px">
+      <div class="sec-head">
+        <span class="eyebrow" id="res-eyebrow">Result</span>
+        <h2>When does value <em>arrive?</em></h2>
+        <p>The staircase shows potential value made available: what customers could get once each slice is live, on a fixed 0–100 scale. It’s not a forecast of how many will use it.</p>
+      </div>
+      <div class="panel" id="res-panel"></div>
+      <div class="rubric" id="rubric" hidden>
+        <span class="eyebrow" style="color:var(--accent)">How we score value</span>
+        <h3>The value scale behind the chart</h3>
+        <p>Every plan is scored on the same fixed scale, so different slicing strategies can be compared. Points are an agreed assumption about increasing capability, not a measure of business impact.</p>
+        <table>
+          <tr><td class="p">5</td><td>Show whether an order is cancellable</td></tr>
+          <tr><td class="p">25</td><td>Request cancellation online, processed manually</td></tr>
+          <tr><td class="p">40</td><td>Automatically cancel single-item orders</td></tr>
+          <tr><td class="p">55</td><td>Automatically cancel entire multi-item orders</td></tr>
+          <tr><td class="p">80</td><td>Cancel selected items within an order</td></tr>
+          <tr><td class="p">100</td><td>Handle all eligible orders, including complex and marketplace orders</td></tr>
+        </table>
+        <ul>
+          <li>A plan’s value is the highest step its released slices have reached. Skipped steps count once a higher one is live.</li>
+          <li>Technical work, supporting pieces (confirmation emails, refunds, validation) and experiments like a fake door add no points on their own.</li>
+          <li>The longest wait counts weeks with no new value, including at the end of the plan.</li>
+        </ul>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" id="revise" type="button">Revise my slices</button>
+          <button class="btn btn-ghost btn-sm" id="compare" type="button">See an alternative solution</button>
+        </div>
+      </div>
+      <div class="alt" id="alt" hidden>
+        <div class="sec-head">
+          <span class="eyebrow">An alternative solution</span>
+          <h2>Here is <em>another way</em> to slice it</h2>
+          <p>David’s plan does the highest-value, smallest slices first, so value arrives fast and then tails off. Compare the two value paths over time.</p>
+        </div>
+        <div class="panel" id="alt-panel"></div>
+      </div>
+      <p class="proto">Prototype: slices are read by a simple keyword model for now, not AI.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="https://www.youtube.com/watch?v=jQg27pFGmWA" target="_blank" rel="noopener">Video: horizontal vs vertical slicing</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=v=>Math.round(v*100)+'%';
+const money=v=>'£'+Math.round(v).toLocaleString('en-GB');
+
+/* ======================= CONFIG (David can tune) ======================= */
+const CAPS={
+  elig:       {v:5,  label:'Show whether an order is cancellable', short:'see if cancellable'},
+  request:    {v:25, label:'Request cancellation online, processed manually', short:'request online'},
+  auto_single:{v:40, label:'Automatically cancel single-item orders', short:'auto single-item'},
+  auto_multi: {v:55, label:'Automatically cancel entire multi-item orders', short:'auto multi-item'},
+  partial:    {v:80, label:'Cancel selected items within an order', short:'partial cancellation'},
+  complex:    {v:100,label:'Handle all eligible orders, including complex and marketplace orders', short:'complex & marketplace'}
+};
+const SIZE_WEEKS={S:1,M:2,L:3,XL:5};  // XL: one slice that bundles several large capabilities
+const DAVID=[
+  {text:'Fake door cancel button (A/B test), monitor clicks',caps:[],kind:'experiment',size:'S',fake:true},
+  {text:'Customers can see if an order is cancellable and request cancellation online (staff process it)',caps:['elig','request'],kind:'release',size:'S'},
+  {text:'Customers can automatically cancel single-item orders',caps:['auto_single'],kind:'release',size:'S'},
+  {text:'Customers can automatically cancel entire multi-item orders',caps:['auto_multi'],kind:'release',size:'S'},
+  {text:'Customers can cancel selected items within an order',caps:['partial'],kind:'release',size:'L'},
+  {text:'Handle all eligible orders, including complex and marketplace orders',caps:['complex'],kind:'release',size:'L'}
+].map(s=>Object.assign(s,{weeks:SIZE_WEEKS[s.size],reason:reasonFor(s)}));
+
+const SIM={
+  requests:2000, cPhone:6, cManual:3, cAuto:0.2, cFail:20, target:0.25,
+  mix:{too_late:.20,single:.25,multi:.25,partial:.20,complex:.10},
+  worlds:{
+    W1:{name:'Expected', weight:25, young:.35, aware:.5, wy:.85, wo:.45, fail:0,
+        story:'Customers behaved as the business case assumed.',
+        david:'Continue to multi-item automation (target met in week 4), then weigh up whether the tail is worth building.'},
+    W2:{name:'Hidden feature', weight:20, young:.35, aware:.15, wy:.85, wo:.45, fail:0,
+        story:'Customers wanted to cancel online, but most never found the option.',
+        david:'Investigate (ask callers), then pivot: make it findable. Then continue.'},
+    W3:{name:'Small segment', weight:20, young:.20, aware:.8, wy:1.0, wo:.10, fail:0,
+        story:'Younger customers loved it, but older customers, who make most cancellation requests, kept phoning.',
+        david:'Investigate by age, then pivot to assisted digital, or stop if the business case no longer holds.'},
+    W4:{name:'Small slice wins', weight:20, young:.35, aware:.5, wy:.85, wo:.45, fail:0,
+        mix:{too_late:.45,single:.19,multi:.19,partial:.12,complex:.05}, check:.7,
+        story:'Most calls were “is it too late to cancel?”. Showing eligibility did most of the work.',
+        david:'Stop early after week 2: target met, 8 planned weeks freed.'},
+    W5:{name:'Partial goes wrong', weight:15, young:.35, aware:.5, wy:.85, wo:.45, fail:.4,
+        story:'Partial cancellation failed on split deliveries, creating repeat calls and complaints.',
+        david:'Roll back partial cancellation, fix split deliveries, then re-release.'}
+  },
+  pivots:[
+    {id:'P1',name:'Make it findable',desc:'Cancel link on the order page, in the confirmation email and on the phone menu.',size:'S'},
+    {id:'P2',name:'Assisted digital',desc:'Call-centre staff text customers a cancellation link and talk them through it.',size:'S'},
+    {id:'P3',name:'Fix partial cancellation for split deliveries',desc:'Handle orders where one parcel has already shipped.',size:'M'},
+    {id:'P4',name:'Ask customers why they cancel',desc:'A short survey on the cancellation page.',size:'S'}
+  ],
+  quotes:{
+    W1:['“Easy. Found it on my order page.”','“I still phoned. Old habits.”','“Glad I didn’t have to wait on hold.”'],
+    W2:['“I looked for a cancel button and couldn’t see one.”','“I didn’t know you could do that online.”','“I searched the help pages and only found the phone number.”'],
+    W3:['“I’d rather speak to a person when it’s about money.”','“My daughter did it for me on her phone.”','“Took me thirty seconds.” (age 24)'],
+    W4:['“I just wanted to know if it had already shipped.”','“Saw it was too late, so didn’t bother calling.”','“Requesting online was fine.”'],
+    W5:['“It said cancelled, then a parcel turned up anyway.”','“Half my order was cancelled and I was charged for all of it.”','“I had to phone twice to sort it out.”']
+  }
+};
+
+/* ======================= READING STICKIES (stand-in for the AI) =======================
+   classify(text) -> {caps:[...], kind:'release'|'experiment'|'support'|'technical'|'unclear', size:'S'|'M'|'L', fake}
+   The AI version returns the same shape; the page does the scoring. */
+function classify(raw){
+  const t=raw.toLowerCase();
+  const has=re=>re.test(t);
+  let caps=[], fake=false;
+  const FAKE=/fake.?door|painted door|dummy|mock button|button that does nothing|does nothing|tracks interest|smoke test|coming soon|please call|phone number on/;
+  const SENDS=/sends?|writes? an email|e-?mails? (to|the)|notification to|forwarded|submit/;
+  if(has(FAKE)){ if(has(SENDS)) caps.push('request'); else fake=true; }
+  if(has(/eligib|cancellable|can (still )?be cancel|see if|check if|whether .*cancel|dispatch|shipped|order status|status of/)) caps.push('elig');
+  const AUTO=/self.?serv|automatic|automate|automated|directly|instant|one.?click|without (calling|staff|a person)|remove (the )?human|remove any remaining staff|wired (up )?to|functioning|by (my|them)sel/;
+  const MANUAL=/request|form\b|forms\b|e-?mail|mailto|staff|support team|customer service|call cent|manual|human in the loop|text ?box|google form|by hand|marks? the order|to be cancelled|checks? (the )?(db|database)|every morning/;
+  const internal=/internal (tool|system|process)|for the (support )?team|for staff|admin/.test(t);
+  const partial=/selected items|individual items?|partial|some items|item.?level|each item|every item|select which items/.test(t);
+  const complex=/complex|marketplace|edge case|all (eligible )?orders|every order|all .*cases|corner case/.test(t);
+  const single=/single.?item|one item/.test(t), multi=/multi.?item|several items|whole order|entire order|baskets?|which orders/.test(t);
+  const isAuto=has(AUTO)&&!internal&&!/every morning|by hand|manually/.test(t);
+  const support=/confirmation|refund|identity|validat|verif|notification|reason for|credit vs|kill.?switch|payback/.test(t)&&!/request|form\b|cancel (the|an|their|your)? ?orders?|cancel button|self.?serv/.test(t);
+  if(!fake&&!support&&!caps.includes('request')&&has(MANUAL)&&!isAuto&&!internal) caps.push('request');
+  if(partial) caps.push('partial');
+  if(complex) caps.push('complex');
+  if(isAuto&&!support&&!partial&&!complex){
+    if(single&&!multi) caps.push('auto_single');
+    else if(multi&&!single) caps.push('auto_multi');
+    else caps.push('auto_single','auto_multi');
+  }
+  // a plain "cancel button / cancel orders" with nothing else recognisable = self-service cancellation
+  if(!caps.length&&!fake&&!support&&/cancel/.test(t)&&!/check|before we start|track|monitor|measure|internal|back.?end|api|database/.test(t)) caps.push('auto_single','auto_multi');
+  caps=[...new Set(caps)];
+  let kind='release';
+  if(!caps.length){
+    if(fake||has(/a\/b|\bab test|survey|research|interview|monitor|measure|track|analytics|feedback|metric|usage|before we start|check existing|understand why|which platform|most active/)) kind='experiment';
+    else if(has(/confirm|refund|identity|validat|verif|reason|notification|kill.?switch|option for|credit|payback|collect info/)) kind='support';
+    else if(has(/\bapi\b|back.?end|database|infrastructure|architecture|internal|synchron|refactor|tooling|method to|data model|codebase/)) kind='technical';
+    else kind='unclear';
+  }
+  // size
+  let size='S';
+  const big=caps.filter(c=>['partial','complex'].includes(c)).length, mid=caps.filter(c=>['auto_single','auto_multi'].includes(c)).length;
+  if(big) size='L'; else if(mid>=2) size='M';
+  if(caps.length>=3&&size!=='L') size=size==='S'?'M':'L';
+  if(big>=2||(big&&caps.length>=3)) size='XL';
+  if(kind==='technical') size='M';
+  return {caps,kind,size,fake};
+}
+function reasonFor(s){
+  if(s.caps.length) return 'Unlocks: '+s.caps.map(c=>CAPS[c].short+' ('+CAPS[c].v+')').join(', ')+'.';
+  return {experiment:'Experiment: you learn something, but customers get nothing new.',
+          support:'Supporting piece: it improves a step, but adds no new step on its own.',
+          technical:'Technical work: no customer can use it yet.',
+          unclear:'Couldn’t tell what customers can do once this is live.'}[s.kind];
+}
+function evaluate(texts){ // returns a Promise so the AI call can drop in here
+  const out=texts.map(text=>{const c=classify(text);const s=Object.assign({text},c);s.weeks=SIZE_WEEKS[s.size];s.reason=reasonFor(s);return s});
+  return new Promise(res=>setTimeout(()=>res(out),matchMedia('(prefers-reduced-motion: reduce)').matches?20:600));
+}
+
+/* ======================= PART 1: SCORING ======================= */
+function potentialOf(capSet){let v=0;capSet.forEach(c=>{v=Math.max(v,CAPS[c].v)});return v}
+function playOut(plan){
+  let t=0,val=0;const live=new Set();
+  return plan.map((s,i)=>{const start=t;t+=s.weeks;s.caps.forEach(c=>live.add(c));const nv=potentialOf(live);const o={s,i,start,end:t,before:val,after:Math.max(val,nv)};val=o.after;return o});
+}
+function measures(plan){
+  const sch=playOut(plan),total=sch.length?sch[sch.length-1].end:0;
+  const M=sch.length?sch[sch.length-1].after:0;
+  const ups=sch.filter(o=>o.after>o.before);
+  const T=M>0?ups.find(o=>o.after===M).end:null;
+  const points=[0].concat(ups.map(o=>o.end));
+  let G=0,gs=0,ge=0;
+  for(let k=1;k<points.length;k++){if(points[k]-points[k-1]>G){G=points[k]-points[k-1];gs=points[k-1];ge=points[k]}}
+  const last=points[points.length-1];
+  if(total-last>G){G=total-last;gs=last;ge=total}
+  if(!ups.length){G=total;gs=0;ge=total}
+  return {sch,total,M,T,G,gs,ge,first:ups.length?ups[0].end:null};
+}
+
+/* Slicing score: one 0-100 score per learning, overall = their average.
+   1 Usable value: share of build weeks spent on slices that release value (experiments don't count against you).
+   2 Value early: when customers first get value. 100 x (1 - (first value week - 1) / total weeks); never = 0.
+   3 Short waits: 100 x (1 - longest wait / total weeks). */
+function scoreOf(m){
+  const total=m.total||1;
+  const expW=m.sch.filter(o=>o.s.kind==='experiment'&&!o.s.caps.length).reduce((a,o)=>a+(o.end-o.start),0);
+  const valW=m.sch.filter(o=>o.after>o.before).reduce((a,o)=>a+(o.end-o.start),0);
+  const usable=total-expW>0?Math.round(100*valW/(total-expW)):0;
+  const early=m.first?Math.round(100*(1-(m.first-1)/total)):0;
+  const waits=Math.round(100*(1-m.G/total));
+  return {usable,early,waits,overall:Math.round((usable+early+waits)/3)};
+}
+function scoreHTML(m,ref){
+  const sc=scoreOf(m),cls=v=>v<40?'lo':v>=70?'hi':'';
+  const part=(name,v,why,rv)=>'<div><div class="sp-head"><span>'+name+'</span><b>'+v+(rv!=null?' <small style="font:500 .7rem var(--mono);color:var(--muted)">David '+rv+'</small>':'')+'</b></div><div class="sp-bar"><i class="'+cls(v)+'" style="width:'+Math.max(2,v)+'%"></i></div><div class="sp-why">'+why+'</div></div>';
+  const rs=ref?scoreOf(ref):null;
+  return '<div class="score"><div class="score-total"><span>Slicing score</span><b>'+sc.overall+'<small>/100</small></b>'+
+    '<p>The average of the three learnings.'+(rs?' David’s plan: '+rs.overall+'.':'')+'</p></div><div class="score-parts">'+
+    part('1 · Slice by usable value',sc.usable,sc.usable+'% of your build weeks went into slices customers can use. Technical work and supporting pieces on their own don’t count; experiments don’t count against you.',rs&&rs.usable)+
+    part('2 · Get value out early',sc.early,m.first?'Customers first got value in week '+m.first+' of '+m.total+'.':'Customers never got any value from this plan.',rs&&rs.early)+
+    part('3 · Avoid long waits',sc.waits,'Your longest wait for new value was '+m.G+' of '+m.total+' weeks.',rs&&rs.waits)+
+    '</div></div>';
+}
+
+/* ======================= PART 1: EDITOR ======================= */
+const PH=['e.g. A “fake door” cancel button to see how many people click','e.g. Customers can request a cancellation online; staff process it','e.g. Customers can cancel single-item orders automatically','e.g. Customers can cancel selected items in an order'];
+let stickies=[{id:1,text:''}],nextId=2,drag=null,suppressClick=false;
+const filled=()=>stickies.filter(s=>s.text.trim());
+function renderPlan(){
+  $('slices').innerHTML=stickies.map((s,i)=>
+    '<div class="slice'+(drag&&drag.active&&drag.sid===s.id?' dragsrc':'')+'" data-i="'+i+'">'+
+    '<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder slice '+(i+1)+', or use the arrow keys"'+(stickies.length>1?'':' disabled')+'>⋮⋮</button>'+
+    '<span class="n">'+(i+1)+'</span>'+
+    '<textarea class="stext" data-i="'+i+'" rows="1" maxlength="200" placeholder="'+esc(PH[Math.min(i,PH.length-1)])+'" aria-label="Slice '+(i+1)+'">'+esc(s.text)+'</textarea>'+
+    '<button class="icon" type="button" data-act="del" data-i="'+i+'" aria-label="Remove slice '+(i+1)+'">×</button></div>'
+  ).join('')+'<button class="new-slice" type="button" id="new-slice">+ Add a slice</button>';
+  document.querySelectorAll('.stext').forEach(grow);updateRun();
+}
+function grow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
+function updateRun(){const n=filled().length;$('run').disabled=n===0;$('hint').textContent=n?n+' slice'+(n>1?'s':''):'Write at least one slice.'}
+$('slices').addEventListener('input',e=>{const el=e.target.closest('.stext');if(!el)return;stickies[+el.dataset.i].text=el.value;grow(el);updateRun()});
+$('slices').addEventListener('click',e=>{
+  if(suppressClick)return;
+  if(e.target.closest('#new-slice')){stickies.push({id:nextId++,text:''});renderPlan();const t=document.querySelectorAll('.stext');t[t.length-1].focus();return}
+  const b=e.target.closest('[data-act="del"]');if(!b)return;
+  stickies.splice(+b.dataset.i,1);if(!stickies.length)stickies.push({id:nextId++,text:''});renderPlan();
+});
+$('slices').addEventListener('keydown',e=>{
+  const ta=e.target.closest('.stext');
+  if(ta&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();const i=+ta.dataset.i;
+    if(i===stickies.length-1&&ta.value.trim()){stickies.push({id:nextId++,text:''});renderPlan()}
+    const t=document.querySelectorAll('.stext');(t[i+1]||t[i]).focus();return}
+  const g=e.target.closest('.grip');if(!g)return;
+  const i=+g.dataset.i,j=e.key==='ArrowUp'?i-1:e.key==='ArrowDown'?i+1:null;
+  if(j===null||j<0||j>=stickies.length)return;e.preventDefault();
+  [stickies[i],stickies[j]]=[stickies[j],stickies[i]];renderPlan();document.querySelector('.grip[data-i="'+j+'"]').focus();
+});
+let lastY=0,raf=0;
+document.addEventListener('pointerdown',e=>{
+  if(e.button>0||drag)return;const g=e.target.closest('.grip[data-i]');if(!g||g.disabled)return;
+  const d={sid:stickies[+g.dataset.i].id,src:g.closest('.slice'),x:e.clientX,y:e.clientY,pt:e.pointerType,active:false};
+  drag=d;lastY=e.clientY;d.lx=e.clientX;
+  if(e.pointerType!=='mouse')d.timer=setTimeout(()=>{if(drag===d)begin()},260);
+});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;lastY=e.clientY;drag.lx=e.clientX;
+  if(!drag.active){const dist=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
+    if(drag.pt==='mouse'){if(dist>5)begin();else return}else{if(dist>10)endDrag();return}}
+  e.preventDefault();place();reorder();
+},{passive:false});
+document.addEventListener('touchmove',e=>{if(drag&&drag.active)e.preventDefault()},{passive:false});
+document.addEventListener('contextmenu',e=>{if(drag)e.preventDefault()});
+document.addEventListener('pointerup',()=>{if(!drag)return;if(drag.active){suppressClick=true;setTimeout(()=>{suppressClick=false},0)}endDrag()});
+document.addEventListener('pointercancel',()=>{if(drag&&!drag.active)endDrag()});
+function begin(){
+  drag.active=true;clearTimeout(drag.timer);
+  const r=drag.src.getBoundingClientRect(),g=drag.src.cloneNode(true);
+  g.classList.add('ghost');g.style.width=r.width+'px';drag.ox=drag.x-r.left;drag.oy=drag.y-r.top;drag.ghost=g;
+  document.body.appendChild(g);drag.src.classList.add('dragsrc');document.body.classList.add('dragging');
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  place();
+  raf=requestAnimationFrame(function step(){if(!drag||!drag.active)return;let v=0;
+    if(lastY<140)v=-Math.ceil((140-lastY)/6);else if(lastY>innerHeight-70)v=Math.ceil((lastY-innerHeight+70)/6);
+    if(v){scrollBy(0,v);reorder()}raf=requestAnimationFrame(step)});
+}
+function place(){if(drag.ghost){drag.ghost.style.left=(drag.lx-drag.ox)+'px';drag.ghost.style.top=(lastY-drag.oy)+'px'}}
+function reorder(){
+  const cards=[...document.querySelectorAll('#slices .slice')],from=stickies.findIndex(s=>s.id===drag.sid);let to=0;
+  cards.forEach((c,k)=>{if(k===from)return;const r=c.getBoundingClientRect();if(lastY>r.top+r.height/2)to++});
+  to=Math.min(stickies.length-1,to);
+  if(to!==from){const s=stickies.splice(from,1)[0];stickies.splice(to,0,s);renderPlan()}
+}
+function endDrag(){clearTimeout(drag.timer);cancelAnimationFrame(raf);if(drag.ghost)drag.ghost.remove();document.body.classList.remove('dragging');const was=drag.active;drag=null;if(was)renderPlan()}
+
+/* ======================= PART 1: CHART ======================= */
+function stepPath(sch,S,y){ // potential-value staircase as an SVG path
+  let d='M0 '+y(0);
+  sch.forEach(o=>{d+=' L'+o.end*10+' '+y(o.before)+' L'+o.end*10+' '+y(o.after)});
+  d+=' L'+S*10+' '+y(sch.length?sch[sch.length-1].after:0);return d;
+}
+function chartBlock(id,runs,main,opts){
+  // runs: [{key,label,m,cls}] ; main = the run whose slices/gaps are drawn
+  opts=opts||{};
+  const S=Math.max(4,...runs.map(r=>r.m.total))+1,W=S*10,H=100,y=v=>H-v;
+  const pc=v=>(v/S*100)+'%';
+  let svg='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>';
+  // pink: weeks of work that added no new value (main run)
+  main.m.sch.forEach(o=>{if(o.after<=o.before)svg+='<rect x="'+o.start*10+'" y="0" width="'+(o.end-o.start)*10+'" height="'+H+'" fill="#F4C7C7"/>'});
+  const sty={you:'stroke="#D99000" stroke-width="3"',prev:'stroke="#A7B0C0" stroke-width="2.5"',david:'stroke="#12213B" stroke-width="2.5" stroke-dasharray="6 4"'};
+  runs.slice().reverse().forEach(r=>{
+    if(r.key==='you')svg+='<path d="'+stepPath(r.m.sch,S,y)+' L'+W+' '+H+' L0 '+H+' Z" fill="#F2A91E" fill-opacity=".14"/>';
+    svg+='<path d="'+stepPath(r.m.sch,S,y)+'" fill="none" '+sty[r.key]+' vector-effect="non-scaling-stroke"/>';
+  });
+  let marks='';
+  main.m.sch.forEach(o=>{marks+='<span class="mark'+(o.after>o.before?'':' zero')+'" style="left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Slice '+(o.i+1)+' released">'+(o.i+1)+'</span>'});
+  let gap='';
+  if(main.m.G>0)gap='<div class="gap" style="left:'+pc(main.m.gs)+';width:'+pc(main.m.G)+'"><span>longest wait: '+main.m.G+' wk</span></div>';
+  // end labels
+  let ends='',used=[];
+  runs.forEach(r=>{let t=y(r.m.M);while(used.some(u=>Math.abs(u-t)<22))t+= (t>50?-22:22);used.push(t);
+    const col={you:'var(--accent-ink)',prev:'#7D879A',david:'var(--navy)'}[r.key];
+    ends+='<span style="top:'+Math.max(6,Math.min(96,t))+'%;color:'+col+'"><b>'+r.m.M+'</b>'+r.label+'</span>'});
+  const blocks=main.m.sch.map(o=>'<div class="blk'+(o.after>o.before?'':' zero')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(o.i+1)+': '+esc(o.s.text)+'">'+(o.i+1)+'</div>').join('');
+  let ticks='';const step=S>16?2:1;for(let w=0;w<=S;w+=step)ticks+='<span style="left:'+pc(w)+'">'+w+'</span>';
+  const keyLines=runs.length>1?runs.map(r=>'<span><i class="k-'+r.key+'"></i>'+r.label+'</span>').join(''):'';
+  return '<div class="chart-wrap">'+
+    '<div class="plot"><div></div><div class="axis-t">Potential value (points)</div><div></div></div>'+
+    '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100</span><span class="yt" style="top:calc(6px + 50%)">50</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+    '<div class="chart" id="'+id+'-chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+svg+'</svg>'+marks+'</div>'+
+    '<div class="endlab">'+ends+'</div></div>'+
+    '<div class="plot"><div></div><div><div class="axis-t row-t">'+(opts.barTitle||'Slices, in the order they’re released')+'</div><div class="timeline">'+blocks+gap+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
+    '<div class="key">'+keyLines+'<span><i class="k-pink"></i>weeks of work that add no new value</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds none on its own</span><span><i class="k-gap"></i>longest wait for new value</span></div></div><div></div></div>'+
+    '</div>';
+}
+
+/* ======================= PART 1: RUN ======================= */
+let current=null,previous=null,rounds=0,comparing=false;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+$('run').addEventListener('click',()=>{
+  const texts=filled().map(s=>s.text.trim());if(!texts.length)return;
+  $('result').hidden=false;
+  $('res-panel').innerHTML='<div class="thinking"><i></i>Reading your slices…</div>';
+  $('run').disabled=true;
+  $('result').scrollIntoView({behavior:reduce?'auto':'smooth'});
+  evaluate(texts).then(plan=>{
+    if(current)previous=current;
+    rounds++;current={plan,m:measures(plan)};
+    renderResult();updateRun();
+    $('rubric').hidden=false;
+    $('res-eyebrow').textContent=rounds===1?'Your first try':'Round '+rounds;
+    updateSimChoice();
+  });
+});
+function statTiles(m){
+  return '<div class="stats"><div class="stat"><b>'+m.M+'</b><span>Highest value reached</span></div>'+
+    '<div class="stat"><b>'+(m.T?m.T+' wk':'–')+'</b><span>Weeks to reach it</span></div>'+
+    '<div class="stat"><b>'+m.G+' wk</b><span>Longest wait for new value</span></div></div>';
+}
+function sliceList(m,withWhy){
+  return '<ol class="slist">'+m.sch.map(o=>{const up=o.after>o.before;
+    return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
+      '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
+}
+function renderResult(){
+  const runs=[{key:'you',label:rounds>1?'This round':'Your plan',m:current.m}];
+  if(previous)runs.push({key:'prev',label:'Previous round',m:previous.m});
+  let h='<div class="panel-title"><b>'+(rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
+    scoreHTML(current.m)+chartBlock('p1',runs,runs[0]);
+  if(runs.length===1)h+=statTiles(current.m);
+  else{
+    const row=(l,f)=>'<tr><td>'+l+'</td>'+runs.map(r=>'<td class="n">'+f(r.m)+'</td>').join('')+'</tr>';
+    h+='<table class="cmp"><thead><tr><th></th>'+runs.map(r=>'<th class="n">'+r.label+'</th>').join('')+'</tr></thead><tbody>'+
+      row('Slicing score',m=>scoreOf(m).overall)+row('Highest value reached',m=>m.M)+row('Weeks to reach it',m=>m.T?m.T:'–')+row('Longest wait for new value',m=>m.G+' wk')+row('First value',m=>m.first?'week '+m.first:'never')+
+      '</tbody></table>';
+  }
+  h+=sliceList(current.m,true);
+  $('res-panel').innerHTML=h;
+  if(comparing)renderAlt();
+}
+function renderAlt(){
+  const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Alternative',m:dm};
+  const row=(l,a,b)=>'<tr><td>'+l+'</td><td class="n">'+a+'</td><td class="n">'+b+'</td></tr>';
+  const ys=scoreOf(current.m),ds=scoreOf(dm);
+  let h='<div class="panel-title"><b>Your plan vs the alternative</b><span>potential value over time</span></div>'+
+    chartBlock('p2',[you,alt],alt,{barTitle:'The alternative’s slices, in order'})+
+    '<table class="cmp"><thead><tr><th></th><th class="n">Your plan</th><th class="n">Alternative</th></tr></thead><tbody>'+
+    row('Slicing score',ys.overall,ds.overall)+row('1 · Slice by usable value',ys.usable,ds.usable)+row('2 · Get value out early',ys.early,ds.early)+row('3 · Avoid long waits',ys.waits,ds.waits)+
+    row('Highest value reached',current.m.M,dm.M)+row('Weeks to reach it',current.m.T||'–',dm.T)+row('First value',current.m.first?'week '+current.m.first:'never','week '+dm.first)+
+    '</tbody></table>'+sliceList(dm,false);
+  $('alt-panel').innerHTML=h;
+}
+$('revise').addEventListener('click',()=>{$('view-slice').scrollIntoView({behavior:reduce?'auto':'smooth'});const t=document.querySelector('.stext');if(t)t.focus({preventScroll:true})});
+$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide the alternative':'See an alternative solution';$('alt').hidden=!comparing;if(comparing){renderAlt();$('alt').scrollIntoView({behavior:reduce?'auto':'smooth'})}});
+
+/* ======================= TABS ======================= */
+function setTab(t){
+  $('tab-slice').setAttribute('aria-selected',t==='slice');$('tab-sim').setAttribute('aria-selected',t==='sim');
+  $('view-slice').hidden=t!=='slice';$('view-sim').hidden=t!=='sim';
+  try{history.replaceState(null,'',t==='sim'?'#simulate':location.pathname+location.search)}catch(e){}
+}
+function updateSimChoice(){
+  if(!$('opt-mine'))return; // simulation switched off for now
+  const ok=!!current,lab=$('opt-mine'),inp=lab.querySelector('input');
+  inp.disabled=!ok;lab.classList.toggle('off',!ok);
+  $('mine-note').textContent=ok?current.plan.length+' slices from your latest round in Part 1.':'Slice it in Part 1 first.';
+}
+
+/* ======================= PART 2: SIMULATION MODEL ======================= */
+function adoption(w,mods){const aware=Math.max(w.aware,mods.aware||0),wo=Math.min(1,w.wo+(mods.woUp||0));return aware*(w.young*w.wy+(1-w.young)*wo)}
+function weekResult(w,caps,mods){
+  const a=adoption(w,mods),mix=w.mix||SIM.mix,fail=mods.fail!=null?mods.fail:w.fail;
+  let calls=0,cost=0,complaints=0,online=0,auto=0,failed=0;
+  const autoCap={single:'auto_single',multi:'auto_multi',partial:'partial',complex:'complex'};
+  for(const [t,s] of Object.entries(mix)){
+    if(t==='too_late'){const e=caps.has('elig')?(w.check!=null?w.check:a):0;calls+=s*(1-e);cost+=s*(1-e)*SIM.cPhone;continue}
+    const route=caps.has(autoCap[t])?'auto':caps.has('request')?'manual':null;
+    if(!route){calls+=s;cost+=s*SIM.cPhone;continue}
+    calls+=s*(1-a);cost+=s*(1-a)*SIM.cPhone;online+=s*a;
+    if(route==='manual')cost+=s*a*SIM.cManual;
+    else{const f=t==='partial'?fail:0,ok=s*a*(1-f),bad=s*a*f;cost+=ok*SIM.cAuto+bad*SIM.cFail;calls+=bad;complaints+=bad;failed+=bad;auto+=ok}
+  }
+  const R=SIM.requests;
+  return {callsAvoided:Math.max(0,1-calls),costSaved:1-cost/SIM.cPhone,calls:Math.round(calls*R),online:Math.round(online*R),auto:Math.round(auto*R),
+    failed:Math.round(failed*R),complaints:Math.round(complaints*R),cost:cost*R,adoption:a};
+}
+
+/* ======================= PART 2: GAME ======================= */
+let G=null;
+function pickWorld(){
+  const q=new URLSearchParams(location.search).get('world');
+  if(q&&SIM.worlds['W'+q.replace(/^w/i,'')])return 'W'+q.replace(/^w/i,'');
+  const ids=Object.keys(SIM.worlds),tot=ids.reduce((a,k)=>a+SIM.worlds[k].weight,0);let r=Math.random()*tot;
+  for(const k of ids){r-=SIM.worlds[k].weight;if(r<0)return k}return ids[0];
+}
+/* simulation switched off for now: $('sim-start') listener removed */
+function startSim(excludeWorld){
+  const src=document.querySelector('input[name="plan"]:checked').value;
+  const base=src==='mine'&&current?current.plan:DAVID;
+  let wid=pickWorld();if(excludeWorld&&!new URLSearchParams(location.search).get('world')){let n=0;while(wid===excludeWorld&&n++<20)wid=pickWorld()}
+  G={wid,w:SIM.worlds[wid],src,queue:base.map(s=>Object.assign({},s,{caps:s.caps.slice()})),week:0,live:new Set(),mods:{},
+     pts:[{x:0,c:0,b:0,p:0}],blocks:[],log:[],cards:[],shown:{},released:[],onlineReleases:0,targetWeek:null,ended:false,pivots:{}};
+  $('sim-setup').hidden=true;$('sim-game').hidden=false;
+  G.cards=[{cls:'info',eyebrow:'Week 0',title:'Ready to build',body:'<p>Nothing is live yet. Every cancellation is a phone call: <b>2,000 a week, £12,000</b>.</p><p>Build your first slice to see what happens.</p>'}];
+  renderSim();
+  $('sim-game').scrollIntoView({behavior:reduce?'auto':'smooth'});
+}
+function cur(){return weekResult(G.w,G.live,G.mods)}
+function advance(weeks,label,kind){ // time passes with the current state
+  if(weeks>0){G.blocks.push({start:G.week,end:G.week+weeks,label,kind});G.week+=weeks;const r=cur();G.pts.push({x:G.week,c:r.callsAvoided,b:r.costSaved,p:potentialOf(G.live)})}
+}
+function pushPoint(){const r=cur();G.pts.push({x:G.week,c:r.callsAvoided,b:r.costSaved,p:potentialOf(G.live)});return r}
+function log(text){G.log.push({w:G.week,text})}
+function release(s){
+  const before=cur(),hadOnline=hasOnline();
+  const startWeek=G.week;
+  advance(s.weeks,s.text,s.caps.length?'release':s.kind);
+  if(!s.weeks)G.blocks.push({start:G.week,end:G.week,label:s.text,kind:'release'});
+  const added=s.caps.filter(c=>!G.live.has(c));added.forEach(c=>G.live.add(c));
+  G.released.push({s,added});
+  const r=pushPoint();
+  log((s.rerelease?'Re-released: ':'Released: ')+s.text+(s.weeks?' ('+s.weeks+' wk)':''));
+  G.cards=[dashCard(r,before)];
+  // evidence cards
+  const W=G.wid;
+  if(s.fake){
+    let body='<p>12% of customers looking at a cancellable order clicked “Cancel order”.</p>';
+    if(W==='W3')body='<p>8% of customers looking at a cancellable order clicked “Cancel order”.</p>';
+    if(W==='W4')body+='<p>40% of the clicks were on orders that had already shipped.</p>';
+    G.cards.push({cls:'info',eyebrow:'Evidence',title:'Fake door result',body:body+'<p>Customers who clicked saw “Coming soon, please call us”.</p>'});
+  }
+  const nowOnline=hasOnline();
+  if(nowOnline)G.onlineReleases++;
+  if(!hadOnline&&nowOnline){
+    if(W==='W2')G.cards.push({cls:'warn',eyebrow:'Evidence',title:'Low adoption',body:'<p>Calls about cancellations are down only '+pct(r.callsAvoided)+', well below the 30% the business case assumed. We don’t know why yet.</p>'});
+    if(W==='W1'||W==='W5')G.cards.push({cls:'good',eyebrow:'Evidence',title:'In line with the business case',body:'<p>Calls about cancellations are down '+pct(r.callsAvoided)+', as the business case assumed.</p>'});
+  }
+  if(W==='W4'&&added.includes('elig')&&!G.shown.E3){G.shown.E3=1;
+    G.cards.push({cls:'good',eyebrow:'Evidence',title:'A small slice did a lot',body:'<p>Calls about cancellations fell '+pct(r.callsAvoided)+' in one week. Most of the drop is “is it too late?” calls: customers checked their order and didn’t phone.</p>'})}
+  if(W==='W3'&&G.onlineReleases>=2&&r.costSaved<.20&&!G.shown.E4){G.shown.E4=1;
+    G.cards.push({cls:'warn',eyebrow:'Evidence',title:'Disappointing overall',body:'<p>Calls about cancellations are down '+pct(r.callsAvoided)+'. Usage is high among some customers and low among others.</p>'})}
+  const fail=G.mods.fail!=null?G.mods.fail:G.w.fail;
+  if(added.includes('partial')&&fail>.1){
+    G.cards.push({cls:'warn',eyebrow:'Evidence',title:'Something’s wrong',body:'<p>Cost saved fell from '+pct(before.costSaved)+' to '+pct(r.costSaved)+' after the release. <b>'+r.failed+' failed cancellations and '+r.complaints+' complaints</b> this week. Repeat calls are up.</p>'})}
+  checkTarget(r);
+}
+function hasOnline(){return ['request','auto_single','auto_multi','partial','complex'].some(c=>G.live.has(c))}
+function checkTarget(r){
+  if(G.targetWeek==null&&r.costSaved>=SIM.target){G.targetWeek=G.week;
+    G.cards.push({cls:'good',eyebrow:'Target',title:'Target met',body:'<p>Handling cost is down '+pct(r.costSaved)+', past the 25% target, in week '+G.week+'.</p>'})}
+}
+function dashCard(r,before){
+  const d=(a,b)=>{const x=Math.round((a-b)*100);return x?(x>0?' (+'+x+')':' ('+x+')'):''};
+  return {cls:'',eyebrow:'Week '+G.week+' · this week',title:'Dashboard',dash:true,body:
+    '<div class="dash">'+
+    '<div><b>'+r.calls.toLocaleString('en-GB')+'</b><span>Cancellation calls</span></div>'+
+    '<div><b>'+r.online.toLocaleString('en-GB')+'</b><span>Cancelled online</span></div>'+
+    '<div><b>'+r.auto.toLocaleString('en-GB')+'</b><span>Of which automatic</span></div>'+
+    '<div><b class="'+(r.complaints?'bad':'')+'">'+r.complaints+'</b><span>Failed / complaints</span></div>'+
+    '<div><b>'+pct(r.callsAvoided)+'</b><span>Calls avoided'+(before?d(r.callsAvoided,before.callsAvoided):'')+'</span></div>'+
+    '<div><b>'+money(r.cost)+'</b><span>Cost / week, '+pct(r.costSaved)+' saved</span></div></div>'};
+}
+function investigate(id){
+  const W=G.wid,w=G.w,r=cur(),a=r.adoption;let card;
+  if(id==='I1'){
+    if(!hasOnline())card={cls:'info',eyebrow:'Investigation',title:'Analytics',body:'<p>Nothing online is live yet, so there’s no usage to analyse.</p>'};
+    else{const aw=Math.max(w.aware,G.mods.aware||0),wo=Math.min(1,w.wo+(G.mods.woUp||0));
+      card={cls:'info',eyebrow:'Investigation · 0 weeks',title:'Analytics breakdown',body:
+      '<ul><li>Customers who saw the cancel option: <b>'+pct(aw)+'</b></li><li>Under 35 who cancelled online: <b>'+pct(aw*w.wy)+'</b></li><li>35 and over who cancelled online: <b>'+pct(aw*wo)+'</b></li><li>Share of requests from under-35s: <b>'+pct(w.young)+'</b></li>'+
+      (w.mix?'<li>Requests about orders that had already shipped: <b>'+pct(w.mix.too_late)+'</b></li>':'')+'</ul>'}}
+    log('Investigated: analytics breakdown');
+  }
+  if(id==='I2'){
+    advance(1,'Ask callers','investigate');
+    const aw=Math.max(w.aware,G.mods.aware||0),knew=hasOnline()?(aw-a)/(1-a):0;
+    card={cls:'info',eyebrow:'Investigation · 1 week',title:'“Did you know you could cancel on our website?”',body:hasOnline()?'<p><b>'+pct(knew)+'</b> of callers said yes.</p>':'<p>Nothing is live online yet, so callers couldn’t have known.</p>'};
+    log('Investigated: asked callers (1 wk)');
+  }
+  if(id==='I3'){advance(1,'Interviews','investigate');card=quotesCard('Investigation · 1 week','Customer interviews');log('Investigated: customer interviews (1 wk)')}
+  if(id==='I4'){
+    const fail=G.mods.fail!=null?G.mods.fail:w.fail;
+    card={cls:'info',eyebrow:'Investigation · 0 weeks',title:'Error log review',body:G.live.has('partial')&&fail>.1?'<p>Most failures are <b>split deliveries</b>: one parcel had already shipped when the customer cancelled some items.</p>':'<p>No unusual errors.</p>'};
+    log('Investigated: error log review');
+  }
+  G.cards=[dashCard(cur()),card];renderSim();
+}
+function quotesCard(eb,title){return {cls:'info',eyebrow:eb,title,body:'<ul>'+SIM.quotes[G.wid].map(q=>'<li>'+esc(q)+'</li>').join('')+'</ul>'}}
+function pivot(id){
+  const p=SIM.pivots.find(x=>x.id===id),before=cur();
+  advance(SIZE_WEEKS[p.size],p.name,'pivot');
+  if(id==='P1')G.mods.aware=Math.max(G.mods.aware||0,.6);
+  if(id==='P2')G.mods.woUp=Math.min(.5,(G.mods.woUp||0)+.25);
+  if(id==='P3')G.mods.fail=.03;
+  const r=pushPoint();
+  log('Pivot: '+p.name+' ('+SIZE_WEEKS[p.size]+' wk)');
+  G.cards=[dashCard(r,before)];
+  if(id==='P4')G.cards.push(quotesCard('Survey results','Why customers cancel'));
+  if(id==='P3')G.cards.push({cls:'info',eyebrow:'Pivot',title:'Fix ready',body:'<p>Split deliveries are handled now. '+(G.live.has('partial')?'The fix is live.':'Re-release partial cancellation to use it.')+'</p>'});
+  if(Math.abs(r.costSaved-before.costSaved)<.005&&id!=='P4'&&id!=='P3')G.cards.push({cls:'warn',eyebrow:'Evidence',title:'No measurable change',body:'<p>The numbers didn’t move after this change.</p>'});
+  checkTarget(r);renderSim();
+}
+function rollback(){
+  for(let k=G.released.length-1;k>=0;k--){const rel=G.released[k];if(rel.added.length){
+    const before=cur();rel.added.forEach(c=>G.live.delete(c));G.released.splice(k,1);
+    const r=pushPoint();log('Rolled back: '+rel.s.text);
+    G.queue.unshift(Object.assign({},rel.s,{text:rel.s.text.replace(/^Re-release: /,''),weeks:0,rerelease:true,caps:rel.added.slice()}));
+    G.cards=[dashCard(r,before),{cls:'info',eyebrow:'Rolled back',title:'Withdrawn',body:'<p>“'+esc(rel.s.text)+'” is switched off. It’s at the top of your plan, ready to re-release with no extra build time.</p>'}];
+    renderSim();return}}
+}
+function stopSim(){G.ended=true;log('Stopped');renderSim()}
+
+function simChart(){
+  const total=G.week+G.queue.reduce((a,s)=>a+s.weeks,0);
+  const S=Math.max(4,G.ended?G.week:total)+1,W=S*10,H=100,y=v=>H-v*100,pc=v=>(v/S*100)+'%';
+  const path=key=>{let d='M0 '+y(G.pts[0][key]);for(let k=1;k<G.pts.length;k++){d+=' L'+G.pts[k].x*10+' '+y(G.pts[k-1][key])+' L'+G.pts[k].x*10+' '+y(G.pts[k][key])}return d};
+  const potPath=()=>{let d='M0 '+(H-G.pts[0].p);for(let k=1;k<G.pts.length;k++){d+=' L'+G.pts[k].x*10+' '+(H-G.pts[k-1].p)+' L'+G.pts[k].x*10+' '+(H-G.pts[k].p)}return d};
+  const last=G.pts[G.pts.length-1];
+  let s1='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/><path d="'+potPath()+'" fill="none" stroke="#12213B" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+  let s2='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/><path d="'+path('c')+'" fill="none" stroke="#D99000" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="'+path('b')+'" fill="none" stroke="#0E7A5F" stroke-width="3" vector-effect="non-scaling-stroke"/>';
+  // pink: weeks where both realised lines were at zero
+  for(let k=1;k<G.pts.length;k++){const p0=G.pts[k-1],p1=G.pts[k];if(p0.c<=0&&p0.b<=0&&p1.x>p0.x)s2='<rect x="'+p0.x*10+'" y="0" width="'+(p1.x-p0.x)*10+'" height="'+H+'" fill="#F4C7C7"/>'+s2}
+  const now='<div style="position:absolute;top:0;bottom:0;left:'+pc(G.week)+';border-left:2px solid var(--accent-ink)"></div>';
+  const tgt='<div class="target" style="top:'+(100-SIM.target*100)+'%"><span>target 25%</span></div>';
+  let lc=y(last.c),lb=y(last.b);if(Math.abs(lc-lb)<26){const m=(lc+lb)/2;if(last.c>=last.b){lc=m-13;lb=m+13}else{lc=m+13;lb=m-13}}
+  const blocks=G.blocks.filter(b=>b.end>b.start).map((b,i)=>'<div class="blk'+(b.kind==='investigate'?' inv':b.kind==='release'||b.kind==='pivot'?'':' zero')+'" style="left:'+pc(b.start)+';width:'+pc(b.end-b.start)+'" title="'+esc(b.label)+'"></div>').join('');
+  const planned=G.ended?'':(()=>{let t=G.week;return G.queue.map(s=>{const st=t;t+=s.weeks;return s.weeks?'<div class="blk" style="left:'+pc(st)+';width:'+pc(s.weeks)+';opacity:.25" title="Planned: '+esc(s.text)+'"></div>':''}).join('')})();
+  let ticks='';const step=S>16?2:1;for(let w=0;w<=S;w+=step)ticks+='<span style="left:'+pc(w)+'">'+w+'</span>';
+  return '<div class="chart-wrap">'+
+    '<div class="plot"><div></div><div class="axis-t">Potential value made available (points)</div><div></div></div>'+
+    '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+      '<div class="chart short"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+s1+'</svg>'+now+'</div>'+
+      '<div class="endlab"><span style="top:'+Math.max(10,Math.min(92,100-last.p))+'%;color:var(--navy)"><b>'+last.p+'</b>potential</span></div></div>'+
+    '<div class="plot" style="margin-top:14px"><div></div><div class="axis-t">Realised value <span class="sim-tag">simulated</span></div><div></div></div>'+
+    '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100%</span><span class="yt" style="top:calc(6px + 50%)">50%</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+      '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+s2+'</svg>'+tgt+now+'</div>'+
+      '<div class="endlab"><span style="top:'+Math.max(10,Math.min(92,lc))+'%;color:var(--accent-ink)"><b>'+pct(last.c)+'</b>Customers<br>calls avoided</span><span style="top:'+Math.max(10,Math.min(92,lb))+'%;color:var(--green)"><b>'+pct(last.b)+'</b>Business<br>cost saved</span></div></div>'+
+    '<div class="plot"><div></div><div><div class="axis-t row-t">What the team worked on</div><div class="timeline">'+blocks+planned+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
+    '<div class="key"><span><i class="k-v"></i>release or pivot</span><span><i class="k-z"></i>work adding no capability</span><span><i class="blk inv" style="position:static;display:inline-block;width:18px;height:12px"></i>investigation</span><span><i class="k-v" style="opacity:.25"></i>still planned</span><span><i class="k-pink"></i>weeks with no realised value</span></div></div><div></div></div>'+
+    '</div>';
+}
+function renderSim(){
+  $('sim-eyebrow').textContent=G.ended?'Simulation over':'Simulation · '+(G.src==='mine'?'your plan':'David’s plan');
+  $('sim-title').textContent='Week '+G.week;
+  $('sim-panel').innerHTML='<div class="panel-title"><b>'+(G.src==='mine'?'Your plan':'David’s plan')+'</b><span>'+G.live.size+' of 6 capabilities live · target 25% cost saved</span></div>'+simChart()+
+    '<ol class="log">'+G.log.map(l=>'<li><span>wk '+l.w+'</span>'+esc(l.text)+'</li>').join('')+(G.log.length?'':'<li><span>wk 0</span>Nothing built yet.</li>')+'</ol>';
+  let side='';
+  if(G.ended)side=summaryHTML();
+  else{
+    side+=G.cards.map(c=>'<div class="card '+(c.cls||'')+'"'+(c.dash?' style="padding:0"':'')+'>'+(c.dash?'<div style="padding:12px 14px 8px"><span class="eyebrow">'+c.eyebrow+' <span class="sim-tag">simulated</span></span><h3>'+c.title+'</h3></div>':'<span class="eyebrow">'+c.eyebrow+'</span><h3>'+c.title+'</h3>')+c.body+'</div>').join('');
+    const next=G.queue[0];
+    const canRoll=G.released.some(r=>r.added.length);
+    side+='<div class="decide"><h3>What next?</h3><p>'+(next?'Next in your plan: <b style="color:#fff">'+esc(next.text)+'</b>'+(next.weeks?' ('+next.weeks+' wk)':' (no build time)'):'Your plan is complete.')+'</p>'+
+      '<div class="btn-row">'+
+      '<button class="btn btn-primary btn-sm" data-sim="continue"'+(next?'':' disabled')+'>'+(G.week===0&&!G.log.length?'Build first slice':'Continue')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" data-sim="stop">'+(next?'Stop here':'Finish')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" data-sim="rollback"'+(canRoll?'':' disabled')+'>Roll back last release</button></div>'+
+      '<div class="sub"><b>Investigate first</b>'+
+      '<button class="opt" data-inv="I1">Analytics breakdown<small>0 weeks · usage by age and request type</small></button>'+
+      '<button class="opt" data-inv="I2">Ask callers: “Did you know you could cancel on our website?”<small>1 week</small></button>'+
+      '<button class="opt" data-inv="I3">Customer interviews<small>1 week</small></button>'+
+      '<button class="opt" data-inv="I4">Error log review<small>0 weeks</small></button></div>'+
+      '<div class="sub"><b>Change the plan (pivot)</b>'+SIM.pivots.map(p=>'<button class="opt" data-piv="'+p.id+'">'+p.name+'<small>'+p.desc+' · '+SIZE_WEEKS[p.size]+' wk</small></button>').join('')+'</div>'+
+      '</div>';
+  }
+  $('sim-side').innerHTML=side;
+}
+function summaryHTML(){
+  const last=G.pts[G.pts.length-1],w=G.w,freed=G.queue.reduce((a,s)=>a+s.weeks,0);
+  return '<div class="summary"><span class="eyebrow" style="color:var(--accent)">Simulation over</span><h3>'+(G.targetWeek!=null?'Target met in week '+G.targetWeek:'Target not met')+'</h3>'+
+    '<p class="world">This was the “'+w.name+'” world. '+esc(w.story)+'</p>'+
+    '<table><tr><td>Potential value made available</td><td class="n">'+last.p+'</td></tr>'+
+    '<tr><td>Customers: calls avoided</td><td class="n">'+pct(last.c)+'</td></tr>'+
+    '<tr><td>Business: cost saved</td><td class="n">'+pct(last.b)+'</td></tr>'+
+    '<tr><td>Weeks used</td><td class="n">'+G.week+'</td></tr>'+
+    '<tr><td>Planned weeks not needed</td><td class="n">'+freed+'</td></tr></table>'+
+    '<p><b style="color:#fff">What David would do in this world:</b> '+esc(w.david)+'</p>'+
+    '<p>Five worlds are possible. Each run picks one at random, so the same plan can need different decisions.</p>'+
+    '<div class="btn-row"><button class="btn btn-primary btn-sm" data-sim="again">Play again in a different world</button><button class="btn btn-ghost btn-sm" data-sim="setup">Change plan</button>'+
+    '<a class="btn btn-ghost btn-sm" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Talk it through with David</a></div></div>';
+}
+if($('sim-side'))$('sim-side').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||b.disabled||!G)return;
+  if(b.dataset.sim==='continue'){const s=G.queue.shift();release(s);renderSim()}
+  if(b.dataset.sim==='stop')stopSim();
+  if(b.dataset.sim==='rollback')rollback();
+  if(b.dataset.sim==='again'){startSim(G.wid)}
+  if(b.dataset.sim==='setup'){$('sim-game').hidden=true;$('sim-setup').hidden=false;G=null;updateSimChoice()}
+  if(b.dataset.inv)investigate(b.dataset.inv);
+  if(b.dataset.piv)pivot(b.dataset.piv);
+});
+
+/* ======================= INIT ======================= */
+$('year').textContent=new Date().getFullYear();
+// TESTING ONLY: ?prefill=david fills Part 1 with David's slices
+const PRESETS={
+  david:DAVID.map(d=>d.text),
+  best:['Customers can see if an order is cancellable and request cancellation online; staff process it (this also tests demand)',
+        'Customers can automatically cancel single-item orders','Customers can automatically cancel entire multi-item orders',
+        'Customers can cancel selected items within an order','Handle all eligible orders, including complex and marketplace orders'],
+  poor:['Design the database for cancellations','Build the cancellation API','Internal admin screen for the support team',
+        'Cancellation page on the website with all options: whole orders, selected items, complex orders','Confirmation and refund emails','Analytics dashboard to track cancellations']
+};
+const QS=new URLSearchParams(location.search);
+if(PRESETS[QS.get('prefill')]){stickies=PRESETS[QS.get('prefill')].map(t=>({id:nextId++,text:t}))}
+renderPlan();updateSimChoice();
+if(QS.get('run')==='1'&&filled().length)$('run').click();
+window.__slicing={classify,evaluate,measures,DAVID,SIM,weekResult,adoption,startSim:()=>startSim(),state:()=>G}; // for testing
+})();
+</script>
+</body>
+</html>

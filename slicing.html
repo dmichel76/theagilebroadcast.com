@@ -569,15 +569,14 @@ function measures(plan){
 
 /* Slicing score: one 0-100 score per learning, overall = their average.
    1 Usable value: share of build weeks spent on slices that release value (experiments don't count against you).
-   2 Value early: average value available per week while building, out of 100 (area under the staircase).
+   2 Value early: when customers first get value. 100 x (1 - (first value week - 1) / total weeks); never = 0.
    3 Short waits: 100 x (1 - longest wait / total weeks). */
 function scoreOf(m){
   const total=m.total||1;
   const expW=m.sch.filter(o=>o.s.kind==='experiment'&&!o.s.caps.length).reduce((a,o)=>a+(o.end-o.start),0);
   const valW=m.sch.filter(o=>o.after>o.before).reduce((a,o)=>a+(o.end-o.start),0);
   const usable=total-expW>0?Math.round(100*valW/(total-expW)):0;
-  let area=0;for(let k=1;k<=total;k++){let v=0;m.sch.forEach(o=>{if(o.end<=k-1)v=o.after});area+=v}
-  const early=Math.round(area/total);
+  const early=m.first?Math.round(100*(1-(m.first-1)/total)):0;
   const waits=Math.round(100*(1-m.G/total));
   return {usable,early,waits,overall:Math.round((usable+early+waits)/3)};
 }
@@ -588,7 +587,7 @@ function scoreHTML(m,ref){
   return '<div class="score"><div class="score-total"><span>Slicing score</span><b>'+sc.overall+'<small>/100</small></b>'+
     '<p>The average of the three learnings.'+(rs?' David’s plan: '+rs.overall+'.':'')+'</p></div><div class="score-parts">'+
     part('1 · Slice by usable value',sc.usable,sc.usable+'% of your build weeks went into slices customers can use. Technical work and supporting pieces on their own don’t count; experiments don’t count against you.',rs&&rs.usable)+
-    part('2 · Get value out early',sc.early,'On average, '+sc.early+' of 100 points were available to customers each week while you built.',rs&&rs.early)+
+    part('2 · Get value out early',sc.early,m.first?'Customers first got value in week '+m.first+' of '+m.total+'.':'Customers never got any value from this plan.',rs&&rs.early)+
     part('3 · Avoid long waits',sc.waits,'Your longest wait for new value was '+m.G+' of '+m.total+' weeks.',rs&&rs.waits)+
     '</div></div>';
 }

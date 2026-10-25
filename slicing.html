@@ -283,13 +283,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .explain-body{padding:4px 18px 18px;font-size:.93rem}
 .explain-body p{margin-top:10px;color:var(--ink)}
 .explain-body p.m{color:var(--muted)}
-.cake{margin:14px 0 4px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.cake figure{margin:0;background:#fff;border:1px solid var(--line);padding:10px 8px 8px;text-align:center}
-.cake svg{width:100%;height:auto;display:block}
-.cake figcaption{font-family:var(--hand);font-size:.86rem;line-height:1.2;margin-top:6px}
-.cake figcaption b{display:block;font-family:var(--mono);font-weight:500;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.cake .bad b{color:var(--red)}
-.cake .good b{color:var(--green)}
+.sketch{margin:4px -6px 2px;background:#fff;border:1px solid var(--line);padding:6px}
+.sketch img{width:100%;height:auto;display:block}
 .tests{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
 .tests li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;font-size:.9rem;line-height:1.4}
 .tests li i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--navy);font:600 .66rem var(--mono);margin-top:1px}
@@ -370,31 +365,16 @@ footer.site a:hover{color:var(--accent)}
     <details class="explain" id="explain" open>
       <summary>
         <span class="eyebrow">Before you start</span>
-        <h3>What is a slice?</h3>
+        <h3>Slice, don’t break down</h3>
       </summary>
       <div class="explain-body">
-        <p>A slice is a thin piece of the feature that someone can <b>actually use</b>. Cut through every layer, top to bottom, not one layer at a time.</p>
-        <div class="cake">
-          <figure class="bad"><svg viewBox="0 0 120 96" aria-hidden="true">
-<g font-family="IBM Plex Mono,monospace" font-size="8" fill="#56637A">
-<rect x="10" y="8" width="100" height="22" rx="3" fill="#fff" stroke="#12213B" stroke-width="2" stroke-dasharray="4 3"/><text x="60" y="22" text-anchor="middle">screens</text>
-<rect x="10" y="36" width="100" height="22" rx="3" fill="#fff" stroke="#12213B" stroke-width="2" stroke-dasharray="4 3"/><text x="60" y="50" text-anchor="middle">logic / API</text>
-<rect x="10" y="64" width="100" height="22" rx="3" fill="#12213B" stroke="#12213B" stroke-width="2"/><text x="60" y="78" text-anchor="middle" fill="#fff">database</text>
-</g></svg><figcaption><b>Horizontal</b>Nothing usable until the last layer lands</figcaption></figure>
-          <figure class="good"><svg viewBox="0 0 120 96" aria-hidden="true">
-<g font-family="IBM Plex Mono,monospace" font-size="8" fill="#56637A">
-<rect x="10" y="8" width="100" height="22" rx="3" fill="#fff" stroke="#D9DEE8" stroke-width="2"/>
-<rect x="10" y="36" width="100" height="22" rx="3" fill="#fff" stroke="#D9DEE8" stroke-width="2"/>
-<rect x="10" y="64" width="100" height="22" rx="3" fill="#fff" stroke="#D9DEE8" stroke-width="2"/>
-<rect x="44" y="4" width="30" height="86" rx="3" fill="#F2A91E" stroke="#12213B" stroke-width="2" transform="rotate(-2 59 47)"/>
-<text x="59" y="51" text-anchor="middle" fill="#12213B" transform="rotate(-90 59 47)" font-weight="600">usable</text>
-</g></svg><figcaption><b>Vertical</b>Thin, but usable from day one</figcaption></figure>
-        </div>
-        <p class="m">Three quick tests for each sticky:</p>
+        <figure class="sketch"><img src="assets/img/sketch-slicing.png" width="700" height="290" alt="Hand-drawn sketch: breaking down turns a house into separate walls, a roof, a door and a window; slicing cuts an orange into wedges, each one still an orange."></figure>
+        <p><b>Breaking down</b> gives you smaller tasks that are still only valuable when assembled. <b>Slicing</b> gives you smaller deliveries that are each genuinely useful on their own.</p>
+        <p class="m">And working end to end isn’t enough. A login screen can work flawlessly and still lead to an empty account. Each slice should let someone do something that matters to them.</p>
+        <p class="m">Two questions for each sticky:</p>
         <ul class="tests">
           <li><i>1</i><span>Once it’s live, what can a customer do that they couldn’t before?</span></li>
-          <li><i>2</i><span>Is it the smallest version that’s still worth having?</span></li>
-          <li><i>3</i><span>Would you learn something from releasing it?</span></li>
+          <li><i>2</i><span>What’s the smallest thing we could put in front of customers that would tell us something meaningful?</span></li>
         </ul>
         <p class="quote">“We can ship output and still miss value.”</p>
         <div class="explain-links">

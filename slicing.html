@@ -128,11 +128,11 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .66rem/18px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .mark.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
 .zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;font-family:var(--hand);font-size:.8rem;line-height:1.2;color:#8A4B4B;pointer-events:none}
-.gap{position:absolute;top:2px;height:10px;border:2px solid var(--red);border-bottom:0;pointer-events:none}
-.gap span{position:absolute;top:10px;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 .66rem var(--mono);color:var(--red);background:#fff;padding:0 4px}
+.gap{position:absolute;top:-12px;height:8px;border:2px solid var(--red);border-bottom:0;pointer-events:none;z-index:2}
+.gap span{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 .66rem var(--mono);color:var(--red);background:#fff;padding:0 4px}
 .target{position:absolute;left:0;right:0;border-top:2px dashed var(--navy);pointer-events:none}
 .target span{position:absolute;right:4px;top:-18px;font:600 .66rem var(--mono);color:var(--navy);background:rgba(255,255,255,.9);padding:0 3px}
-.row-t{margin:14px 0 4px}
+.row-t{margin:14px 0 22px}
 .timeline{position:relative;height:30px;background:var(--soft);border:1px solid var(--line)}
 .blk{position:absolute;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.66rem;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
 .blk.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
@@ -148,7 +148,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .k-z{border:2px dashed var(--navy);background:#fff}
 .k-you{border-top:3px solid var(--amber-line);height:0!important}
 .k-prev{border-top:3px solid #A7B0C0;height:0!important}
-.k-dav{border-top:3px dashed var(--navy);height:0!important}
+.k-david{border-top:3px dashed var(--navy);height:0!important}
 .k-c{border-top:3px solid var(--amber-line);height:0!important}
 .k-b{border-top:3px solid var(--green);height:0!important}
 .k-gap{border:2px solid var(--red);border-bottom:0;height:8px!important}
@@ -187,6 +187,29 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .rubric .btn-row{margin-top:16px}
 .rubric .btn-ghost{color:#fff}
 .rubric .btn-ghost:hover{background:#fff;color:var(--navy)}
+.score{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);border-bottom:1px solid var(--line)}
+@media (max-width:700px){.score{grid-template-columns:1fr}}
+.score-total{padding:18px 16px;background:var(--soft);border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+@media (max-width:700px){.score-total{border-right:0;border-bottom:1px solid var(--line)}}
+.score-total b{font:800 clamp(2.6rem,6vw,3.6rem)/1 var(--display)}
+.score-total b small{font-size:.4em;color:var(--muted);margin-left:4px}
+.score-total span{font:500 .68rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.score-total p{font-size:.85rem;color:var(--muted);margin-top:8px}
+.score-parts{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.sp-head{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:.92rem}
+.sp-head b{font:800 1rem var(--display)}
+.sp-bar{height:8px;background:var(--soft);margin-top:4px}
+.sp-bar i{display:block;height:100%;background:var(--accent)}
+.sp-bar i.lo{background:var(--red)}
+.sp-bar i.hi{background:var(--green)}
+.sp-why{font-size:.8rem;color:var(--muted);margin-top:3px}
+.alt{margin-top:28px}
+.alt .sec-head{margin-bottom:14px}
+.sim-cta{margin-top:32px;background:var(--navy);color:var(--on-navy);padding:clamp(24px,4vw,40px);display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:20px;align-items:center;border-top:6px solid var(--accent)}
+@media (max-width:760px){.sim-cta{grid-template-columns:1fr}}
+.sim-cta h2{color:#fff;font-size:clamp(1.6rem,3.6vw,2.6rem)}
+.sim-cta p{color:#C3CCDB;margin-top:10px;max-width:56ch}
+.sim-cta .btn{font-size:1.05rem;padding:18px 24px;justify-self:start}
 .closing{margin-top:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;max-width:70ch}
 .closing p{font-size:.95rem;color:var(--muted)}
 .closing p+p{margin-top:8px}
@@ -340,12 +363,24 @@ footer.site a:hover{color:var(--accent)}
         </ul>
         <div class="btn-row">
           <button class="btn btn-primary btn-sm" id="revise" type="button">Revise my slices</button>
-          <button class="btn btn-ghost btn-sm" id="compare" type="button">Compare with David’s plan</button>
+          <button class="btn btn-ghost btn-sm" id="compare" type="button">See an alternative solution</button>
         </div>
       </div>
-      <div class="closing" id="closing" hidden>
-        <p><b>Potential value isn’t realised value.</b> A slice can make cancelling possible without anyone using it, and some releases make things worse.</p>
-        <p><button class="linkbtn" id="to-sim" type="button">Simulate what happens when customers meet your plan →</button></p>
+      <div class="alt" id="alt" hidden>
+        <div class="sec-head">
+          <span class="eyebrow">An alternative solution</span>
+          <h2>Here is <em>another way</em> to slice it</h2>
+          <p>David’s plan does the highest-value, smallest slices first, so value arrives fast and then tails off. Compare the two value paths over time.</p>
+        </div>
+        <div class="panel" id="alt-panel"></div>
+      </div>
+      <div class="sim-cta" id="closing" hidden>
+        <div>
+          <span class="eyebrow" style="color:var(--accent)">Part 2</span>
+          <h2>What happens when customers <em>meet your plan?</em></h2>
+          <p>Potential value isn’t realised value. A slice can make cancelling possible without anyone using it, and some releases make things worse. Release your plan to simulated customers, read the evidence, and decide what to do next.</p>
+        </div>
+        <button class="btn btn-primary" id="to-sim" type="button">Simulate your plan →</button>
       </div>
       <p class="proto">Prototype: slices are read by a simple keyword model for now, not AI.</p>
     </div>
@@ -408,7 +443,7 @@ const CAPS={
   partial:    {v:80, label:'Cancel selected items within an order', short:'partial cancellation'},
   complex:    {v:100,label:'Handle all eligible orders, including complex and marketplace orders', short:'complex & marketplace'}
 };
-const SIZE_WEEKS={S:1,M:2,L:3};
+const SIZE_WEEKS={S:1,M:2,L:3,XL:5};  // XL: one slice that bundles several large capabilities
 const DAVID=[
   {text:'Fake door cancel button (A/B test), monitor clicks',caps:[],kind:'experiment',size:'S',fake:true},
   {text:'Customers can see if an order is cancellable and request cancellation online (staff process it)',caps:['elig','request'],kind:'release',size:'S'},
@@ -496,6 +531,7 @@ function classify(raw){
   const big=caps.filter(c=>['partial','complex'].includes(c)).length, mid=caps.filter(c=>['auto_single','auto_multi'].includes(c)).length;
   if(big) size='L'; else if(mid>=2) size='M';
   if(caps.length>=3&&size!=='L') size=size==='S'?'M':'L';
+  if(big>=2||(big&&caps.length>=3)) size='XL';
   if(kind==='technical') size='M';
   return {caps,kind,size,fake};
 }
@@ -529,6 +565,32 @@ function measures(plan){
   if(total-last>G){G=total-last;gs=last;ge=total}
   if(!ups.length){G=total;gs=0;ge=total}
   return {sch,total,M,T,G,gs,ge,first:ups.length?ups[0].end:null};
+}
+
+/* Slicing score: one 0-100 score per learning, overall = their average.
+   1 Usable value: share of build weeks spent on slices that release value (experiments don't count against you).
+   2 Value early: average value available per week while building, out of 100 (area under the staircase).
+   3 Short waits: 100 x (1 - longest wait / total weeks). */
+function scoreOf(m){
+  const total=m.total||1;
+  const expW=m.sch.filter(o=>o.s.kind==='experiment'&&!o.s.caps.length).reduce((a,o)=>a+(o.end-o.start),0);
+  const valW=m.sch.filter(o=>o.after>o.before).reduce((a,o)=>a+(o.end-o.start),0);
+  const usable=total-expW>0?Math.round(100*valW/(total-expW)):0;
+  let area=0;for(let k=1;k<=total;k++){let v=0;m.sch.forEach(o=>{if(o.end<=k-1)v=o.after});area+=v}
+  const early=Math.round(area/total);
+  const waits=Math.round(100*(1-m.G/total));
+  return {usable,early,waits,overall:Math.round((usable+early+waits)/3)};
+}
+function scoreHTML(m,ref){
+  const sc=scoreOf(m),cls=v=>v<40?'lo':v>=70?'hi':'';
+  const part=(name,v,why,rv)=>'<div><div class="sp-head"><span>'+name+'</span><b>'+v+(rv!=null?' <small style="font:500 .7rem var(--mono);color:var(--muted)">David '+rv+'</small>':'')+'</b></div><div class="sp-bar"><i class="'+cls(v)+'" style="width:'+Math.max(2,v)+'%"></i></div><div class="sp-why">'+why+'</div></div>';
+  const rs=ref?scoreOf(ref):null;
+  return '<div class="score"><div class="score-total"><span>Slicing score</span><b>'+sc.overall+'<small>/100</small></b>'+
+    '<p>The average of the three learnings.'+(rs?' David’s plan: '+rs.overall+'.':'')+'</p></div><div class="score-parts">'+
+    part('1 · Slice by usable value',sc.usable,sc.usable+'% of your build weeks went into slices customers can use. Technical work and supporting pieces on their own don’t count; experiments don’t count against you.',rs&&rs.usable)+
+    part('2 · Get value out early',sc.early,'On average, '+sc.early+' of 100 points were available to customers each week while you built.',rs&&rs.early)+
+    part('3 · Avoid long waits',sc.waits,'Your longest wait for new value was '+m.G+' of '+m.total+' weeks.',rs&&rs.waits)+
+    '</div></div>';
 }
 
 /* ======================= PART 1: EDITOR ======================= */
@@ -635,9 +697,9 @@ function chartBlock(id,runs,main,opts){
   return '<div class="chart-wrap">'+
     '<div class="plot"><div></div><div class="axis-t">Potential value (points)</div><div></div></div>'+
     '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100</span><span class="yt" style="top:calc(6px + 50%)">50</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
-    '<div class="chart" id="'+id+'-chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+svg+'</svg>'+marks+gap+'</div>'+
+    '<div class="chart" id="'+id+'-chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+svg+'</svg>'+marks+'</div>'+
     '<div class="endlab">'+ends+'</div></div>'+
-    '<div class="plot"><div></div><div><div class="axis-t row-t">'+(opts.barTitle||'Slices, in the order they’re released')+'</div><div class="timeline">'+blocks+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
+    '<div class="plot"><div></div><div><div class="axis-t row-t">'+(opts.barTitle||'Slices, in the order they’re released')+'</div><div class="timeline">'+blocks+gap+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
     '<div class="key">'+keyLines+'<span><i class="k-pink"></i>weeks of work that add no new value</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds none on its own</span><span><i class="k-gap"></i>longest wait for new value</span></div></div><div></div></div>'+
     '</div>';
 }
@@ -665,32 +727,41 @@ function statTiles(m){
     '<div class="stat"><b>'+(m.T?m.T+' wk':'–')+'</b><span>Weeks to reach it</span></div>'+
     '<div class="stat"><b>'+m.G+' wk</b><span>Longest wait for new value</span></div></div>';
 }
+function sliceList(m,withWhy){
+  return '<ol class="slist">'+m.sch.map(o=>{const up=o.after>o.before;
+    return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
+      '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
+}
 function renderResult(){
   const runs=[{key:'you',label:rounds>1?'This round':'Your plan',m:current.m}];
   if(previous)runs.push({key:'prev',label:'Previous round',m:previous.m});
-  let dm=null;if(comparing){dm=measures(DAVID);runs.push({key:'david',label:'David’s plan',m:dm})}
   let h='<div class="panel-title"><b>'+(rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
-    chartBlock('p1',runs,runs[0]);
+    scoreHTML(current.m)+chartBlock('p1',runs,runs[0]);
   if(runs.length===1)h+=statTiles(current.m);
   else{
     const row=(l,f)=>'<tr><td>'+l+'</td>'+runs.map(r=>'<td class="n">'+f(r.m)+'</td>').join('')+'</tr>';
     h+='<table class="cmp"><thead><tr><th></th>'+runs.map(r=>'<th class="n">'+r.label+'</th>').join('')+'</tr></thead><tbody>'+
-      row('Highest value reached',m=>m.M)+row('Weeks to reach it',m=>m.T?m.T:'–')+row('Longest wait for new value',m=>m.G+' wk')+row('First value',m=>m.first?'week '+m.first:'never')+
+      row('Slicing score',m=>scoreOf(m).overall)+row('Highest value reached',m=>m.M)+row('Weeks to reach it',m=>m.T?m.T:'–')+row('Longest wait for new value',m=>m.G+' wk')+row('First value',m=>m.first?'week '+m.first:'never')+
       '</tbody></table>';
   }
-  h+='<ol class="slist">'+current.m.sch.map(o=>{
-    const up=o.after>o.before;
-    return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
-      '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span><span class="why">'+esc(o.s.reason)+'</span></li>';
-  }).join('')+'</ol>';
-  if(comparing){
-    h+='<ol class="slist" style="background:var(--soft)"><li style="display:block"><span class="txt">David’s plan</span></li>'+dm.sch.map(o=>{const up=o.after>o.before;
-      return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span><span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span></li>'}).join('')+'</ol>';
-  }
+  h+=sliceList(current.m,true);
   $('res-panel').innerHTML=h;
+  if(comparing)renderAlt();
+}
+function renderAlt(){
+  const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Alternative',m:dm};
+  const row=(l,a,b)=>'<tr><td>'+l+'</td><td class="n">'+a+'</td><td class="n">'+b+'</td></tr>';
+  const ys=scoreOf(current.m),ds=scoreOf(dm);
+  let h='<div class="panel-title"><b>Your plan vs the alternative</b><span>potential value over time</span></div>'+
+    chartBlock('p2',[you,alt],alt,{barTitle:'The alternative’s slices, in order'})+
+    '<table class="cmp"><thead><tr><th></th><th class="n">Your plan</th><th class="n">Alternative</th></tr></thead><tbody>'+
+    row('Slicing score',ys.overall,ds.overall)+row('1 · Slice by usable value',ys.usable,ds.usable)+row('2 · Get value out early',ys.early,ds.early)+row('3 · Avoid long waits',ys.waits,ds.waits)+
+    row('Highest value reached',current.m.M,dm.M)+row('Weeks to reach it',current.m.T||'–',dm.T)+row('First value',current.m.first?'week '+current.m.first:'never','week '+dm.first)+
+    '</tbody></table>'+sliceList(dm,false);
+  $('alt-panel').innerHTML=h;
 }
 $('revise').addEventListener('click',()=>{$('view-slice').scrollIntoView({behavior:reduce?'auto':'smooth'});const t=document.querySelector('.stext');if(t)t.focus({preventScroll:true})});
-$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide David’s plan':'Compare with David’s plan';renderResult()});
+$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide the alternative':'See an alternative solution';$('alt').hidden=!comparing;if(comparing){renderAlt();$('alt').scrollIntoView({behavior:reduce?'auto':'smooth'})}});
 $('to-sim').addEventListener('click',()=>{setTab('sim');const r=document.querySelector('input[name="plan"][value="mine"]');if(!r.disabled)r.checked=true;$('view-sim').scrollIntoView({behavior:reduce?'auto':'smooth'})});
 
 /* ======================= TABS ======================= */
@@ -933,9 +1004,16 @@ $('sim-side').addEventListener('click',e=>{
 /* ======================= INIT ======================= */
 $('year').textContent=new Date().getFullYear();
 // TESTING ONLY: ?prefill=david fills Part 1 with David's slices
-if(new URLSearchParams(location.search).get('prefill')==='david'){stickies=DAVID.map(d=>({id:nextId++,text:d.text}))}
+const PRESETS={
+  david:DAVID.map(d=>d.text),
+  poor:['Design the database for cancellations','Build the cancellation API','Internal admin screen for the support team',
+        'Cancellation page on the website with all options: whole orders, selected items, complex orders','Confirmation and refund emails','Analytics dashboard to track cancellations']
+};
+const QS=new URLSearchParams(location.search);
+if(PRESETS[QS.get('prefill')]){stickies=PRESETS[QS.get('prefill')].map(t=>({id:nextId++,text:t}))}
 renderPlan();updateSimChoice();
 if(location.hash==='#simulate')setTab('sim');
+if(QS.get('run')==='1'&&filled().length)$('run').click();
 window.__slicing={classify,evaluate,measures,DAVID,SIM,weekResult,adoption,startSim:()=>startSim(),state:()=>G}; // for testing
 })();
 </script>

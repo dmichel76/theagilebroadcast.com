@@ -254,8 +254,8 @@ footer.site a{color:#C3CCDB}
 .show-text h2{font-size:clamp(1.6rem,2.8vw,2.3rem);line-height:1}
 .show-text p{color:var(--muted);max-width:46ch}
 .show-text .btn{margin-top:8px}
-.note{font-family:var(--hand);font-size:1.15rem;color:var(--ink)!important;display:flex;align-items:center;gap:6px;margin-left:-6px}
-.arrow{width:46px;height:30px;transform:rotate(8deg) translateY(-6px);flex:none}
+.note{font-family:var(--hand);font-size:1.15rem;color:var(--ink)!important;display:flex;align-items:center;gap:8px}
+.arrow{width:56px;height:36px;transform:rotate(-6deg) translateY(-12px);flex:none}
 .arrow path{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 
 .book3d{position:relative;display:block;width:clamp(170px,22vw,230px);margin-left:clamp(8px,4vw,56px);transform:rotate(-7deg);transition:transform .35s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(22px 26px 22px rgba(10,20,40,.38))}
@@ -414,7 +414,33 @@ footer.site a{color:#C3CCDB}
 .course-left .deck .deck-slide{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border-radius:8px;background:#fff;box-shadow:0 14px 30px rgba(0,0,0,.35);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s;transform-origin:50% 60%}
 .course.featured:hover .deck-slide.front{transform:none}
 @media (prefers-reduced-motion:reduce){.course-left .deck .deck-slide{transition:none}}
+
+/* speech bubble next to the hero portrait */
+.hero-photo{position:relative}
+.hello-bubble{position:absolute;top:6%;left:-4%;z-index:2;background:#fff;color:var(--navy);font-family:var(--hand);font-weight:500;font-size:clamp(1.15rem,2vw,1.6rem);line-height:1.1;padding:14px 22px;border:3px solid var(--navy);border-radius:28px 34px 26px 36px/30px 24px 34px 26px;box-shadow:6px 7px 0 var(--accent);transform:rotate(-4deg);white-space:nowrap;animation:bubble-pop .6s cubic-bezier(.2,1.4,.4,1) .4s both}
+.hello-bubble::before,.hello-bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid}
+.hello-bubble::before{right:22px;bottom:-22px;border-width:22px 0 0 22px;border-color:var(--navy) transparent transparent transparent}
+.hello-bubble::after{right:26px;bottom:-14px;border-width:15px 0 0 15px;border-color:#fff transparent transparent transparent}
+@keyframes bubble-pop{from{opacity:0;transform:rotate(-4deg) scale(.6)}to{opacity:1;transform:rotate(-4deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){.hello-bubble{animation:none}}
+@media (max-width:860px){.hello-bubble{left:-2%;top:0;font-size:1.05rem;padding:10px 16px}}
+
+/* tools */
+#tools .tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:44px}
+@media (max-width:760px){#tools .tools{grid-template-columns:1fr}}
+.tool{display:flex;flex-direction:column;gap:12px;padding:26px;background:var(--soft);border-radius:12px;text-decoration:none;color:var(--ink);border-top:5px solid var(--c);transition:transform .15s,box-shadow .15s}
+.tool:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(18,33,59,.12)}
+.tool-reflect{--c:#16A37F}
+.tool-slice{--c:var(--accent)}
+.tool .tool-art{height:56px;display:flex;align-items:flex-end}
+.tool .tool-dots{display:flex;gap:8px}
+.tool .tool-dots i{width:22px;height:22px;border-radius:50%;border:1px solid #2B2B2B}
+.tool h3{text-transform:uppercase;font-size:1.3rem}
+.tool p{color:var(--muted)}
+.tool .tool-meta{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-top:auto}
+@media (prefers-reduced-motion:reduce){.tool{transition:none}}
 </style>
+<script defer src="assets/js/track.js?v=2026-10-24b"></script>
 </head>
 <body>
 
@@ -429,6 +455,7 @@ footer.site a{color:#C3CCDB}
         <li><a href="#training">Training</a></li>
         <li><a href="#coaching">Coaching</a></li>
         <li><a href="#speaking">Speaking</a></li>
+        <li><a href="#tools">Tools</a></li>
         <li><a href="#book">Book</a></li>
         <li><a href="#videos">Videos</a></li>
         <li><a href="#about">About</a></li>
@@ -454,6 +481,7 @@ footer.site a{color:#C3CCDB}
       </div>
       <figure class="hero-photo">
         <img src="assets/img/hero-david.webp" alt="Portrait of David Michel smiling with his arms crossed" width="1126" height="1397">
+        <span class="hello-bubble">Hey, I'm David!</span>
       </figure>
     </div>
   </div>
@@ -467,7 +495,7 @@ footer.site a{color:#C3CCDB}
         <span class="sticker sticker-amber">Coming<br>soon!</span>
       </a>
       <div class="show-text">
-        <p class="note"><svg class="arrow" viewBox="0 0 80 50" aria-hidden="true"><path d="M74 44 C 56 40, 30 34, 14 12"/><path d="M8 20 L 13 10 L 24 13"/></svg>My first book</p>
+        <p class="note">My first book<svg class="arrow" viewBox="0 0 80 50" aria-hidden="true"><path d="M6 44 C 26 42, 50 36, 66 12"/><path d="M55 14 L 67 9 L 71 21"/></svg></p>
         <h2>Demystifying Value Delivery</h2>
         <p>A practical guide to discovering, delivering and validating value in agile product development. I'm writing it now.</p>
         <a class="btn btn-primary" href="https://leanpub.com/demystifyingvaluedelivery/" target="_blank" rel="noopener">Get notified when it's out</a>
@@ -485,7 +513,7 @@ footer.site a{color:#C3CCDB}
         <span class="sticker sticker-red">Watch<br>now!</span>
       </a>
       <div class="show-text">
-        <p class="note"><svg class="arrow" viewBox="0 0 80 50" aria-hidden="true"><path d="M74 44 C 56 40, 30 34, 14 12"/><path d="M8 20 L 13 10 L 24 13"/></svg>My most-watched video</p>
+        <p class="note">My most-watched video<svg class="arrow" viewBox="0 0 80 50" aria-hidden="true"><path d="M6 44 C 26 42, 50 36, 66 12"/><path d="M55 14 L 67 9 L 71 21"/></svg></p>
         <h2>The Agile Broadcast <svg class="yt-logo yt-inline" viewBox="0 0 90 20" role="img" aria-label="YouTube"><rect x="0" y="0" width="28.6" height="20" rx="5.6" fill="#FF0000"/><path d="M11.4 5.7 L19 10 L11.4 14.3 Z" fill="#fff"/><text x="31.5" y="15.6" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="15.5" letter-spacing="-0.6" fill="currentColor">YouTube</text></svg></h2>
         <dl class="stats">
           <div><dt>Views</dt><dd>160K+</dd></div>
@@ -653,6 +681,32 @@ footer.site a{color:#C3CCDB}
       <img src="assets/img/speaking-aotb-2019.jpg" alt="David on stage at Agile on the Beach 2019 in front of a sketch of a fox and a hen" width="1400" height="788" loading="lazy">
       <img src="assets/img/speaking-aotb-extroverts.jpg" alt="David on the main stage at Agile on the Beach 2019 presenting Is Agile designed for extroverts" width="1400" height="1050" loading="lazy">
       <img src="assets/img/speaking-aotb-stage.jpg" alt="David on stage at Agile on the Beach explaining incremental and iterative delivery with the Mona Lisa" width="1000" height="990" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Try it yourself</span>
+        <h2>Tools</h2>
+        <p class="lede" style="margin-top:20px">Free, short exercises from my training. Use them on your own or with your team. Nothing you enter is stored or sent anywhere.</p>
+      </div>
+    </div>
+    <div class="tools">
+      <a class="tool tool-reflect" href="self-assessment.html">
+        <span class="tool-art" aria-hidden="true"><span class="tool-dots"><i style="background:#BE1111"></i><i style="background:#F89A4C"></i><i style="background:#FFDA45"></i><i style="background:#AEEBC9"></i><i style="background:#08712A"></i></span></span>
+        <h3>Agility self-reflection</h3>
+        <p>Twelve questions on how often you really work with value, learning and flow. See where to focus next.</p>
+        <span class="tool-meta">12 questions · 3 minutes →</span>
+      </a>
+      <a class="tool tool-slice" href="slicing.html">
+        <span class="tool-art" aria-hidden="true"><svg width="120" height="56" viewBox="0 0 120 56"><path d="M2 54 H22 V40 H42 V30 H62 V20 H92 V6 H118" fill="none" stroke="#D99000" stroke-width="4"/><line x1="2" y1="54" x2="118" y2="54" stroke="#12213B" stroke-width="2"/></svg></span>
+        <h3>Slice it right</h3>
+        <p>Slice a real feature into releases and see when value reaches customers. Get a slicing score, then compare with a reference solution.</p>
+        <span class="tool-meta">Slicing exercise · 5 minutes →</span>
+      </a>
     </div>
   </div>
 </section>

@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Slice It Right</title>
-<meta name="robots" content="noindex">
-<meta name="description" content="A slicing game: slice self-service order cancellation into releases and see when value becomes available.">
+<meta name="description" content="A slicing game: slice self-service order cancellation, see when value becomes available, then simulate what happens when customers meet your plan.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
@@ -275,6 +274,7 @@ footer.site a{color:#C3CCDB;text-decoration:none}
 footer.site a:hover{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.thinking i{animation:none}}
 </style>
+<script defer src="assets/js/track.js?v=2026-10-24b"></script>
 </head>
 <body>
 
@@ -289,6 +289,7 @@ footer.site a:hover{color:var(--accent)}
         <li><a href="./#training">Training</a></li>
         <li><a href="./#coaching">Coaching</a></li>
         <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#tools">Tools</a></li>
         <li><a href="./#book">Book</a></li>
         <li><a href="./#videos">Videos</a></li>
         <li><a href="./#about">About</a></li>
@@ -304,7 +305,7 @@ footer.site a:hover{color:var(--accent)}
     <div>
       <span class="eyebrow">Slicing game · about 5 minutes</span>
       <h1>Slice it <em>right</em></h1>
-      <p class="lede">Slice a real feature into releases and see when value becomes available. A good plan gets usable value out early and avoids long waits with nothing new.</p>
+      <p class="lede">Slice a real feature into releases, see when value becomes available, then find out what happens when customers actually meet your plan.</p>
     </div>
     <div class="brief">
       <span class="eyebrow">The brief</span>
@@ -314,10 +315,15 @@ footer.site a:hover{color:var(--accent)}
   </div>
 </section>
 
-
+<nav class="tabbar" aria-label="Game parts">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="tab-slice" aria-controls="view-slice" aria-selected="true" type="button"><small>Part 1</small>Slice it</button>
+    <button class="tab" role="tab" id="tab-sim" aria-controls="view-sim" aria-selected="false" type="button"><small>Part 2</small>Simulate</button>
+  </div>
+</nav>
 
 <!-- ===================== PART 1: SLICE IT ===================== -->
-<section class="band" id="view-slice">
+<section class="band" id="view-slice" role="tabpanel" aria-labelledby="tab-slice">
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">Your slices</span>
@@ -329,6 +335,7 @@ footer.site a:hover{color:var(--accent)}
       <div class="plan-foot">
         <button class="btn btn-primary" id="run" type="button" disabled>See when value arrives</button>
         <span class="hint" id="hint"></span>
+        <a class="linkbtn" id="ref-link" href="slicing-reference.html" target="_blank" rel="noopener">Stuck? See the reference solution ↗</a>
       </div>
     </div>
 
@@ -336,7 +343,7 @@ footer.site a:hover{color:var(--accent)}
       <div class="sec-head">
         <span class="eyebrow" id="res-eyebrow">Result</span>
         <h2>When does value <em>arrive?</em></h2>
-        <p>The staircase shows potential value made available: what customers could get once each slice is live, on a fixed 0–100 scale. It’s not a forecast of how many will use it.</p>
+        <p>The staircase shows potential value made available: what customers could get once each slice is live, on a fixed 0–100 scale. It’s not a forecast of how many will use it; that’s Part 2.</p>
       </div>
       <div class="panel" id="res-panel"></div>
       <div class="rubric" id="rubric" hidden>
@@ -358,22 +365,60 @@ footer.site a:hover{color:var(--accent)}
         </ul>
         <div class="btn-row">
           <button class="btn btn-primary btn-sm" id="revise" type="button">Revise my slices</button>
-          <button class="btn btn-ghost btn-sm" id="compare" type="button">See an alternative solution</button>
+          <button class="btn btn-ghost btn-sm" id="compare" type="button">See the reference solution</button>
         </div>
       </div>
       <div class="alt" id="alt" hidden>
         <div class="sec-head">
-          <span class="eyebrow">An alternative solution</span>
-          <h2>Here is <em>another way</em> to slice it</h2>
+          <span class="eyebrow">The reference solution</span>
+          <h2>Here is <em>the reference</em> solution</h2>
           <p>David’s plan does the highest-value, smallest slices first, so value arrives fast and then tails off. Compare the two value paths over time.</p>
         </div>
         <div class="panel" id="alt-panel"></div>
+      </div>
+      <div class="sim-cta" id="closing" hidden>
+        <div>
+          <span class="eyebrow" style="color:var(--accent)">Part 2</span>
+          <h2>What happens when customers <em>meet your plan?</em></h2>
+          <p>Potential value isn’t realised value. A slice can make cancelling possible without anyone using it, and some releases make things worse. Release your plan to simulated customers, read the evidence, and decide what to do next.</p>
+        </div>
+        <button class="btn btn-primary" id="to-sim" type="button">Simulate your plan →</button>
       </div>
       <p class="proto">Prototype: slices are read by a simple keyword model for now, not AI.</p>
     </div>
   </div>
 </section>
 
+<!-- ===================== PART 2: SIMULATE ===================== -->
+<section class="band" id="view-sim" role="tabpanel" aria-labelledby="tab-sim" hidden>
+  <div class="wrap">
+    <div id="sim-setup" class="setup">
+      <div class="sec-head">
+        <span class="eyebrow">Simulation</span>
+        <h2>What happens when customers meet it?</h2>
+        <p>Your plan is released one slice at a time to simulated customers. After each release you see what happened, and decide: continue, stop, change the plan or roll back. You won’t know in advance how these customers behave.</p>
+      </div>
+      <div class="target-box"><b>Business target:</b> cut the cost of handling cancellations by 25%. Today: 2,000 cancellation calls a week at £6 each, £12,000 a week. <span class="sim-tag">simulated</span></div>
+      <div class="choice" id="plan-choice">
+        <label id="opt-mine" class="off"><input type="radio" name="plan" value="mine" disabled><span><b>My plan from Part 1</b><small id="mine-note">Slice it in Part 1 first.</small></span></label>
+        <label><input type="radio" name="plan" value="david" checked><span><b>David’s plan</b><small>Fake door, then requests online, automation, partial cancellation, complex orders.</small></span></label>
+      </div>
+      <button class="btn btn-primary" id="sim-start" type="button">Start the simulation</button>
+    </div>
+
+    <div id="sim-game" hidden>
+      <div class="sec-head">
+        <span class="eyebrow" id="sim-eyebrow">Simulation</span>
+        <h2 id="sim-title">Week 0</h2>
+      </div>
+      <div class="sim-grid">
+        <div class="panel" id="sim-panel"></div>
+        <div class="side" id="sim-side"></div>
+      </div>
+    </div>
+    <p class="proto">Simulated data from a fixed model. It isn’t a prediction of how any real retailer’s customers behave.</p>
+  </div>
+</section>
 </main>
 
 <footer class="site">
@@ -673,8 +718,8 @@ $('run').addEventListener('click',()=>{
     if(current)previous=current;
     rounds++;current={plan,m:measures(plan)};
     renderResult();updateRun();
-    $('rubric').hidden=false;
-    $('res-eyebrow').textContent=rounds===1?'Your first try':'Round '+rounds;
+    $('rubric').hidden=false;$('closing').hidden=false;
+    $('res-eyebrow').textContent=REF_MODE&&rounds===1?'Reference solution':rounds===1?'Your first try':'Round '+rounds;
     updateSimChoice();
   });
 });
@@ -689,9 +734,9 @@ function sliceList(m,withWhy){
       '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
 }
 function renderResult(){
-  const runs=[{key:'you',label:rounds>1?'This round':'Your plan',m:current.m}];
+  const runs=[{key:'you',label:REF_MODE&&rounds===1?'Reference':rounds>1?'This round':'Your plan',m:current.m}];
   if(previous)runs.push({key:'prev',label:'Previous round',m:previous.m});
-  let h='<div class="panel-title"><b>'+(rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
+  let h='<div class="panel-title"><b>'+(REF_MODE&&rounds===1?'The reference solution':rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
     scoreHTML(current.m)+chartBlock('p1',runs,runs[0]);
   if(runs.length===1)h+=statTiles(current.m);
   else{
@@ -705,19 +750,20 @@ function renderResult(){
   if(comparing)renderAlt();
 }
 function renderAlt(){
-  const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Alternative',m:dm};
+  const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Reference',m:dm};
   const row=(l,a,b)=>'<tr><td>'+l+'</td><td class="n">'+a+'</td><td class="n">'+b+'</td></tr>';
   const ys=scoreOf(current.m),ds=scoreOf(dm);
-  let h='<div class="panel-title"><b>Your plan vs the alternative</b><span>potential value over time</span></div>'+
-    chartBlock('p2',[you,alt],alt,{barTitle:'The alternative’s slices, in order'})+
-    '<table class="cmp"><thead><tr><th></th><th class="n">Your plan</th><th class="n">Alternative</th></tr></thead><tbody>'+
+  let h='<div class="panel-title"><b>Your plan vs the reference</b><span>potential value over time</span></div>'+
+    chartBlock('p2',[you,alt],alt,{barTitle:'The reference solution’s slices, in order'})+
+    '<table class="cmp"><thead><tr><th></th><th class="n">Your plan</th><th class="n">Reference</th></tr></thead><tbody>'+
     row('Slicing score',ys.overall,ds.overall)+row('1 · Slice by usable value',ys.usable,ds.usable)+row('2 · Get value out early',ys.early,ds.early)+row('3 · Avoid long waits',ys.waits,ds.waits)+
     row('Highest value reached',current.m.M,dm.M)+row('Weeks to reach it',current.m.T||'–',dm.T)+row('First value',current.m.first?'week '+current.m.first:'never','week '+dm.first)+
     '</tbody></table>'+sliceList(dm,false);
   $('alt-panel').innerHTML=h;
 }
 $('revise').addEventListener('click',()=>{$('view-slice').scrollIntoView({behavior:reduce?'auto':'smooth'});const t=document.querySelector('.stext');if(t)t.focus({preventScroll:true})});
-$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide the alternative':'See an alternative solution';$('alt').hidden=!comparing;if(comparing){renderAlt();$('alt').scrollIntoView({behavior:reduce?'auto':'smooth'})}});
+$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide the reference solution':'See the reference solution';$('alt').hidden=!comparing;if(comparing){renderAlt();$('alt').scrollIntoView({behavior:reduce?'auto':'smooth'})}});
+$('to-sim').addEventListener('click',()=>{setTab('sim');const r=document.querySelector('input[name="plan"][value="mine"]');if(!r.disabled)r.checked=true;$('view-sim').scrollIntoView({behavior:reduce?'auto':'smooth'})});
 
 /* ======================= TABS ======================= */
 function setTab(t){
@@ -725,8 +771,9 @@ function setTab(t){
   $('view-slice').hidden=t!=='slice';$('view-sim').hidden=t!=='sim';
   try{history.replaceState(null,'',t==='sim'?'#simulate':location.pathname+location.search)}catch(e){}
 }
+$('tab-slice').addEventListener('click',()=>setTab('slice'));
+$('tab-sim').addEventListener('click',()=>setTab('sim'));
 function updateSimChoice(){
-  if(!$('opt-mine'))return; // simulation switched off for now
   const ok=!!current,lab=$('opt-mine'),inp=lab.querySelector('input');
   inp.disabled=!ok;lab.classList.toggle('off',!ok);
   $('mine-note').textContent=ok?current.plan.length+' slices from your latest round in Part 1.':'Slice it in Part 1 first.';
@@ -759,7 +806,7 @@ function pickWorld(){
   const ids=Object.keys(SIM.worlds),tot=ids.reduce((a,k)=>a+SIM.worlds[k].weight,0);let r=Math.random()*tot;
   for(const k of ids){r-=SIM.worlds[k].weight;if(r<0)return k}return ids[0];
 }
-/* simulation switched off for now: $('sim-start') listener removed */
+$('sim-start').addEventListener('click',()=>startSim());
 function startSim(excludeWorld){
   const src=document.querySelector('input[name="plan"]:checked').value;
   const base=src==='mine'&&current?current.plan:DAVID;
@@ -944,7 +991,7 @@ function summaryHTML(){
     '<div class="btn-row"><button class="btn btn-primary btn-sm" data-sim="again">Play again in a different world</button><button class="btn btn-ghost btn-sm" data-sim="setup">Change plan</button>'+
     '<a class="btn btn-ghost btn-sm" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Talk it through with David</a></div></div>';
 }
-if($('sim-side'))$('sim-side').addEventListener('click',e=>{
+$('sim-side').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.disabled||!G)return;
   if(b.dataset.sim==='continue'){const s=G.queue.shift();release(s);renderSim()}
   if(b.dataset.sim==='stop')stopSim();
@@ -957,18 +1004,18 @@ if($('sim-side'))$('sim-side').addEventListener('click',e=>{
 
 /* ======================= INIT ======================= */
 $('year').textContent=new Date().getFullYear();
-// TESTING ONLY: ?prefill=david fills Part 1 with David's slices
+// ?prefill=reference (David's plan) or ?prefill=basic (a weak, layered plan); add &run=1 to run straight away
 const PRESETS={
-  david:DAVID.map(d=>d.text),
-  best:['Customers can see if an order is cancellable and request cancellation online; staff process it (this also tests demand)',
-        'Customers can automatically cancel single-item orders','Customers can automatically cancel entire multi-item orders',
-        'Customers can cancel selected items within an order','Handle all eligible orders, including complex and marketplace orders'],
-  poor:['Design the database for cancellations','Build the cancellation API','Internal admin screen for the support team',
+  reference:DAVID.map(d=>d.text),
+  basic:['Design the database for cancellations','Build the cancellation API','Internal admin screen for the support team',
         'Cancellation page on the website with all options: whole orders, selected items, complex orders','Confirmation and refund emails','Analytics dashboard to track cancellations']
 };
 const QS=new URLSearchParams(location.search);
+const REF_MODE=QS.get('prefill')==='reference';
+if(REF_MODE){$('ref-link').hidden=true;$('compare').hidden=true}
 if(PRESETS[QS.get('prefill')]){stickies=PRESETS[QS.get('prefill')].map(t=>({id:nextId++,text:t}))}
 renderPlan();updateSimChoice();
+if(location.hash==='#simulate')setTab('sim');
 if(QS.get('run')==='1'&&filled().length)$('run').click();
 window.__slicing={classify,evaluate,measures,DAVID,SIM,weekResult,adoption,startSim:()=>startSim(),state:()=>G}; // for testing
 })();

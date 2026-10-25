@@ -5,21 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Slice It Right</title>
 <meta name="robots" content="noindex">
-<meta name="description" content="A slicing game: write your slices for self-service order cancellation and see how your plan plays out, week by week.">
+<meta name="description" content="A slicing game: slice self-service order cancellation, see when value becomes available, then simulate what happens when customers meet your plan.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Shantell+Sans:wght@500&display=swap">
 <style>
-/* PROTOTYPE (branch slicing-game), step 1.
-   Visitors write slices (text only) and order them. evaluate() sizes each slice (effort, value) and writes a customer line
-   and a business line. In this step evaluate() is a keyword stand-in for the AI; step 2 swaps it for a Claude call via a small proxy.
-   David's solution is fixed data (SOLUTION) shown side by side for comparison. Value = share of cancellations done online. */
+/* PROTOTYPE (branch slicing-game). Built from brief/slicing-game docs 04 (exercise) and 05 (simulation).
+   Tab 1 "Slice it": stickies -> capabilities on the fixed 6-step scale -> potential-value staircase + 3 measures.
+   Tab 2 "Simulate": the same plan meets simulated customers in one of five hidden worlds; continue / stop / pivot / roll back.
+   Slices are read by a keyword stand-in (classify) until the AI proxy exists. All model numbers live in CONFIG below. */
 :root{
   --navy:#12213B; --navy-2:#1C3157; --paper:#FFFFFF; --soft:#F1F3F7;
   --ink:#12213B; --muted:#56637A; --on-navy:#DCE3EF; --line:#D9DEE8;
-  --accent:#F2A91E; --accent-ink:#B87700;
-  --red:#C62828; --red-soft:#F7DADA;
-  --cust:#3B9BEF; --biz:#16A37F;
+  --accent:#F2A91E; --accent-ink:#B87700; --amber-line:#D99000;
+  --red:#C62828; --pink:#F4C7C7; --green:#0E7A5F;
   --display:"Archivo","Arial Black",system-ui,sans-serif;
   --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
@@ -32,21 +31,23 @@
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
 a:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-0.01em;text-wrap:balance;margin:0}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.05;letter-spacing:-0.01em;text-wrap:balance;margin:0}
 h1,h2{text-transform:uppercase}
 h1 em,h2 em{font-style:normal;color:var(--accent)}
 p{margin:0}
 button,textarea{font:inherit;color:inherit}
 .wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
 @media (max-width:560px){.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
-.eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:14px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.95rem;text-transform:uppercase;letter-spacing:.02em;padding:15px 22px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s,opacity .15s;background:none}
+.eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.92rem;text-transform:uppercase;letter-spacing:.02em;padding:14px 20px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s,opacity .15s;background:none}
 .btn-primary{background:var(--accent);color:var(--navy)!important}
 .btn-primary:hover{background:#FFC04D}
-.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-ghost{border-color:currentColor;color:var(--ink)}
-.btn-ghost:hover{background:var(--ink);color:#fff}
-.btn-row{display:flex;flex-wrap:wrap;gap:12px}
+.btn-ghost:hover:not(:disabled){background:var(--ink);color:#fff}
+.btn-sm{padding:10px 14px;font-size:.8rem}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px}
+.linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.9rem}
 
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
@@ -61,153 +62,195 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:980px){.nav ul{display:none}}
 @media (max-width:420px){.nav .btn{padding:9px 12px;font-size:.78rem}.brand span{display:none}}
 
-/* hero + brief */
-.hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(44px,6vw,80px)}
+/* hero */
+.hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(40px,6vw,72px)}
 .hero .eyebrow{color:var(--accent)}
-.hero h1{color:#fff;font-size:clamp(2.4rem,6vw,4.6rem);letter-spacing:-0.02em;line-height:.95}
+.hero h1{color:#fff;font-size:clamp(2.4rem,6vw,4.4rem);letter-spacing:-0.02em;line-height:.95}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,4vw,56px);align-items:end}
 @media (max-width:860px){.hero-grid{grid-template-columns:1fr}}
-.hero .lede{margin-top:20px;color:#C3CCDB;font-size:clamp(1.02rem,1.5vw,1.18rem);max-width:56ch}
+.hero .lede{margin-top:18px;color:#C3CCDB;font-size:clamp(1.02rem,1.5vw,1.15rem);max-width:56ch}
 .brief{background:#fff;color:var(--ink);padding:20px 22px;transform:rotate(-1deg);box-shadow:0 18px 40px rgba(0,0,0,.25);border-top:6px solid var(--accent)}
-.brief .eyebrow{color:var(--accent-ink);margin-bottom:8px}
-.brief h2{font-size:1.45rem;line-height:1.05}
+.brief .eyebrow{margin-bottom:8px}
+.brief h2{font-size:1.35rem;line-height:1.05}
 .brief p{margin-top:10px;font-size:.95rem;color:var(--muted)}
 .brief p b{color:var(--ink)}
 
-/* plan */
-.band{padding-block:clamp(40px,5vw,72px)}
-.sec-head{margin-bottom:22px}
-.sec-head h2{font-size:clamp(1.6rem,3.4vw,2.4rem)}
-.sec-head p{color:var(--muted);font-size:.95rem;max-width:62ch;margin-top:8px}
-.plan{max-width:720px}
+/* tabs */
+.tabbar{background:var(--soft);border-bottom:1px solid var(--line)}
+.tabbar .wrap{display:flex;gap:0}
+.tab{appearance:none;border:0;background:none;padding:16px 18px 14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer;border-bottom:4px solid transparent;color:var(--muted)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);background:#fff}
+.tab small{display:block;font:500 .66rem var(--mono);letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+@media (max-width:520px){.tab{padding:12px 10px 10px;font-size:.78rem}}
+
+.band{padding-block:clamp(32px,4.5vw,64px)}
+.sec-head{margin-bottom:20px}
+.sec-head h2{font-size:clamp(1.5rem,3.2vw,2.2rem)}
+.sec-head p{color:var(--muted);font-size:.95rem;max-width:64ch;margin-top:8px}
+.proto{margin-top:18px;font-size:.76rem;color:var(--muted);font-family:var(--mono);letter-spacing:.02em}
+
+/* stickies */
+.plan{max-width:760px}
 .slices{display:flex;flex-direction:column;gap:10px}
-.slice{display:flex;align-items:flex-start;gap:4px;border:1px solid var(--line);background:#FFF9E8;border-left:6px solid var(--accent);padding:8px 8px 8px 2px}
+.slice{display:flex;align-items:flex-start;gap:4px;border:1px solid #EAD9A6;background:#FFF9E8;border-left:6px solid var(--accent);padding:8px 8px 8px 2px}
 .slice .n{flex:none;font-family:var(--mono);font-size:.75rem;color:var(--muted);padding:12px 2px 0 4px;width:2.4ch;text-align:right}
 .grip{appearance:none;border:0;background:none;cursor:grab;color:var(--muted);font-size:1rem;letter-spacing:-3px;padding:10px 6px 10px 4px;line-height:1;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-.grip:hover{color:var(--ink)}
 .grip[disabled]{visibility:hidden}
 .stext{flex:1;min-width:0;resize:none;overflow:hidden;font:500 1rem/1.4 var(--body);color:var(--ink);border:0;border-bottom:1px dashed #E3C77E;background:transparent;padding:8px 4px;min-height:2.4em}
 .stext::placeholder{color:#A99A72;font-weight:400}
 .stext:focus{outline:0;border-bottom-color:var(--accent-ink)}
 .icon{appearance:none;border:1px solid var(--line);background:#fff;width:32px;height:32px;display:inline-grid;place-items:center;cursor:pointer;font-size:.95rem;line-height:1;flex:none;margin-top:4px}
 .icon:hover{border-color:var(--navy)}
-.new-slice{appearance:none;width:100%;border:2px dashed var(--navy);background:transparent;padding:14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer;color:var(--ink)}
+.new-slice{appearance:none;width:100%;border:2px dashed var(--navy);background:transparent;padding:14px;font:800 .9rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer}
 .new-slice:hover{background:var(--soft)}
-.plan-foot{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:22px}
+.plan-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:20px}
 .plan-foot .hint{font-size:.85rem;color:var(--muted)}
-.linkbtn{appearance:none;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px;color:var(--ink);font-size:.85rem}
 .ghost{position:fixed;z-index:200;pointer-events:none;margin:0;opacity:.95;transform:rotate(-1.5deg) scale(1.02);box-shadow:0 14px 30px rgba(18,33,59,.3)}
 body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none;user-select:none}
 .dragsrc{opacity:.3}
 
-/* outcome */
-.outcome{background:var(--soft);padding-block:clamp(40px,5vw,72px);border-top:1px solid var(--line)}
-.outcome[hidden]{display:none}
-.out-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:14px 24px;margin-bottom:20px}
-.out-head h2{font-size:clamp(1.6rem,3.4vw,2.4rem)}
-.out-head p{color:var(--muted);font-size:.92rem;margin-top:6px;max-width:60ch}
-.tabs{display:none;gap:0;margin-bottom:14px;border:2px solid var(--navy)}
-.tabs button{flex:1;appearance:none;border:0;background:#fff;padding:10px;font:800 .82rem var(--display);text-transform:uppercase;letter-spacing:.02em;cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--navy);color:#fff}
-.panels{display:grid;grid-template-columns:1fr;gap:24px}
-.panels.both{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-@media (max-width:900px){
-  .panels.both{grid-template-columns:1fr}
-  .panels.both + .x{display:none}
-  .outcome.has-alt .tabs{display:flex}
-  .panels.both .panel{display:none}
-  .panels.both .panel.on{display:block}
-}
+/* panels and charts */
 .panel{background:#fff;border:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 18px 40px rgba(18,33,59,.06)}
-.panel-title{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.panel-title{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .panel-title b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1rem}
 .panel-title span{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.04em}
-.panel.alt{border-top:4px solid var(--navy)}
 .chart-wrap{padding:16px 16px 10px}
 .axis-t{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.plot{display:grid;grid-template-columns:34px minmax(0,1fr) 96px;column-gap:6px}
-.plot .ycol{position:relative}
+.plot{display:grid;grid-template-columns:34px minmax(0,1fr) 92px;column-gap:6px}
+.ycol{position:relative}
 .yt{position:absolute;right:0;transform:translateY(-50%);font-family:var(--mono);font-size:.6rem;color:var(--muted)}
-.chart{position:relative;height:clamp(160px,18vw,200px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:6px}
-.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.chart{position:relative;height:clamp(170px,20vw,230px);border-left:1px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:6px}
+.chart.short{height:clamp(140px,16vw,180px)}
+.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
 .endlab{position:relative;margin-top:6px}
-.endlab span{position:absolute;left:0;transform:translateY(-50%);font-size:.74rem;line-height:1.15;font-weight:600;white-space:nowrap;transition:top .25s}
+.endlab span{position:absolute;left:0;transform:translateY(-50%);font-size:.72rem;line-height:1.15;font-weight:600;white-space:nowrap}
 .endlab span b{display:block;font-family:var(--display);font-weight:800;font-size:1rem}
-.endlab .c{color:var(--accent-ink)}
-.endlab .b{color:#0E7A5F}
-.zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;font-family:var(--hand);font-size:.8rem;line-height:1.2;color:var(--muted);pointer-events:none}
-.zone.top{align-items:flex-start;padding-top:6px}
-.deadline{position:absolute;top:-8px;bottom:-1px;border-left:2px dashed var(--navy);pointer-events:none}
-.deadline span{position:absolute;top:-4px;right:5px;font-family:var(--hand);font-size:.8rem;white-space:nowrap;background:rgba(255,255,255,.9);padding:0 3px}
-.mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .68rem/18px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);opacity:0;transform:scale(.4);transition:opacity .2s,transform .2s}
-.mark.on{opacity:1;transform:none}
+.mark{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--navy);color:#fff;font:600 .66rem/18px var(--mono);text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .mark.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;font-family:var(--hand);font-size:.8rem;line-height:1.2;color:#8A4B4B;pointer-events:none}
+.gap{position:absolute;top:2px;height:10px;border:2px solid var(--red);border-bottom:0;pointer-events:none}
+.gap span{position:absolute;top:10px;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 .66rem var(--mono);color:var(--red);background:#fff;padding:0 4px}
+.target{position:absolute;left:0;right:0;border-top:2px dashed var(--navy);pointer-events:none}
+.target span{position:absolute;right:4px;top:-18px;font:600 .66rem var(--mono);color:var(--navy);background:rgba(255,255,255,.9);padding:0 3px}
 .row-t{margin:14px 0 4px}
 .timeline{position:relative;height:30px;background:var(--soft);border:1px solid var(--line)}
 .blk{position:absolute;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.66rem;color:#fff;background:var(--navy);border-right:2px solid #fff;overflow:hidden;white-space:nowrap}
 .blk.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
-.blk.late{opacity:.35}
+.blk.inv{background:repeating-linear-gradient(135deg,#E6E9F0 0 5px,#fff 5px 10px);color:var(--muted);border:1px solid var(--line)}
 .ticks{position:relative;height:16px;font-family:var(--mono);font-size:.6rem;color:var(--muted)}
 .ticks span{position:absolute;top:2px;transform:translateX(-50%)}
 .xt{text-align:right;margin-top:2px}
 .key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--muted)}
 .key span{display:inline-flex;align-items:center;gap:6px}
-.key i{display:inline-block;width:18px;height:12px}
-.key .k-v{background:var(--navy)}
-.key .k-z{border:2px dashed var(--navy);background:#fff}
-.key .k-n{background:#F4C7C7}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
-@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}}
-.stat b.c{color:var(--accent-ink)}.stat b.b{color:#0E7A5F}
-.lg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;text-transform:none;letter-spacing:0}
-.lg i{display:inline-block;width:16px;height:10px}
-.lg .lc{background:var(--accent)}
-.lg .lb{border-top:3px dashed #0E7A5F;height:0;margin-left:6px}
-.story .gain .gc{color:var(--accent-ink)}.story .gain .gb{color:#0E7A5F}
+.key i{display:inline-block;width:18px;height:12px;flex:none}
+.k-pink{background:var(--pink)}
+.k-v{background:var(--navy)}
+.k-z{border:2px dashed var(--navy);background:#fff}
+.k-you{border-top:3px solid var(--amber-line);height:0!important}
+.k-prev{border-top:3px solid #A7B0C0;height:0!important}
+.k-dav{border-top:3px dashed var(--navy);height:0!important}
+.k-c{border-top:3px solid var(--amber-line);height:0!important}
+.k-b{border-top:3px solid var(--green);height:0!important}
+.k-gap{border:2px solid var(--red);border-bottom:0;height:8px!important}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
 .stat{padding:12px 14px;border-right:1px solid var(--line)}
 .stat:last-child{border-right:0}
-.stat b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(1.3rem,2.4vw,1.7rem);line-height:1}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(1.3rem,2.4vw,1.8rem);line-height:1}
 .stat span{display:block;margin-top:5px;font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.story{list-style:none;margin:0;padding:6px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
-.story li{opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
-.story li.on{opacity:1;transform:none}
-.story .when{display:flex;align-items:baseline;gap:8px;font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin:10px 0 6px}
-.story .when i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:.62rem}
-.story .when i.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
-.story .what{display:block;font-weight:600;font-size:.92rem;line-height:1.35;margin:0 0 4px 28px}
-.story .gain{margin-left:auto;white-space:nowrap}
-.story .gain.up{color:var(--accent-ink)}
-.story .gain.none{color:var(--red)}
-.say{display:flex;gap:10px;align-items:flex-start;margin-top:6px}
-.say .who{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:.95rem;color:#fff}
-.say.c .who{background:var(--cust)}
-.say.b .who{background:var(--biz)}
-.say p{background:var(--soft);padding:8px 12px;border-radius:2px 14px 14px 14px;font-size:.92rem;line-height:1.45}
-.say p small{display:block;font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
-.story li.end .when{color:var(--red)}
+.cmp{width:100%;border-collapse:collapse;font-size:.88rem;border-top:1px solid var(--line)}
+.cmp th,.cmp td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line)}
+.cmp th{font:500 .66rem var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.cmp td.n,.cmp th.n{text-align:right;font-family:var(--mono)}
+.slist{list-style:none;margin:0;padding:6px 16px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.slist li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding-top:8px}
+.slist .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font:600 .64rem var(--mono);margin-top:2px}
+.slist .num.zero{background:#fff;color:var(--navy);border:2px dashed var(--navy)}
+.slist .txt{font-weight:600;font-size:.93rem;line-height:1.35}
+.slist .why{grid-column:2/4;font-size:.84rem;color:var(--muted);line-height:1.4}
+.slist .pts{font:600 .72rem var(--mono);white-space:nowrap;text-align:right}
+.slist .pts.up{color:var(--accent-ink)}
+.slist .pts.none{color:var(--muted)}
+.slist .wk{font:500 .66rem var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:2px;font-weight:500}
+.results-actions{margin-top:18px}
 .thinking{display:flex;align-items:center;gap:12px;padding:28px 16px;font-family:var(--hand);font-size:1.05rem;color:var(--muted)}
 .thinking i{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite alternate}
 @keyframes pulse{from{opacity:.25}to{opacity:1}}
-.compare{margin-top:24px;background:var(--navy);color:var(--on-navy);padding:20px 22px}
-.compare[hidden]{display:none}
-.compare h3{color:#fff;text-transform:uppercase;font-size:1.1rem}
-.compare table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9rem}
-.compare th,.compare td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--navy-2)}
-.compare th{font-family:var(--mono);font-weight:500;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:#AEB9CC}
-.compare td.num{font-family:var(--mono);color:#fff;text-align:right}
-.compare th.num{text-align:right}
-.compare p{margin-top:14px;font-family:var(--hand);font-size:1.1rem;color:#fff;line-height:1.35}
-.compare .btn-row{margin-top:18px}
-.compare .btn-ghost{color:#fff}
-.compare .btn-ghost:hover{background:#fff;color:var(--navy)}
-.out-actions{margin-top:20px}
-.proto{margin-top:14px;font-size:.78rem;color:var(--muted);font-family:var(--mono);letter-spacing:.02em}
+
+/* rubric reveal */
+.rubric{margin-top:28px;background:var(--navy);color:var(--on-navy);padding:22px}
+.rubric h3{color:#fff;text-transform:uppercase;font-size:1.2rem}
+.rubric p{color:#C3CCDB;font-size:.93rem;margin-top:8px;max-width:70ch}
+.rubric table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.92rem}
+.rubric td{padding:8px 6px;border-bottom:1px solid var(--navy-2);vertical-align:top}
+.rubric td.p{font:800 1.05rem var(--display);color:var(--accent);width:56px;text-align:right;padding-right:14px}
+.rubric ul{margin:14px 0 0;padding-left:18px;color:#C3CCDB;font-size:.88rem}
+.rubric .btn-row{margin-top:16px}
+.rubric .btn-ghost{color:#fff}
+.rubric .btn-ghost:hover{background:#fff;color:var(--navy)}
+.closing{margin-top:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;max-width:70ch}
+.closing p{font-size:.95rem;color:var(--muted)}
+.closing p+p{margin-top:8px}
+
+/* simulation */
+.sim-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(18px,3vw,32px);align-items:start}
+@media (max-width:960px){.sim-grid{grid-template-columns:1fr}}
+.setup{max-width:760px}
+.choice{display:flex;flex-direction:column;gap:10px;margin:14px 0 18px}
+.choice label{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);padding:12px 14px;cursor:pointer;background:#fff}
+.choice label:has(input:checked){border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+.choice label.off{opacity:.5;cursor:not-allowed}
+.choice input{margin-top:5px;accent-color:var(--navy)}
+.choice b{display:block}
+.choice small{color:var(--muted);font-size:.85rem}
+.target-box{background:#FFF6E2;border:1px solid #F3D28B;padding:12px 14px;font-size:.93rem}
+.target-box b{font-family:var(--display);text-transform:uppercase}
+.side{display:flex;flex-direction:column;gap:14px}
+.dash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line)}
+.dash div{padding:10px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.dash div:nth-child(2n){border-right:0}
+.dash b{display:block;font:800 1.2rem var(--display)}
+.dash span{font:500 .62rem var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.dash b.bad{color:var(--red)}
+.card{border:1px solid var(--line);background:#fff;border-left:5px solid var(--navy);padding:14px 16px}
+.card.warn{border-left-color:var(--red)}
+.card.good{border-left-color:var(--green)}
+.card.info{border-left-color:var(--accent)}
+.card .eyebrow{margin-bottom:6px}
+.card h3{font-size:1.02rem;text-transform:uppercase}
+.card p{margin-top:6px;font-size:.92rem}
+.card ul{margin:8px 0 0;padding-left:18px;font-size:.88rem}
+.decide{background:var(--navy);color:var(--on-navy);padding:16px}
+.decide h3{color:#fff;text-transform:uppercase;font-size:1rem}
+.decide p{font-size:.88rem;color:#C3CCDB;margin-top:4px}
+.decide .btn-row{margin-top:12px}
+.decide .btn-ghost{color:#fff}
+.decide .btn-ghost:hover:not(:disabled){background:#fff;color:var(--navy)}
+.decide .sub{margin-top:14px;padding-top:12px;border-top:1px solid var(--navy-2)}
+.decide .sub b{display:block;font:500 .66rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.opt{display:block;width:100%;text-align:left;appearance:none;border:1px solid var(--navy-2);background:var(--navy-2);color:#fff;padding:9px 12px;margin-top:6px;cursor:pointer;font-size:.88rem;line-height:1.35}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{opacity:.4;cursor:not-allowed}
+.opt small{display:block;color:#AEB9CC;font-size:.78rem}
+.log{list-style:none;margin:0;padding:10px 16px 14px;border-top:1px solid var(--line);font-size:.86rem;display:flex;flex-direction:column;gap:6px}
+.log li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px}
+.log li span{font:500 .68rem var(--mono);color:var(--muted);padding-top:2px}
+.summary{background:var(--navy);color:var(--on-navy);padding:22px}
+.summary h3{color:#fff;font-size:1.3rem;text-transform:uppercase}
+.summary p{margin-top:8px;color:#C3CCDB;font-size:.93rem}
+.summary .world{font-family:var(--hand);font-size:1.15rem;color:#fff;margin-top:10px}
+.summary table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.9rem}
+.summary td{padding:7px 6px;border-bottom:1px solid var(--navy-2)}
+.summary td.n{text-align:right;font-family:var(--mono);color:#fff}
+.summary .btn-row{margin-top:16px}
+.summary .btn-ghost{color:#fff}
+.summary .btn-ghost:hover{background:#fff;color:var(--navy)}
+.sim-tag{display:inline-block;font:500 .62rem var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#FFF1D2;color:var(--accent-ink);padding:1px 6px;margin-left:6px;vertical-align:middle}
 
 footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
 footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 footer.site a{color:#C3CCDB;text-decoration:none}
 footer.site a:hover{color:var(--accent)}
-@media (prefers-reduced-motion:reduce){.mark,.story li{transition:none}.thinking i{animation:none}}
+@media (prefers-reduced-motion:reduce){.thinking i{animation:none}}
 </style>
 </head>
 <body>
@@ -238,56 +281,105 @@ footer.site a:hover{color:var(--accent)}
     <div>
       <span class="eyebrow">Slicing game · about 5 minutes</span>
       <h1>Slice it <em>right</em></h1>
-      <p class="lede">Write how you’d slice this feature, put the slices in order, and see how your plan plays out week by week: for customers, and for the business.</p>
+      <p class="lede">Slice a real feature into releases, see when value becomes available, then find out what happens when customers actually meet your plan.</p>
     </div>
     <div class="brief">
       <span class="eyebrow">The brief</span>
-      <h2>“As a user, I want to be able to cancel an order by myself”</h2>
-      <p>On this ecommerce platform, cancelling an order means calling the call centre. The business wants self-service cancellation on the <b>website</b> and the <b>iOS and Android apps</b>. How would you slice it to deliver value early, and learn or reduce risk?</p>
+      <h2>“As a customer, I want to cancel an order by myself”</h2>
+      <p>An online retailer sells through <b>its website</b>. Today, customers who want to cancel an order have to <b>phone the contact centre</b>, where staff handle it. The business wants self-service cancellation on the website, to cut cancellation calls and the cost of handling them.</p>
     </div>
   </div>
 </section>
 
-<section class="band" aria-labelledby="plan-title" id="plan">
+<nav class="tabbar" aria-label="Game parts">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="tab-slice" aria-controls="view-slice" aria-selected="true" type="button"><small>Part 1</small>Slice it</button>
+    <button class="tab" role="tab" id="tab-sim" aria-controls="view-sim" aria-selected="false" type="button"><small>Part 2</small>Simulate</button>
+  </div>
+</nav>
+
+<!-- ===================== PART 1: SLICE IT ===================== -->
+<section class="band" id="view-slice" role="tabpanel" aria-labelledby="tab-slice">
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">Your slices</span>
-      <h2 id="plan-title">How would you slice it?</h2>
-      <p>One sticky per slice, in the order you’d build them. Say what changes and where, like “Customers can request a cancellation on the website”. Drag the ⋮⋮ handle to reorder (press and hold on a phone).</p>
+      <h2>How would you slice it?</h2>
+      <p>One sticky per slice, in the order you’d release them. Say what customers can do once it’s live. Drag the ⋮⋮ handle to reorder (press and hold on a phone).</p>
     </div>
     <div class="plan">
       <div class="slices" id="slices"></div>
       <div class="plan-foot">
-        <button class="btn btn-primary" id="run" type="button" disabled>See how it plays out</button>
+        <button class="btn btn-primary" id="run" type="button" disabled>See when value arrives</button>
         <span class="hint" id="hint"></span>
       </div>
+    </div>
+
+    <div id="result" hidden tabindex="-1" style="margin-top:40px">
+      <div class="sec-head">
+        <span class="eyebrow" id="res-eyebrow">Result</span>
+        <h2>When does value <em>arrive?</em></h2>
+        <p>The staircase shows potential value made available: what customers could get once each slice is live, on a fixed 0–100 scale. It’s not a forecast of how many will use it; that’s Part 2.</p>
+      </div>
+      <div class="panel" id="res-panel"></div>
+      <div class="rubric" id="rubric" hidden>
+        <span class="eyebrow" style="color:var(--accent)">How we score value</span>
+        <h3>The value scale behind the chart</h3>
+        <p>Every plan is scored on the same fixed scale, so different slicing strategies can be compared. Points are an agreed assumption about increasing capability, not a measure of business impact.</p>
+        <table>
+          <tr><td class="p">5</td><td>Show whether an order is cancellable</td></tr>
+          <tr><td class="p">25</td><td>Request cancellation online, processed manually</td></tr>
+          <tr><td class="p">40</td><td>Automatically cancel single-item orders</td></tr>
+          <tr><td class="p">55</td><td>Automatically cancel entire multi-item orders</td></tr>
+          <tr><td class="p">80</td><td>Cancel selected items within an order</td></tr>
+          <tr><td class="p">100</td><td>Handle all eligible orders, including complex and marketplace orders</td></tr>
+        </table>
+        <ul>
+          <li>A plan’s value is the highest step its released slices have reached. Skipped steps count once a higher one is live.</li>
+          <li>Technical work, supporting pieces (confirmation emails, refunds, validation) and experiments like a fake door add no points on their own.</li>
+          <li>The longest wait counts weeks with no new value, including at the end of the plan.</li>
+        </ul>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" id="revise" type="button">Revise my slices</button>
+          <button class="btn btn-ghost btn-sm" id="compare" type="button">Compare with David’s plan</button>
+        </div>
+      </div>
+      <div class="closing" id="closing" hidden>
+        <p><b>Potential value isn’t realised value.</b> A slice can make cancelling possible without anyone using it, and some releases make things worse.</p>
+        <p><button class="linkbtn" id="to-sim" type="button">Simulate what happens when customers meet your plan →</button></p>
+      </div>
+      <p class="proto">Prototype: slices are read by a simple keyword model for now, not AI.</p>
     </div>
   </div>
 </section>
 
-<section class="outcome" id="outcome" hidden aria-labelledby="out-title" tabindex="-1">
+<!-- ===================== PART 2: SIMULATE ===================== -->
+<section class="band" id="view-sim" role="tabpanel" aria-labelledby="tab-sim" hidden>
   <div class="wrap">
-    <div class="out-head">
-      <div>
-        <span class="eyebrow">Week by week</span>
-        <h2 id="out-title">How your plan <em>played out</em></h2>
-        <p>Two lines: <b style="color:var(--accent-ink)">customers</b>, the share of cancellations they can do online instead of phoning, and <b style="color:#0E7A5F">business</b>, the share of call-centre work that goes away. Both only step up when a slice goes live.</p>
+    <div id="sim-setup" class="setup">
+      <div class="sec-head">
+        <span class="eyebrow">Simulation</span>
+        <h2>What happens when customers meet it?</h2>
+        <p>Your plan is released one slice at a time to simulated customers. After each release you see what happened, and decide: continue, stop, change the plan or roll back. You won’t know in advance how these customers behave.</p>
+      </div>
+      <div class="target-box"><b>Business target:</b> cut the cost of handling cancellations by 25%. Today: 2,000 cancellation calls a week at £6 each, £12,000 a week. <span class="sim-tag">simulated</span></div>
+      <div class="choice" id="plan-choice">
+        <label id="opt-mine" class="off"><input type="radio" name="plan" value="mine" disabled><span><b>My plan from Part 1</b><small id="mine-note">Slice it in Part 1 first.</small></span></label>
+        <label><input type="radio" name="plan" value="david" checked><span><b>David’s plan</b><small>Fake door, then requests online, automation, partial cancellation, complex orders.</small></span></label>
+      </div>
+      <button class="btn btn-primary" id="sim-start" type="button">Start the simulation</button>
+    </div>
+
+    <div id="sim-game" hidden>
+      <div class="sec-head">
+        <span class="eyebrow" id="sim-eyebrow">Simulation</span>
+        <h2 id="sim-title">Week 0</h2>
+      </div>
+      <div class="sim-grid">
+        <div class="panel" id="sim-panel"></div>
+        <div class="side" id="sim-side"></div>
       </div>
     </div>
-    <div class="tabs" role="tablist" id="tabs">
-      <button type="button" role="tab" aria-selected="true" data-tab="you">Your plan</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="alt">David’s plan</button>
-    </div>
-    <div class="panels" id="panels">
-      <div class="panel on" id="p-you"></div>
-      <div class="panel alt" id="p-alt" hidden></div>
-    </div>
-    <div class="btn-row out-actions" id="out-actions">
-      <button class="btn btn-primary" id="show-alt" type="button">Show David’s plan</button>
-      <button class="btn btn-ghost" id="edit" type="button">Change my slices</button>
-    </div>
-    <div class="compare" id="compare" hidden aria-live="polite"></div>
-    <p class="proto">Prototype: the estimates come from a simple keyword model for now, not AI.</p>
+    <p class="proto">Simulated data from a fixed model. It isn’t a prediction of how any real retailer’s customers behave.</p>
   </div>
 </section>
 </main>
@@ -301,417 +393,548 @@ footer.site a:hover{color:var(--accent)}
 
 <script>
 (function(){
-  var $=function(id){return document.getElementById(id)};
-  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=v=>Math.round(v*100)+'%';
+const money=v=>'£'+Math.round(v).toLocaleString('en-GB');
 
-  /* ================= DAVID'S PLAN (fixed) =================
-     value = share of cancellations done online once the slice is live (cumulative, 0 to 1) */
-  var SOLUTION=[
-    {text:'“Fake door” cancel button on the website (A/B test), monitor how many people click it',effort:1,value:0,bval:0,
-      customer:'I clicked “Cancel order” and got a “coming soon” message. Fine, I’ll phone.',
-      business:'14% of people who wanted to cancel clicked it, above our 10% bar. And 60% of them were on the website. We go ahead, website first.'},
-    {text:'Customers can see if their order can still be cancelled, on the website',effort:2,value:.06,bval:.03,
-      customer:'At least I know my order can still be cancelled before I pick up the phone.',
-      business:'Fewer “can I still cancel?” calls. A small dent, and real customers are using it.'},
-    {text:'Customers can request a cancellation on the website (the call centre still does it)',effort:1,value:.3,bval:.12,
-      customer:'I sent a cancellation request in two minutes. No queue.',
-      business:'30% of cancellations now arrive online instead of by phone. Staff still process them, so the workload only drops about 12%.'},
-    {text:'Customers can cancel eligible orders themselves on the website (self-service)',effort:5,value:.57,bval:.57,
-      customer:'Cancelled in two taps. Done.',
-      business:'Nearly 60% of cancellations now happen online with no one involved. Next: iOS, where another 30% of customers are.'}
-  ];
+/* ======================= CONFIG (David can tune) ======================= */
+const CAPS={
+  elig:       {v:5,  label:'Show whether an order is cancellable', short:'see if cancellable'},
+  request:    {v:25, label:'Request cancellation online, processed manually', short:'request online'},
+  auto_single:{v:40, label:'Automatically cancel single-item orders', short:'auto single-item'},
+  auto_multi: {v:55, label:'Automatically cancel entire multi-item orders', short:'auto multi-item'},
+  partial:    {v:80, label:'Cancel selected items within an order', short:'partial cancellation'},
+  complex:    {v:100,label:'Handle all eligible orders, including complex and marketplace orders', short:'complex & marketplace'}
+};
+const SIZE_WEEKS={S:1,M:2,L:3};
+const DAVID=[
+  {text:'Fake door cancel button (A/B test), monitor clicks',caps:[],kind:'experiment',size:'S',fake:true},
+  {text:'Customers can see if an order is cancellable and request cancellation online (staff process it)',caps:['elig','request'],kind:'release',size:'S'},
+  {text:'Customers can automatically cancel single-item orders',caps:['auto_single'],kind:'release',size:'S'},
+  {text:'Customers can automatically cancel entire multi-item orders',caps:['auto_multi'],kind:'release',size:'S'},
+  {text:'Customers can cancel selected items within an order',caps:['partial'],kind:'release',size:'L'},
+  {text:'Handle all eligible orders, including complex and marketplace orders',caps:['complex'],kind:'release',size:'L'}
+].map(s=>Object.assign(s,{weeks:SIZE_WEEKS[s.size],reason:reasonFor(s)}));
 
-  /* ================= THE EVALUATOR =================
-     evaluate(brief, texts) -> Promise<[{effort, value, customer, business}]>
-     value is cumulative (share of cancellations online once that slice is live).
-     STEP 1: keyword stand-in, using the same model as David's plan. STEP 2: replace the body with a call to the proxy. */
-  var SHARE={web:.6,ios:.3,android:.1}, CH_NAME={web:'the website',ios:'the iOS app',android:'the Android app'};
-  var CH_COST={web:1,ios:3,android:3}, CAP_COST={elig:1,request:1,auto:5,edge:5,polish:2};
-  // customer value (c) = share of cancellations customers can do online; business value (b) = share of call-centre work removed.
-  // A manual request is online for the customer, but staff still process it: big for customers, small for the business,
-  // until internal tooling automates the processing.
-  var LEVEL={elig:{c:.1,b:.05},request:{c:.5,b:.2},requestTooled:{c:.5,b:.6},auto:{c:.95,b:.95}};  // edge cases add the last 5%
-  function classify(t){
-    t=t.toLowerCase();
-    var k={};
-    var SUPPORT=/^(automated )?(confirmation|validat|verif|identity|refund|automate (money )?refund|automated refund|user enters|option for|type of|collect info|tracking of|build in|admin|kill.?switch|send the user a notification|have cancellation form ask|ask the user why|ways to make sure|automated order lookup|order lookup)/;
-    var MANUAL=/request|form\b|forms\b|e-?mail|mailto|staff|support team|customer service|call cent(re|er)|manual|human in the loop|forwarded|text box|ticket|google form|by hand|checks? (the )?db|every morning|concierge|wizard of oz|marks? the order|to be cancelled/;
-    var AUTO=/self.?serv|(automat\w*|functioning|directly|instant\w*)[^.]{0,45}cancel|cancel\w*[^.]{0,30}(automatic\w*|directly|itself|themselves|behind the scenes)|remove (the )?human|remove any remaining staff|remove .*staff oversi|wired (up )?to (the )?internal|one.?click|two.?tap|without (calling|staff)|automate cancel|automation of|away from (the )?manual|functioning (\(automated\) )?button|automated button/;
-    if(/fake.?door|a\/b|\bab test|painted door|dummy|smoke test|coming soon|mock button|does nothing|tracks interest|please call|phone number on/.test(t))k.fake=1;
-    if(/^(check|analy|track|look|find|measure)/.test(t)&&/(which|what) platform|most active|footfall|where (users|customers) (are|go|cancel)|disaggregated by (device|os)/.test(t))k.split=1;
-    if(/monitor|measure|track|analytics|how many|metric|usage|feedback|stats|before we start|check existing|understand why|research|interview/.test(t))k.monitor=1;
-    if(/\bif (not|yes|no)\b|go.?no.?go|decide|decision|stop development|rethink|pivot|start implement/.test(t))k.decide=1;
-    if(/internal (tool|system|cancel)|support team to automate|autofill|auto-?populate|bulk cancel|staff oversight|automated order lookup|automated refund|automate (money )?refund|remove (the )?human|automat\w* (updating|data updates)/.test(t))k.tooling=1;
-    if(SUPPORT.test(t)&&!AUTO.test(t.replace(SUPPORT,''))){if(!k.tooling)k.support=1;return {k:k,ch:channels(t)}}
-    if(/edge case|all orders|every (order|case)|partial|split|voucher|gift card|corner case|individual items?|every item|which orders|baskets|bulk/.test(t))k.edge=1;
-    if(/eligib|can (still )?be cancel|see if|check if|dispatch/.test(t))k.elig=1;
-    var internal=/internal (tool|system)|for the support team|for (the )?staff|support team to/.test(t);
-    if(AUTO.test(t)&&!internal)k.auto=1;
-    else if(MANUAL.test(t))k.request=1;
-    // a 'mock' button that actually sends something to a person is a working manual request, not a fake door
-    if(k.fake&&/sends|writes an email|notification to|email to/.test(t)){delete k.fake;delete k.auto;k.request=1}
-    if(k.fake||k.split){delete k.auto;delete k.request;delete k.edge}
-    if(k.edge&&k.request)delete k.edge;
-    if(k.edge&&!k.request)k.auto=1;
-    if(/\b(url|link|linking)\b/.test(t))k.link=1;
-    if(/redesign|polish|new design|look and feel|theming|branding|my orders page|look pretty|make it (look|pretty)/.test(t))k.polish=1;
-    if(/\bapi\b|back.?end|database|infrastructure|architecture|microservice|integration|platform work|data model|refactor|internal (system|process|tooling)|synchroni[sz]e|internal tool/.test(t)&&!k.auto&&!(k.request&&!internal))k.backend=1;
-    if(internal&&k.backend)delete k.request;
-    if(/cancel/.test(t)&&!/check|before we start/.test(t)&&!k.fake&&!k.split&&!k.monitor&&!k.decide&&!k.elig&&!k.request&&!k.auto&&!k.polish&&!k.backend)k.auto=1;
-    return {k:k,ch:channels(t)};
+const SIM={
+  requests:2000, cPhone:6, cManual:3, cAuto:0.2, cFail:20, target:0.25,
+  mix:{too_late:.20,single:.25,multi:.25,partial:.20,complex:.10},
+  worlds:{
+    W1:{name:'Expected', weight:25, young:.35, aware:.5, wy:.85, wo:.45, fail:0,
+        story:'Customers behaved as the business case assumed.',
+        david:'Continue to multi-item automation (target met in week 4), then weigh up whether the tail is worth building.'},
+    W2:{name:'Hidden feature', weight:20, young:.35, aware:.15, wy:.85, wo:.45, fail:0,
+        story:'Customers wanted to cancel online, but most never found the option.',
+        david:'Investigate (ask callers), then pivot: make it findable. Then continue.'},
+    W3:{name:'Small segment', weight:20, young:.20, aware:.8, wy:1.0, wo:.10, fail:0,
+        story:'Younger customers loved it, but older customers, who make most cancellation requests, kept phoning.',
+        david:'Investigate by age, then pivot to assisted digital, or stop if the business case no longer holds.'},
+    W4:{name:'Small slice wins', weight:20, young:.35, aware:.5, wy:.85, wo:.45, fail:0,
+        mix:{too_late:.45,single:.19,multi:.19,partial:.12,complex:.05}, check:.7,
+        story:'Most calls were “is it too late to cancel?”. Showing eligibility did most of the work.',
+        david:'Stop early after week 2: target met, 8 planned weeks freed.'},
+    W5:{name:'Partial goes wrong', weight:15, young:.35, aware:.5, wy:.85, wo:.45, fail:.4,
+        story:'Partial cancellation failed on split deliveries, creating repeat calls and complaints.',
+        david:'Roll back partial cancellation, fix split deliveries, then re-release.'}
+  },
+  pivots:[
+    {id:'P1',name:'Make it findable',desc:'Cancel link on the order page, in the confirmation email and on the phone menu.',size:'S'},
+    {id:'P2',name:'Assisted digital',desc:'Call-centre staff text customers a cancellation link and talk them through it.',size:'S'},
+    {id:'P3',name:'Fix partial cancellation for split deliveries',desc:'Handle orders where one parcel has already shipped.',size:'M'},
+    {id:'P4',name:'Ask customers why they cancel',desc:'A short survey on the cancellation page.',size:'S'}
+  ],
+  quotes:{
+    W1:['“Easy. Found it on my order page.”','“I still phoned. Old habits.”','“Glad I didn’t have to wait on hold.”'],
+    W2:['“I looked for a cancel button and couldn’t see one.”','“I didn’t know you could do that online.”','“I searched the help pages and only found the phone number.”'],
+    W3:['“I’d rather speak to a person when it’s about money.”','“My daughter did it for me on her phone.”','“Took me thirty seconds.” (age 24)'],
+    W4:['“I just wanted to know if it had already shipped.”','“Saw it was too late, so didn’t bother calling.”','“Requesting online was fine.”'],
+    W5:['“It said cancelled, then a parcel turned up anyway.”','“Half my order was cancelled and I was charged for all of it.”','“I had to phone twice to sort it out.”']
   }
-  function channels(t){
-    var ch={};
-    if(/web|site|desktop|browser/.test(t))ch.web=1;
-    if(/ios|iphone|apple/.test(t))ch.ios=1;
-    if(/android/.test(t))ch.android=1;
-    if(/\bapps?\b|mobile/.test(t)&&!ch.ios&&!ch.android&&!/web app/.test(t)){ch.ios=1;ch.android=1}
-    if(/platform (that )?(users|customers) are most active|most (used|popular) platform/.test(t))ch.web=1;
-    if(/all (channels|platforms)|everywhere|every (channel|platform)|all three|web and (the )?apps|more platforms|other platforms?|one codebase for all/.test(t)){ch.web=ch.ios=ch.android=1}
-    return Object.keys(ch);
-  }
-  function evaluateStandIn(brief,texts){
-    var caps={},chanCaps={web:{},ios:{},android:{}},live={},knowsSplit=false,decided=false,backendDone=false,lastCh=null,out=[];
-    var toolingDone=false;
-    function rateOf(key){var r=0;Object.keys(chanCaps).forEach(function(c){var cc=chanCaps[c],l=0;
-      if(cc.elig)l=LEVEL.elig[key];if(cc.request)l=(toolingDone?LEVEL.requestTooled:LEVEL.request)[key];if(cc.auto)l=LEVEL.auto[key];if(cc.auto&&cc.edge)l+=.05;r+=SHARE[c]*l});return Math.round(r*100)/100}
-    function rate(){return rateOf('c')}
-    texts.forEach(function(text,i){
-      var c=classify(text),k=c.k,before=rate(),beforeB=rateOf('b'),effort=0,cust,biz;
-      var facing=['elig','request','auto','edge','polish'].filter(function(x){return k[x]});
-      // a slice that only names a channel brings what's already built to that channel
-      if(!facing.length&&c.ch.length&&!k.fake&&!k.backend)facing=['elig','request','auto','edge'].filter(function(x){return caps[x]});
-      var chans=c.ch.length?c.ch:(lastCh||['web']);
-      var newCh=[],newCaps=[];
-      if(facing.length){
-        facing.forEach(function(x){if(!caps[x]){effort+=CAP_COST[x];caps[x]=1;newCaps.push(x)}});
-        chans.forEach(function(ch){
-          if(!live[ch]){effort+=k.link?1:CH_COST[ch];live[ch]=1;newCh.push(ch)}
-          facing.forEach(function(x){chanCaps[ch][x]=1});
-        });
-        lastCh=chans;
-      }
-      var newTooling=false;if(k.tooling){effort+=toolingDone?1:3;newTooling=!toolingDone;toolingDone=true}
-      if(k.fake){effort+=1}
-      if(k.split){effort+=1}
-      if(k.support){effort+=2}
-      if(k.monitor&&!k.fake&&!k.support){effort+=1}
-      var moreBackend=backendDone;if(k.backend&&!facing.length){effort+=backendDone?1:2;backendDone=true}
-      if(!facing.length&&!k.fake&&!k.split&&!k.support&&!k.monitor&&!k.decide&&!k.backend&&!k.tooling)effort=2;
-      if(facing.length&&effort===0)effort=1;
-      var after=rate(),afterB=rateOf('b'),gain=Math.round((after-before)*100),gainB=Math.round((afterB-beforeB)*100);
-      var lastChSet=i>0&&out.length&&texts.slice(0,i).some(function(x){return classify(x).ch.length});
-      var chText=function(list){return list.map(function(x){return CH_NAME[x]}).join(' and ')};
-      // ---- narrative
-      if(k.fake){
-        cust='I clicked “Cancel order” and got a “coming soon” message. Fine, I’ll phone.';
-        biz='14% of people who wanted to cancel clicked the fake button, so demand is real. 60% of them were on the website, 30% on iOS, 10% on Android.';
-        knowsSplit=true;
-      }else if(k.split){
-        cust='Nothing’s changed for me.';
-        biz=knowsSplit?'We double-checked the numbers: still 60% website, 30% iOS, 10% Android.':'The data says 60% of cancellations start on the website, 30% on iOS and only 10% on Android. Now we know where to start.';
-        knowsSplit=true;
-      }else if(k.tooling&&!newCaps.length&&!newCh.length){
-        cust=after>0?'Nothing new on my screen, but my cancellation was confirmed within the hour.':'Nothing’s changed. I still have to phone.';
-        biz=!newTooling?'More internal tooling. The team’s already fast, so it barely moves.':after>0?'The support team now processes online requests in seconds instead of minutes. Call-centre work on cancellations is down '+Math.round(afterB*100)+'%.':'Great tooling for the support team… but there are no online requests to process yet.';
-      }else if(k.support){
-        cust=after>0?'Nice touch. It doesn’t change whether I can cancel online, though.':'Nice touch, but I still have to phone to cancel.';
-        biz=after>0?'Useful for the team, and it makes the experience better. The share of online cancellations doesn’t move.':'It makes something smoother for the team. But no customer can cancel online yet, so the calls keep coming.';
-      }else if(k.decide&&!facing.length){
-        cust=null;
-        biz=!knowsSplit?'We say we’ll decide… but we haven’t measured anything yet, so what are we deciding on?':decided?'Agreed. The go/no-go is already made: we build, website first.':'Demand clears our 10% bar, so we don’t stop. We go ahead, and we know which channel to start with.';
-        decided=true;
-      }else if(k.monitor&&!facing.length){
-        cust='Nothing’s changed for me.';
-        biz=knowsSplit?'We let the test run for a week. The numbers hold: enough demand, and most of it on the website.':after>0?'We’re watching the numbers on what’s live. Now we can see what customers actually do.':'We’re measuring, but nothing is live yet, so there’s nothing to measure.';
-      }else if(k.backend&&!facing.length){
-        cust='Nothing’s changed. I still have to phone.';
-        biz=moreBackend?'More plumbing. Still nothing a customer can see, and the weeks keep going by.':'The team says the foundations are in place. No customer can see any of it yet.';
-      }else if(!facing.length){
-        cust='I’m not sure anything changed for me.';
-        biz='We couldn’t tell what this slice changed for customers. Could it say what they can now do, and where?';
-      }else if(newCaps.indexOf('edge')>=0&&gain<=5){
-        cust='Even my split-delivery order with a voucher cancelled on its own. That’s rare, though.';
-        biz='Five weeks for about 5% of cancellations, which the call centre was handling fine.';
-      }else if(newCaps.indexOf('polish')>=0&&gain<=0){
-        cust='Nice new page. Cancelling works the same as before.';
-        biz='It looks great. The numbers didn’t move.';
-      }else if(newCaps.indexOf('auto')>=0){
-        cust='Cancelled in two taps on '+chText(chans)+'. Done.';
-        if(!c.ch.length&&!lastChSet)cust+=' (Your slice didn’t say where, so we assumed the website.)';
-        biz=Math.round(afterB*100)+'% of cancellations now happen online with nobody involved.'+(newCh.indexOf('android')>=0&&chans.length===1?' Though Android is only 10% of cancellations.':'');
-      }else if(newCaps.indexOf('request')>=0){
-        cust='I sent a cancellation request on '+chText(chans)+' in two minutes. No queue.';
-        biz=Math.round(after*100)+'% of cancellations now arrive online. But staff still process every one by hand, so the call-centre workload only drops '+Math.round(afterB*100)+'%.';
-      }else if(newCaps.indexOf('elig')>=0){
-        cust='I can see my order can still be cancelled… but I still have to phone to do it.';
-        biz='Fewer “can I still cancel?” calls, about '+Math.max(1,gain)+'% of them. A small start.';
-      }else if(newCh.length){
-        var share=Math.round(newCh.reduce(function(a,ch){return a+SHARE[ch]},0)*100);
-        cust='Finally, it works on '+chText(newCh)+' too.';
-        biz=chText(newCh).charAt(0).toUpperCase()+chText(newCh).slice(1)+(newCh.length>1?' are ':' is ')+share+'% of cancellations. '+(share<=10?'A lot of effort for a small slice of customers.':'Online cancellations are now '+Math.round(after*100)+'%.');
-      }else{
-        cust='It works a bit better than before.';
-        biz='Hard to see a difference in the numbers.';
-      }
-      out.push({effort:effort,value:after,bval:afterB,customer:cust,business:biz});
-    });
-    return new Promise(function(res){setTimeout(function(){res(out)},reduce?50:900)});
-  }
-  var evaluate=evaluateStandIn;
+};
 
-  /* ================= PLAN EDITOR ================= */
-  var PH=['e.g. A “fake door” cancel button to see how many people click','e.g. Customers can see if an order can be cancelled, on the website','e.g. Customers can request a cancellation online','e.g. Self-service cancel on the website','e.g. Same on iOS and Android'];
-  var slices=[{id:1,text:''}],nextId=2,drag=null,suppressClick=false;
-  function filled(){return slices.filter(function(s){return s.text.trim()})}
-  function renderPlan(){
-    $('slices').innerHTML=slices.map(function(s,i){
-      return '<div class="slice'+(drag&&drag.active&&drag.sid===s.id?' dragsrc':'')+'" data-i="'+i+'">'+
-        '<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder slice '+(i+1)+', or use the arrow keys"'+(slices.length>1?'':' disabled')+'>⋮⋮</button>'+
-        '<span class="n">'+(i+1)+'</span>'+
-        '<textarea class="stext" data-i="'+i+'" rows="1" maxlength="200" placeholder="'+esc(PH[Math.min(i,PH.length-1)])+'" aria-label="Slice '+(i+1)+'">'+esc(s.text)+'</textarea>'+
-        '<button class="icon" type="button" data-act="del" data-i="'+i+'" aria-label="Remove slice '+(i+1)+'">×</button>'+
+/* ======================= READING STICKIES (stand-in for the AI) =======================
+   classify(text) -> {caps:[...], kind:'release'|'experiment'|'support'|'technical'|'unclear', size:'S'|'M'|'L', fake}
+   The AI version returns the same shape; the page does the scoring. */
+function classify(raw){
+  const t=raw.toLowerCase();
+  const has=re=>re.test(t);
+  let caps=[], fake=false;
+  const FAKE=/fake.?door|painted door|dummy|mock button|button that does nothing|does nothing|tracks interest|smoke test|coming soon|please call|phone number on/;
+  const SENDS=/sends?|writes? an email|e-?mails? (to|the)|notification to|forwarded|submit/;
+  if(has(FAKE)){ if(has(SENDS)) caps.push('request'); else fake=true; }
+  if(has(/eligib|cancellable|can (still )?be cancel|see if|check if|whether .*cancel|dispatch|shipped|order status|status of/)) caps.push('elig');
+  const AUTO=/self.?serv|automatic|automate|automated|directly|instant|one.?click|without (calling|staff|a person)|remove (the )?human|remove any remaining staff|wired (up )?to|functioning|by (my|them)sel/;
+  const MANUAL=/request|form\b|forms\b|e-?mail|mailto|staff|support team|customer service|call cent|manual|human in the loop|text ?box|google form|by hand|marks? the order|to be cancelled|checks? (the )?(db|database)|every morning/;
+  const internal=/internal (tool|system|process)|for the (support )?team|for staff|admin/.test(t);
+  const partial=/selected items|individual items?|partial|some items|item.?level|each item|every item|select which items/.test(t);
+  const complex=/complex|marketplace|edge case|all (eligible )?orders|every order|all .*cases|corner case/.test(t);
+  const single=/single.?item|one item/.test(t), multi=/multi.?item|several items|whole order|entire order|baskets?|which orders/.test(t);
+  const isAuto=has(AUTO)&&!internal&&!/every morning|by hand|manually/.test(t);
+  const support=/confirmation|refund|identity|validat|verif|notification|reason for|credit vs|kill.?switch|payback/.test(t)&&!/request|form\b|cancel (the|an|their|your)? ?orders?|cancel button|self.?serv/.test(t);
+  if(!fake&&!support&&!caps.includes('request')&&has(MANUAL)&&!isAuto&&!internal) caps.push('request');
+  if(partial) caps.push('partial');
+  if(complex) caps.push('complex');
+  if(isAuto&&!support&&!partial&&!complex){
+    if(single&&!multi) caps.push('auto_single');
+    else if(multi&&!single) caps.push('auto_multi');
+    else caps.push('auto_single','auto_multi');
+  }
+  // a plain "cancel button / cancel orders" with nothing else recognisable = self-service cancellation
+  if(!caps.length&&!fake&&!support&&/cancel/.test(t)&&!/check|before we start|track|monitor|measure|internal|back.?end|api|database/.test(t)) caps.push('auto_single','auto_multi');
+  caps=[...new Set(caps)];
+  let kind='release';
+  if(!caps.length){
+    if(fake||has(/a\/b|\bab test|survey|research|interview|monitor|measure|track|analytics|feedback|metric|usage|before we start|check existing|understand why|which platform|most active/)) kind='experiment';
+    else if(has(/confirm|refund|identity|validat|verif|reason|notification|kill.?switch|option for|credit|payback|collect info/)) kind='support';
+    else if(has(/\bapi\b|back.?end|database|infrastructure|architecture|internal|synchron|refactor|tooling|method to|data model|codebase/)) kind='technical';
+    else kind='unclear';
+  }
+  // size
+  let size='S';
+  const big=caps.filter(c=>['partial','complex'].includes(c)).length, mid=caps.filter(c=>['auto_single','auto_multi'].includes(c)).length;
+  if(big) size='L'; else if(mid>=2) size='M';
+  if(caps.length>=3&&size!=='L') size=size==='S'?'M':'L';
+  if(kind==='technical') size='M';
+  return {caps,kind,size,fake};
+}
+function reasonFor(s){
+  if(s.caps.length) return 'Unlocks: '+s.caps.map(c=>CAPS[c].short+' ('+CAPS[c].v+')').join(', ')+'.';
+  return {experiment:'Experiment: you learn something, but customers get nothing new.',
+          support:'Supporting piece: it improves a step, but adds no new step on its own.',
+          technical:'Technical work: no customer can use it yet.',
+          unclear:'Couldn’t tell what customers can do once this is live.'}[s.kind];
+}
+function evaluate(texts){ // returns a Promise so the AI call can drop in here
+  const out=texts.map(text=>{const c=classify(text);const s=Object.assign({text},c);s.weeks=SIZE_WEEKS[s.size];s.reason=reasonFor(s);return s});
+  return new Promise(res=>setTimeout(()=>res(out),matchMedia('(prefers-reduced-motion: reduce)').matches?20:600));
+}
+
+/* ======================= PART 1: SCORING ======================= */
+function potentialOf(capSet){let v=0;capSet.forEach(c=>{v=Math.max(v,CAPS[c].v)});return v}
+function playOut(plan){
+  let t=0,val=0;const live=new Set();
+  return plan.map((s,i)=>{const start=t;t+=s.weeks;s.caps.forEach(c=>live.add(c));const nv=potentialOf(live);const o={s,i,start,end:t,before:val,after:Math.max(val,nv)};val=o.after;return o});
+}
+function measures(plan){
+  const sch=playOut(plan),total=sch.length?sch[sch.length-1].end:0;
+  const M=sch.length?sch[sch.length-1].after:0;
+  const ups=sch.filter(o=>o.after>o.before);
+  const T=M>0?ups.find(o=>o.after===M).end:null;
+  const points=[0].concat(ups.map(o=>o.end));
+  let G=0,gs=0,ge=0;
+  for(let k=1;k<points.length;k++){if(points[k]-points[k-1]>G){G=points[k]-points[k-1];gs=points[k-1];ge=points[k]}}
+  const last=points[points.length-1];
+  if(total-last>G){G=total-last;gs=last;ge=total}
+  if(!ups.length){G=total;gs=0;ge=total}
+  return {sch,total,M,T,G,gs,ge,first:ups.length?ups[0].end:null};
+}
+
+/* ======================= PART 1: EDITOR ======================= */
+const PH=['e.g. A “fake door” cancel button to see how many people click','e.g. Customers can request a cancellation online; staff process it','e.g. Customers can cancel single-item orders automatically','e.g. Customers can cancel selected items in an order'];
+let stickies=[{id:1,text:''}],nextId=2,drag=null,suppressClick=false;
+const filled=()=>stickies.filter(s=>s.text.trim());
+function renderPlan(){
+  $('slices').innerHTML=stickies.map((s,i)=>
+    '<div class="slice'+(drag&&drag.active&&drag.sid===s.id?' dragsrc':'')+'" data-i="'+i+'">'+
+    '<button class="grip" type="button" data-i="'+i+'" aria-label="Drag to reorder slice '+(i+1)+', or use the arrow keys"'+(stickies.length>1?'':' disabled')+'>⋮⋮</button>'+
+    '<span class="n">'+(i+1)+'</span>'+
+    '<textarea class="stext" data-i="'+i+'" rows="1" maxlength="200" placeholder="'+esc(PH[Math.min(i,PH.length-1)])+'" aria-label="Slice '+(i+1)+'">'+esc(s.text)+'</textarea>'+
+    '<button class="icon" type="button" data-act="del" data-i="'+i+'" aria-label="Remove slice '+(i+1)+'">×</button></div>'
+  ).join('')+'<button class="new-slice" type="button" id="new-slice">+ Add a slice</button>';
+  document.querySelectorAll('.stext').forEach(grow);updateRun();
+}
+function grow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
+function updateRun(){const n=filled().length;$('run').disabled=n===0;$('hint').textContent=n?n+' slice'+(n>1?'s':''):'Write at least one slice.'}
+$('slices').addEventListener('input',e=>{const el=e.target.closest('.stext');if(!el)return;stickies[+el.dataset.i].text=el.value;grow(el);updateRun()});
+$('slices').addEventListener('click',e=>{
+  if(suppressClick)return;
+  if(e.target.closest('#new-slice')){stickies.push({id:nextId++,text:''});renderPlan();const t=document.querySelectorAll('.stext');t[t.length-1].focus();return}
+  const b=e.target.closest('[data-act="del"]');if(!b)return;
+  stickies.splice(+b.dataset.i,1);if(!stickies.length)stickies.push({id:nextId++,text:''});renderPlan();
+});
+$('slices').addEventListener('keydown',e=>{
+  const ta=e.target.closest('.stext');
+  if(ta&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();const i=+ta.dataset.i;
+    if(i===stickies.length-1&&ta.value.trim()){stickies.push({id:nextId++,text:''});renderPlan()}
+    const t=document.querySelectorAll('.stext');(t[i+1]||t[i]).focus();return}
+  const g=e.target.closest('.grip');if(!g)return;
+  const i=+g.dataset.i,j=e.key==='ArrowUp'?i-1:e.key==='ArrowDown'?i+1:null;
+  if(j===null||j<0||j>=stickies.length)return;e.preventDefault();
+  [stickies[i],stickies[j]]=[stickies[j],stickies[i]];renderPlan();document.querySelector('.grip[data-i="'+j+'"]').focus();
+});
+let lastY=0,raf=0;
+document.addEventListener('pointerdown',e=>{
+  if(e.button>0||drag)return;const g=e.target.closest('.grip[data-i]');if(!g||g.disabled)return;
+  const d={sid:stickies[+g.dataset.i].id,src:g.closest('.slice'),x:e.clientX,y:e.clientY,pt:e.pointerType,active:false};
+  drag=d;lastY=e.clientY;d.lx=e.clientX;
+  if(e.pointerType!=='mouse')d.timer=setTimeout(()=>{if(drag===d)begin()},260);
+});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;lastY=e.clientY;drag.lx=e.clientX;
+  if(!drag.active){const dist=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
+    if(drag.pt==='mouse'){if(dist>5)begin();else return}else{if(dist>10)endDrag();return}}
+  e.preventDefault();place();reorder();
+},{passive:false});
+document.addEventListener('touchmove',e=>{if(drag&&drag.active)e.preventDefault()},{passive:false});
+document.addEventListener('contextmenu',e=>{if(drag)e.preventDefault()});
+document.addEventListener('pointerup',()=>{if(!drag)return;if(drag.active){suppressClick=true;setTimeout(()=>{suppressClick=false},0)}endDrag()});
+document.addEventListener('pointercancel',()=>{if(drag&&!drag.active)endDrag()});
+function begin(){
+  drag.active=true;clearTimeout(drag.timer);
+  const r=drag.src.getBoundingClientRect(),g=drag.src.cloneNode(true);
+  g.classList.add('ghost');g.style.width=r.width+'px';drag.ox=drag.x-r.left;drag.oy=drag.y-r.top;drag.ghost=g;
+  document.body.appendChild(g);drag.src.classList.add('dragsrc');document.body.classList.add('dragging');
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  place();
+  raf=requestAnimationFrame(function step(){if(!drag||!drag.active)return;let v=0;
+    if(lastY<140)v=-Math.ceil((140-lastY)/6);else if(lastY>innerHeight-70)v=Math.ceil((lastY-innerHeight+70)/6);
+    if(v){scrollBy(0,v);reorder()}raf=requestAnimationFrame(step)});
+}
+function place(){if(drag.ghost){drag.ghost.style.left=(drag.lx-drag.ox)+'px';drag.ghost.style.top=(lastY-drag.oy)+'px'}}
+function reorder(){
+  const cards=[...document.querySelectorAll('#slices .slice')],from=stickies.findIndex(s=>s.id===drag.sid);let to=0;
+  cards.forEach((c,k)=>{if(k===from)return;const r=c.getBoundingClientRect();if(lastY>r.top+r.height/2)to++});
+  to=Math.min(stickies.length-1,to);
+  if(to!==from){const s=stickies.splice(from,1)[0];stickies.splice(to,0,s);renderPlan()}
+}
+function endDrag(){clearTimeout(drag.timer);cancelAnimationFrame(raf);if(drag.ghost)drag.ghost.remove();document.body.classList.remove('dragging');const was=drag.active;drag=null;if(was)renderPlan()}
+
+/* ======================= PART 1: CHART ======================= */
+function stepPath(sch,S,y){ // potential-value staircase as an SVG path
+  let d='M0 '+y(0);
+  sch.forEach(o=>{d+=' L'+o.end*10+' '+y(o.before)+' L'+o.end*10+' '+y(o.after)});
+  d+=' L'+S*10+' '+y(sch.length?sch[sch.length-1].after:0);return d;
+}
+function chartBlock(id,runs,main,opts){
+  // runs: [{key,label,m,cls}] ; main = the run whose slices/gaps are drawn
+  opts=opts||{};
+  const S=Math.max(4,...runs.map(r=>r.m.total))+1,W=S*10,H=100,y=v=>H-v;
+  const pc=v=>(v/S*100)+'%';
+  let svg='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>';
+  // pink: weeks of work that added no new value (main run)
+  main.m.sch.forEach(o=>{if(o.after<=o.before)svg+='<rect x="'+o.start*10+'" y="0" width="'+(o.end-o.start)*10+'" height="'+H+'" fill="#F4C7C7"/>'});
+  const sty={you:'stroke="#D99000" stroke-width="3"',prev:'stroke="#A7B0C0" stroke-width="2.5"',david:'stroke="#12213B" stroke-width="2.5" stroke-dasharray="6 4"'};
+  runs.slice().reverse().forEach(r=>{
+    if(r.key==='you')svg+='<path d="'+stepPath(r.m.sch,S,y)+' L'+W+' '+H+' L0 '+H+' Z" fill="#F2A91E" fill-opacity=".14"/>';
+    svg+='<path d="'+stepPath(r.m.sch,S,y)+'" fill="none" '+sty[r.key]+' vector-effect="non-scaling-stroke"/>';
+  });
+  let marks='';
+  main.m.sch.forEach(o=>{marks+='<span class="mark'+(o.after>o.before?'':' zero')+'" style="left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Slice '+(o.i+1)+' released">'+(o.i+1)+'</span>'});
+  let gap='';
+  if(main.m.G>0)gap='<div class="gap" style="left:'+pc(main.m.gs)+';width:'+pc(main.m.G)+'"><span>longest wait: '+main.m.G+' wk</span></div>';
+  // end labels
+  let ends='',used=[];
+  runs.forEach(r=>{let t=y(r.m.M);while(used.some(u=>Math.abs(u-t)<22))t+= (t>50?-22:22);used.push(t);
+    const col={you:'var(--accent-ink)',prev:'#7D879A',david:'var(--navy)'}[r.key];
+    ends+='<span style="top:'+Math.max(6,Math.min(96,t))+'%;color:'+col+'"><b>'+r.m.M+'</b>'+r.label+'</span>'});
+  const blocks=main.m.sch.map(o=>'<div class="blk'+(o.after>o.before?'':' zero')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(o.i+1)+': '+esc(o.s.text)+'">'+(o.i+1)+'</div>').join('');
+  let ticks='';const step=S>16?2:1;for(let w=0;w<=S;w+=step)ticks+='<span style="left:'+pc(w)+'">'+w+'</span>';
+  const keyLines=runs.length>1?runs.map(r=>'<span><i class="k-'+r.key+'"></i>'+r.label+'</span>').join(''):'';
+  return '<div class="chart-wrap">'+
+    '<div class="plot"><div></div><div class="axis-t">Potential value (points)</div><div></div></div>'+
+    '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100</span><span class="yt" style="top:calc(6px + 50%)">50</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+    '<div class="chart" id="'+id+'-chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+svg+'</svg>'+marks+gap+'</div>'+
+    '<div class="endlab">'+ends+'</div></div>'+
+    '<div class="plot"><div></div><div><div class="axis-t row-t">'+(opts.barTitle||'Slices, in the order they’re released')+'</div><div class="timeline">'+blocks+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
+    '<div class="key">'+keyLines+'<span><i class="k-pink"></i>weeks of work that add no new value</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds none on its own</span><span><i class="k-gap"></i>longest wait for new value</span></div></div><div></div></div>'+
+    '</div>';
+}
+
+/* ======================= PART 1: RUN ======================= */
+let current=null,previous=null,rounds=0,comparing=false;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+$('run').addEventListener('click',()=>{
+  const texts=filled().map(s=>s.text.trim());if(!texts.length)return;
+  $('result').hidden=false;
+  $('res-panel').innerHTML='<div class="thinking"><i></i>Reading your slices…</div>';
+  $('run').disabled=true;
+  $('result').scrollIntoView({behavior:reduce?'auto':'smooth'});
+  evaluate(texts).then(plan=>{
+    if(current)previous=current;
+    rounds++;current={plan,m:measures(plan)};
+    renderResult();updateRun();
+    $('rubric').hidden=false;$('closing').hidden=false;
+    $('res-eyebrow').textContent=rounds===1?'Your first try':'Round '+rounds;
+    updateSimChoice();
+  });
+});
+function statTiles(m){
+  return '<div class="stats"><div class="stat"><b>'+m.M+'</b><span>Highest value reached</span></div>'+
+    '<div class="stat"><b>'+(m.T?m.T+' wk':'–')+'</b><span>Weeks to reach it</span></div>'+
+    '<div class="stat"><b>'+m.G+' wk</b><span>Longest wait for new value</span></div></div>';
+}
+function renderResult(){
+  const runs=[{key:'you',label:rounds>1?'This round':'Your plan',m:current.m}];
+  if(previous)runs.push({key:'prev',label:'Previous round',m:previous.m});
+  let dm=null;if(comparing){dm=measures(DAVID);runs.push({key:'david',label:'David’s plan',m:dm})}
+  let h='<div class="panel-title"><b>'+(rounds>1?'Round '+rounds:'Your plan')+'</b><span>'+current.plan.length+' slices · '+current.m.total+' weeks of work</span></div>'+
+    chartBlock('p1',runs,runs[0]);
+  if(runs.length===1)h+=statTiles(current.m);
+  else{
+    const row=(l,f)=>'<tr><td>'+l+'</td>'+runs.map(r=>'<td class="n">'+f(r.m)+'</td>').join('')+'</tr>';
+    h+='<table class="cmp"><thead><tr><th></th>'+runs.map(r=>'<th class="n">'+r.label+'</th>').join('')+'</tr></thead><tbody>'+
+      row('Highest value reached',m=>m.M)+row('Weeks to reach it',m=>m.T?m.T:'–')+row('Longest wait for new value',m=>m.G+' wk')+row('First value',m=>m.first?'week '+m.first:'never')+
+      '</tbody></table>';
+  }
+  h+='<ol class="slist">'+current.m.sch.map(o=>{
+    const up=o.after>o.before;
+    return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
+      '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span><span class="why">'+esc(o.s.reason)+'</span></li>';
+  }).join('')+'</ol>';
+  if(comparing){
+    h+='<ol class="slist" style="background:var(--soft)"><li style="display:block"><span class="txt">David’s plan</span></li>'+dm.sch.map(o=>{const up=o.after>o.before;
+      return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span><span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span></li>'}).join('')+'</ol>';
+  }
+  $('res-panel').innerHTML=h;
+}
+$('revise').addEventListener('click',()=>{$('view-slice').scrollIntoView({behavior:reduce?'auto':'smooth'});const t=document.querySelector('.stext');if(t)t.focus({preventScroll:true})});
+$('compare').addEventListener('click',()=>{comparing=!comparing;$('compare').textContent=comparing?'Hide David’s plan':'Compare with David’s plan';renderResult()});
+$('to-sim').addEventListener('click',()=>{setTab('sim');const r=document.querySelector('input[name="plan"][value="mine"]');if(!r.disabled)r.checked=true;$('view-sim').scrollIntoView({behavior:reduce?'auto':'smooth'})});
+
+/* ======================= TABS ======================= */
+function setTab(t){
+  $('tab-slice').setAttribute('aria-selected',t==='slice');$('tab-sim').setAttribute('aria-selected',t==='sim');
+  $('view-slice').hidden=t!=='slice';$('view-sim').hidden=t!=='sim';
+  try{history.replaceState(null,'',t==='sim'?'#simulate':location.pathname+location.search)}catch(e){}
+}
+$('tab-slice').addEventListener('click',()=>setTab('slice'));
+$('tab-sim').addEventListener('click',()=>setTab('sim'));
+function updateSimChoice(){
+  const ok=!!current,lab=$('opt-mine'),inp=lab.querySelector('input');
+  inp.disabled=!ok;lab.classList.toggle('off',!ok);
+  $('mine-note').textContent=ok?current.plan.length+' slices from your latest round in Part 1.':'Slice it in Part 1 first.';
+}
+
+/* ======================= PART 2: SIMULATION MODEL ======================= */
+function adoption(w,mods){const aware=Math.max(w.aware,mods.aware||0),wo=Math.min(1,w.wo+(mods.woUp||0));return aware*(w.young*w.wy+(1-w.young)*wo)}
+function weekResult(w,caps,mods){
+  const a=adoption(w,mods),mix=w.mix||SIM.mix,fail=mods.fail!=null?mods.fail:w.fail;
+  let calls=0,cost=0,complaints=0,online=0,auto=0,failed=0;
+  const autoCap={single:'auto_single',multi:'auto_multi',partial:'partial',complex:'complex'};
+  for(const [t,s] of Object.entries(mix)){
+    if(t==='too_late'){const e=caps.has('elig')?(w.check!=null?w.check:a):0;calls+=s*(1-e);cost+=s*(1-e)*SIM.cPhone;continue}
+    const route=caps.has(autoCap[t])?'auto':caps.has('request')?'manual':null;
+    if(!route){calls+=s;cost+=s*SIM.cPhone;continue}
+    calls+=s*(1-a);cost+=s*(1-a)*SIM.cPhone;online+=s*a;
+    if(route==='manual')cost+=s*a*SIM.cManual;
+    else{const f=t==='partial'?fail:0,ok=s*a*(1-f),bad=s*a*f;cost+=ok*SIM.cAuto+bad*SIM.cFail;calls+=bad;complaints+=bad;failed+=bad;auto+=ok}
+  }
+  const R=SIM.requests;
+  return {callsAvoided:Math.max(0,1-calls),costSaved:1-cost/SIM.cPhone,calls:Math.round(calls*R),online:Math.round(online*R),auto:Math.round(auto*R),
+    failed:Math.round(failed*R),complaints:Math.round(complaints*R),cost:cost*R,adoption:a};
+}
+
+/* ======================= PART 2: GAME ======================= */
+let G=null;
+function pickWorld(){
+  const q=new URLSearchParams(location.search).get('world');
+  if(q&&SIM.worlds['W'+q.replace(/^w/i,'')])return 'W'+q.replace(/^w/i,'');
+  const ids=Object.keys(SIM.worlds),tot=ids.reduce((a,k)=>a+SIM.worlds[k].weight,0);let r=Math.random()*tot;
+  for(const k of ids){r-=SIM.worlds[k].weight;if(r<0)return k}return ids[0];
+}
+$('sim-start').addEventListener('click',()=>startSim());
+function startSim(excludeWorld){
+  const src=document.querySelector('input[name="plan"]:checked').value;
+  const base=src==='mine'&&current?current.plan:DAVID;
+  let wid=pickWorld();if(excludeWorld&&!new URLSearchParams(location.search).get('world')){let n=0;while(wid===excludeWorld&&n++<20)wid=pickWorld()}
+  G={wid,w:SIM.worlds[wid],src,queue:base.map(s=>Object.assign({},s,{caps:s.caps.slice()})),week:0,live:new Set(),mods:{},
+     pts:[{x:0,c:0,b:0,p:0}],blocks:[],log:[],cards:[],shown:{},released:[],onlineReleases:0,targetWeek:null,ended:false,pivots:{}};
+  $('sim-setup').hidden=true;$('sim-game').hidden=false;
+  G.cards=[{cls:'info',eyebrow:'Week 0',title:'Ready to build',body:'<p>Nothing is live yet. Every cancellation is a phone call: <b>2,000 a week, £12,000</b>.</p><p>Build your first slice to see what happens.</p>'}];
+  renderSim();
+  $('sim-game').scrollIntoView({behavior:reduce?'auto':'smooth'});
+}
+function cur(){return weekResult(G.w,G.live,G.mods)}
+function advance(weeks,label,kind){ // time passes with the current state
+  if(weeks>0){G.blocks.push({start:G.week,end:G.week+weeks,label,kind});G.week+=weeks;const r=cur();G.pts.push({x:G.week,c:r.callsAvoided,b:r.costSaved,p:potentialOf(G.live)})}
+}
+function pushPoint(){const r=cur();G.pts.push({x:G.week,c:r.callsAvoided,b:r.costSaved,p:potentialOf(G.live)});return r}
+function log(text){G.log.push({w:G.week,text})}
+function release(s){
+  const before=cur(),hadOnline=hasOnline();
+  const startWeek=G.week;
+  advance(s.weeks,s.text,s.caps.length?'release':s.kind);
+  if(!s.weeks)G.blocks.push({start:G.week,end:G.week,label:s.text,kind:'release'});
+  const added=s.caps.filter(c=>!G.live.has(c));added.forEach(c=>G.live.add(c));
+  G.released.push({s,added});
+  const r=pushPoint();
+  log((s.rerelease?'Re-released: ':'Released: ')+s.text+(s.weeks?' ('+s.weeks+' wk)':''));
+  G.cards=[dashCard(r,before)];
+  // evidence cards
+  const W=G.wid;
+  if(s.fake){
+    let body='<p>12% of customers looking at a cancellable order clicked “Cancel order”.</p>';
+    if(W==='W3')body='<p>8% of customers looking at a cancellable order clicked “Cancel order”.</p>';
+    if(W==='W4')body+='<p>40% of the clicks were on orders that had already shipped.</p>';
+    G.cards.push({cls:'info',eyebrow:'Evidence',title:'Fake door result',body:body+'<p>Customers who clicked saw “Coming soon, please call us”.</p>'});
+  }
+  const nowOnline=hasOnline();
+  if(nowOnline)G.onlineReleases++;
+  if(!hadOnline&&nowOnline){
+    if(W==='W2')G.cards.push({cls:'warn',eyebrow:'Evidence',title:'Low adoption',body:'<p>Calls about cancellations are down only '+pct(r.callsAvoided)+', well below the 30% the business case assumed. We don’t know why yet.</p>'});
+    if(W==='W1'||W==='W5')G.cards.push({cls:'good',eyebrow:'Evidence',title:'In line with the business case',body:'<p>Calls about cancellations are down '+pct(r.callsAvoided)+', as the business case assumed.</p>'});
+  }
+  if(W==='W4'&&added.includes('elig')&&!G.shown.E3){G.shown.E3=1;
+    G.cards.push({cls:'good',eyebrow:'Evidence',title:'A small slice did a lot',body:'<p>Calls about cancellations fell '+pct(r.callsAvoided)+' in one week. Most of the drop is “is it too late?” calls: customers checked their order and didn’t phone.</p>'})}
+  if(W==='W3'&&G.onlineReleases>=2&&r.costSaved<.20&&!G.shown.E4){G.shown.E4=1;
+    G.cards.push({cls:'warn',eyebrow:'Evidence',title:'Disappointing overall',body:'<p>Calls about cancellations are down '+pct(r.callsAvoided)+'. Usage is high among some customers and low among others.</p>'})}
+  const fail=G.mods.fail!=null?G.mods.fail:G.w.fail;
+  if(added.includes('partial')&&fail>.1){
+    G.cards.push({cls:'warn',eyebrow:'Evidence',title:'Something’s wrong',body:'<p>Cost saved fell from '+pct(before.costSaved)+' to '+pct(r.costSaved)+' after the release. <b>'+r.failed+' failed cancellations and '+r.complaints+' complaints</b> this week. Repeat calls are up.</p>'})}
+  checkTarget(r);
+}
+function hasOnline(){return ['request','auto_single','auto_multi','partial','complex'].some(c=>G.live.has(c))}
+function checkTarget(r){
+  if(G.targetWeek==null&&r.costSaved>=SIM.target){G.targetWeek=G.week;
+    G.cards.push({cls:'good',eyebrow:'Target',title:'Target met',body:'<p>Handling cost is down '+pct(r.costSaved)+', past the 25% target, in week '+G.week+'.</p>'})}
+}
+function dashCard(r,before){
+  const d=(a,b)=>{const x=Math.round((a-b)*100);return x?(x>0?' (+'+x+')':' ('+x+')'):''};
+  return {cls:'',eyebrow:'Week '+G.week+' · this week',title:'Dashboard',dash:true,body:
+    '<div class="dash">'+
+    '<div><b>'+r.calls.toLocaleString('en-GB')+'</b><span>Cancellation calls</span></div>'+
+    '<div><b>'+r.online.toLocaleString('en-GB')+'</b><span>Cancelled online</span></div>'+
+    '<div><b>'+r.auto.toLocaleString('en-GB')+'</b><span>Of which automatic</span></div>'+
+    '<div><b class="'+(r.complaints?'bad':'')+'">'+r.complaints+'</b><span>Failed / complaints</span></div>'+
+    '<div><b>'+pct(r.callsAvoided)+'</b><span>Calls avoided'+(before?d(r.callsAvoided,before.callsAvoided):'')+'</span></div>'+
+    '<div><b>'+money(r.cost)+'</b><span>Cost / week, '+pct(r.costSaved)+' saved</span></div></div>'};
+}
+function investigate(id){
+  const W=G.wid,w=G.w,r=cur(),a=r.adoption;let card;
+  if(id==='I1'){
+    if(!hasOnline())card={cls:'info',eyebrow:'Investigation',title:'Analytics',body:'<p>Nothing online is live yet, so there’s no usage to analyse.</p>'};
+    else{const aw=Math.max(w.aware,G.mods.aware||0),wo=Math.min(1,w.wo+(G.mods.woUp||0));
+      card={cls:'info',eyebrow:'Investigation · 0 weeks',title:'Analytics breakdown',body:
+      '<ul><li>Customers who saw the cancel option: <b>'+pct(aw)+'</b></li><li>Under 35 who cancelled online: <b>'+pct(aw*w.wy)+'</b></li><li>35 and over who cancelled online: <b>'+pct(aw*wo)+'</b></li><li>Share of requests from under-35s: <b>'+pct(w.young)+'</b></li>'+
+      (w.mix?'<li>Requests about orders that had already shipped: <b>'+pct(w.mix.too_late)+'</b></li>':'')+'</ul>'}}
+    log('Investigated: analytics breakdown');
+  }
+  if(id==='I2'){
+    advance(1,'Ask callers','investigate');
+    const aw=Math.max(w.aware,G.mods.aware||0),knew=hasOnline()?(aw-a)/(1-a):0;
+    card={cls:'info',eyebrow:'Investigation · 1 week',title:'“Did you know you could cancel on our website?”',body:hasOnline()?'<p><b>'+pct(knew)+'</b> of callers said yes.</p>':'<p>Nothing is live online yet, so callers couldn’t have known.</p>'};
+    log('Investigated: asked callers (1 wk)');
+  }
+  if(id==='I3'){advance(1,'Interviews','investigate');card=quotesCard('Investigation · 1 week','Customer interviews');log('Investigated: customer interviews (1 wk)')}
+  if(id==='I4'){
+    const fail=G.mods.fail!=null?G.mods.fail:w.fail;
+    card={cls:'info',eyebrow:'Investigation · 0 weeks',title:'Error log review',body:G.live.has('partial')&&fail>.1?'<p>Most failures are <b>split deliveries</b>: one parcel had already shipped when the customer cancelled some items.</p>':'<p>No unusual errors.</p>'};
+    log('Investigated: error log review');
+  }
+  G.cards=[dashCard(cur()),card];renderSim();
+}
+function quotesCard(eb,title){return {cls:'info',eyebrow:eb,title,body:'<ul>'+SIM.quotes[G.wid].map(q=>'<li>'+esc(q)+'</li>').join('')+'</ul>'}}
+function pivot(id){
+  const p=SIM.pivots.find(x=>x.id===id),before=cur();
+  advance(SIZE_WEEKS[p.size],p.name,'pivot');
+  if(id==='P1')G.mods.aware=Math.max(G.mods.aware||0,.6);
+  if(id==='P2')G.mods.woUp=Math.min(.5,(G.mods.woUp||0)+.25);
+  if(id==='P3')G.mods.fail=.03;
+  const r=pushPoint();
+  log('Pivot: '+p.name+' ('+SIZE_WEEKS[p.size]+' wk)');
+  G.cards=[dashCard(r,before)];
+  if(id==='P4')G.cards.push(quotesCard('Survey results','Why customers cancel'));
+  if(id==='P3')G.cards.push({cls:'info',eyebrow:'Pivot',title:'Fix ready',body:'<p>Split deliveries are handled now. '+(G.live.has('partial')?'The fix is live.':'Re-release partial cancellation to use it.')+'</p>'});
+  if(Math.abs(r.costSaved-before.costSaved)<.005&&id!=='P4'&&id!=='P3')G.cards.push({cls:'warn',eyebrow:'Evidence',title:'No measurable change',body:'<p>The numbers didn’t move after this change.</p>'});
+  checkTarget(r);renderSim();
+}
+function rollback(){
+  for(let k=G.released.length-1;k>=0;k--){const rel=G.released[k];if(rel.added.length){
+    const before=cur();rel.added.forEach(c=>G.live.delete(c));G.released.splice(k,1);
+    const r=pushPoint();log('Rolled back: '+rel.s.text);
+    G.queue.unshift(Object.assign({},rel.s,{text:rel.s.text.replace(/^Re-release: /,''),weeks:0,rerelease:true,caps:rel.added.slice()}));
+    G.cards=[dashCard(r,before),{cls:'info',eyebrow:'Rolled back',title:'Withdrawn',body:'<p>“'+esc(rel.s.text)+'” is switched off. It’s at the top of your plan, ready to re-release with no extra build time.</p>'}];
+    renderSim();return}}
+}
+function stopSim(){G.ended=true;log('Stopped');renderSim()}
+
+function simChart(){
+  const total=G.week+G.queue.reduce((a,s)=>a+s.weeks,0);
+  const S=Math.max(4,G.ended?G.week:total)+1,W=S*10,H=100,y=v=>H-v*100,pc=v=>(v/S*100)+'%';
+  const path=key=>{let d='M0 '+y(G.pts[0][key]);for(let k=1;k<G.pts.length;k++){d+=' L'+G.pts[k].x*10+' '+y(G.pts[k-1][key])+' L'+G.pts[k].x*10+' '+y(G.pts[k][key])}return d};
+  const potPath=()=>{let d='M0 '+(H-G.pts[0].p);for(let k=1;k<G.pts.length;k++){d+=' L'+G.pts[k].x*10+' '+(H-G.pts[k-1].p)+' L'+G.pts[k].x*10+' '+(H-G.pts[k].p)}return d};
+  const last=G.pts[G.pts.length-1];
+  let s1='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/><path d="'+potPath()+'" fill="none" stroke="#12213B" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+  let s2='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/><path d="'+path('c')+'" fill="none" stroke="#D99000" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="'+path('b')+'" fill="none" stroke="#0E7A5F" stroke-width="3" vector-effect="non-scaling-stroke"/>';
+  // pink: weeks where both realised lines were at zero
+  for(let k=1;k<G.pts.length;k++){const p0=G.pts[k-1],p1=G.pts[k];if(p0.c<=0&&p0.b<=0&&p1.x>p0.x)s2='<rect x="'+p0.x*10+'" y="0" width="'+(p1.x-p0.x)*10+'" height="'+H+'" fill="#F4C7C7"/>'+s2}
+  const now='<div style="position:absolute;top:0;bottom:0;left:'+pc(G.week)+';border-left:2px solid var(--accent-ink)"></div>';
+  const tgt='<div class="target" style="top:'+(100-SIM.target*100)+'%"><span>target 25%</span></div>';
+  let lc=y(last.c),lb=y(last.b);if(Math.abs(lc-lb)<26){const m=(lc+lb)/2;if(last.c>=last.b){lc=m-13;lb=m+13}else{lc=m+13;lb=m-13}}
+  const blocks=G.blocks.filter(b=>b.end>b.start).map((b,i)=>'<div class="blk'+(b.kind==='investigate'?' inv':b.kind==='release'||b.kind==='pivot'?'':' zero')+'" style="left:'+pc(b.start)+';width:'+pc(b.end-b.start)+'" title="'+esc(b.label)+'"></div>').join('');
+  const planned=G.ended?'':(()=>{let t=G.week;return G.queue.map(s=>{const st=t;t+=s.weeks;return s.weeks?'<div class="blk" style="left:'+pc(st)+';width:'+pc(s.weeks)+';opacity:.25" title="Planned: '+esc(s.text)+'"></div>':''}).join('')})();
+  let ticks='';const step=S>16?2:1;for(let w=0;w<=S;w+=step)ticks+='<span style="left:'+pc(w)+'">'+w+'</span>';
+  return '<div class="chart-wrap">'+
+    '<div class="plot"><div></div><div class="axis-t">Potential value made available (points)</div><div></div></div>'+
+    '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+      '<div class="chart short"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+s1+'</svg>'+now+'</div>'+
+      '<div class="endlab"><span style="top:'+Math.max(10,Math.min(92,100-last.p))+'%;color:var(--navy)"><b>'+last.p+'</b>potential</span></div></div>'+
+    '<div class="plot" style="margin-top:14px"><div></div><div class="axis-t">Realised value <span class="sim-tag">simulated</span></div><div></div></div>'+
+    '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100%</span><span class="yt" style="top:calc(6px + 50%)">50%</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
+      '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+s2+'</svg>'+tgt+now+'</div>'+
+      '<div class="endlab"><span style="top:'+Math.max(10,Math.min(92,lc))+'%;color:var(--accent-ink)"><b>'+pct(last.c)+'</b>Customers<br>calls avoided</span><span style="top:'+Math.max(10,Math.min(92,lb))+'%;color:var(--green)"><b>'+pct(last.b)+'</b>Business<br>cost saved</span></div></div>'+
+    '<div class="plot"><div></div><div><div class="axis-t row-t">What the team worked on</div><div class="timeline">'+blocks+planned+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
+    '<div class="key"><span><i class="k-v"></i>release or pivot</span><span><i class="k-z"></i>work adding no capability</span><span><i class="blk inv" style="position:static;display:inline-block;width:18px;height:12px"></i>investigation</span><span><i class="k-v" style="opacity:.25"></i>still planned</span><span><i class="k-pink"></i>weeks with no realised value</span></div></div><div></div></div>'+
+    '</div>';
+}
+function renderSim(){
+  $('sim-eyebrow').textContent=G.ended?'Simulation over':'Simulation · '+(G.src==='mine'?'your plan':'David’s plan');
+  $('sim-title').textContent='Week '+G.week;
+  $('sim-panel').innerHTML='<div class="panel-title"><b>'+(G.src==='mine'?'Your plan':'David’s plan')+'</b><span>'+G.live.size+' of 6 capabilities live · target 25% cost saved</span></div>'+simChart()+
+    '<ol class="log">'+G.log.map(l=>'<li><span>wk '+l.w+'</span>'+esc(l.text)+'</li>').join('')+(G.log.length?'':'<li><span>wk 0</span>Nothing built yet.</li>')+'</ol>';
+  let side='';
+  if(G.ended)side=summaryHTML();
+  else{
+    side+=G.cards.map(c=>'<div class="card '+(c.cls||'')+'"'+(c.dash?' style="padding:0"':'')+'>'+(c.dash?'<div style="padding:12px 14px 8px"><span class="eyebrow">'+c.eyebrow+' <span class="sim-tag">simulated</span></span><h3>'+c.title+'</h3></div>':'<span class="eyebrow">'+c.eyebrow+'</span><h3>'+c.title+'</h3>')+c.body+'</div>').join('');
+    const next=G.queue[0];
+    const canRoll=G.released.some(r=>r.added.length);
+    side+='<div class="decide"><h3>What next?</h3><p>'+(next?'Next in your plan: <b style="color:#fff">'+esc(next.text)+'</b>'+(next.weeks?' ('+next.weeks+' wk)':' (no build time)'):'Your plan is complete.')+'</p>'+
+      '<div class="btn-row">'+
+      '<button class="btn btn-primary btn-sm" data-sim="continue"'+(next?'':' disabled')+'>'+(G.week===0&&!G.log.length?'Build first slice':'Continue')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" data-sim="stop">'+(next?'Stop here':'Finish')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" data-sim="rollback"'+(canRoll?'':' disabled')+'>Roll back last release</button></div>'+
+      '<div class="sub"><b>Investigate first</b>'+
+      '<button class="opt" data-inv="I1">Analytics breakdown<small>0 weeks · usage by age and request type</small></button>'+
+      '<button class="opt" data-inv="I2">Ask callers: “Did you know you could cancel on our website?”<small>1 week</small></button>'+
+      '<button class="opt" data-inv="I3">Customer interviews<small>1 week</small></button>'+
+      '<button class="opt" data-inv="I4">Error log review<small>0 weeks</small></button></div>'+
+      '<div class="sub"><b>Change the plan (pivot)</b>'+SIM.pivots.map(p=>'<button class="opt" data-piv="'+p.id+'">'+p.name+'<small>'+p.desc+' · '+SIZE_WEEKS[p.size]+' wk</small></button>').join('')+'</div>'+
       '</div>';
-    }).join('')+'<button class="new-slice" type="button" id="new-slice">+ Add a slice</button>';
-    document.querySelectorAll('.stext').forEach(grow);
-    updateRun();
   }
-  function grow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
-  function updateRun(){
-    var n=filled().length;$('run').disabled=n===0;
-    $('hint').textContent=n===0?'Write at least one slice.':n+' slice'+(n>1?'s':'');
-  }
-  $('slices').addEventListener('input',function(e){var el=e.target.closest('.stext');if(!el)return;slices[+el.dataset.i].text=el.value;grow(el);updateRun()});
-  $('slices').addEventListener('click',function(e){
-    if(suppressClick)return;
-    if(e.target.closest('#new-slice')){slices.push({id:nextId++,text:''});renderPlan();var t=document.querySelectorAll('.stext');t[t.length-1].focus();return}
-    var b=e.target.closest('[data-act="del"]');if(!b)return;
-    slices.splice(+b.dataset.i,1);if(!slices.length)slices.push({id:nextId++,text:''});renderPlan();
-  });
-  $('slices').addEventListener('keydown',function(e){
-    var ta=e.target.closest('.stext');
-    if(ta&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();var i=+ta.dataset.i;
-      if(i===slices.length-1&&ta.value.trim()){slices.push({id:nextId++,text:''});renderPlan()}
-      var t=document.querySelectorAll('.stext');(t[i+1]||t[i]).focus();return}
-    var g=e.target.closest('.grip');if(!g)return;
-    var i=+g.dataset.i,j=e.key==='ArrowUp'?i-1:e.key==='ArrowDown'?i+1:null;
-    if(j===null||j<0||j>=slices.length)return;e.preventDefault();
-    var t=slices[i];slices[i]=slices[j];slices[j]=t;renderPlan();document.querySelector('.grip[data-i="'+j+'"]').focus();
-  });
+  $('sim-side').innerHTML=side;
+}
+function summaryHTML(){
+  const last=G.pts[G.pts.length-1],w=G.w,freed=G.queue.reduce((a,s)=>a+s.weeks,0);
+  return '<div class="summary"><span class="eyebrow" style="color:var(--accent)">Simulation over</span><h3>'+(G.targetWeek!=null?'Target met in week '+G.targetWeek:'Target not met')+'</h3>'+
+    '<p class="world">This was the “'+w.name+'” world. '+esc(w.story)+'</p>'+
+    '<table><tr><td>Potential value made available</td><td class="n">'+last.p+'</td></tr>'+
+    '<tr><td>Customers: calls avoided</td><td class="n">'+pct(last.c)+'</td></tr>'+
+    '<tr><td>Business: cost saved</td><td class="n">'+pct(last.b)+'</td></tr>'+
+    '<tr><td>Weeks used</td><td class="n">'+G.week+'</td></tr>'+
+    '<tr><td>Planned weeks not needed</td><td class="n">'+freed+'</td></tr></table>'+
+    '<p><b style="color:#fff">What David would do in this world:</b> '+esc(w.david)+'</p>'+
+    '<p>Five worlds are possible. Each run picks one at random, so the same plan can need different decisions.</p>'+
+    '<div class="btn-row"><button class="btn btn-primary btn-sm" data-sim="again">Play again in a different world</button><button class="btn btn-ghost btn-sm" data-sim="setup">Change plan</button>'+
+    '<a class="btn btn-ghost btn-sm" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Talk it through with David</a></div></div>';
+}
+$('sim-side').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||b.disabled||!G)return;
+  if(b.dataset.sim==='continue'){const s=G.queue.shift();release(s);renderSim()}
+  if(b.dataset.sim==='stop')stopSim();
+  if(b.dataset.sim==='rollback')rollback();
+  if(b.dataset.sim==='again'){startSim(G.wid)}
+  if(b.dataset.sim==='setup'){$('sim-game').hidden=true;$('sim-setup').hidden=false;G=null;updateSimChoice()}
+  if(b.dataset.inv)investigate(b.dataset.inv);
+  if(b.dataset.piv)pivot(b.dataset.piv);
+});
 
-  /* drag to reorder: mouse drags at once, touch needs press-and-hold */
-  var lastX=0,lastY=0,raf=0;
-  document.addEventListener('pointerdown',function(e){
-    if(e.button>0||drag)return;var g=e.target.closest('.grip[data-i]');if(!g||g.disabled)return;
-    var d={sid:slices[+g.dataset.i].id,src:g.closest('.slice'),x:e.clientX,y:e.clientY,pt:e.pointerType,active:false};
-    drag=d;lastX=e.clientX;lastY=e.clientY;
-    if(e.pointerType!=='mouse')d.timer=setTimeout(function(){if(drag===d)begin()},260);
-  });
-  document.addEventListener('pointermove',function(e){
-    if(!drag)return;lastX=e.clientX;lastY=e.clientY;
-    if(!drag.active){var dist=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
-      if(drag.pt==='mouse'){if(dist>5)begin();else return}else{if(dist>10)endDrag();return}}
-    e.preventDefault();place();reorder();
-  },{passive:false});
-  document.addEventListener('touchmove',function(e){if(drag&&drag.active)e.preventDefault()},{passive:false});
-  document.addEventListener('contextmenu',function(e){if(drag)e.preventDefault()});
-  document.addEventListener('pointerup',function(){if(!drag)return;if(drag.active){suppressClick=true;setTimeout(function(){suppressClick=false},0)}endDrag()});
-  document.addEventListener('pointercancel',function(){if(drag&&!drag.active)endDrag()});
-  function begin(){
-    drag.active=true;clearTimeout(drag.timer);
-    var r=drag.src.getBoundingClientRect(),g=drag.src.cloneNode(true);
-    g.classList.add('ghost');g.style.width=r.width+'px';drag.ox=drag.x-r.left;drag.oy=drag.y-r.top;drag.ghost=g;
-    document.body.appendChild(g);drag.src.classList.add('dragsrc');document.body.classList.add('dragging');
-    if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
-    if(navigator.vibrate&&drag.pt!=='mouse')try{navigator.vibrate(12)}catch(err){}
-    place();
-    raf=requestAnimationFrame(function step(){if(!drag||!drag.active)return;var v=0;
-      if(lastY<140)v=-Math.ceil((140-lastY)/6);else if(lastY>innerHeight-70)v=Math.ceil((lastY-innerHeight+70)/6);
-      if(v){scrollBy(0,v);reorder()}raf=requestAnimationFrame(step)});
-  }
-  function place(){if(drag.ghost){drag.ghost.style.left=(lastX-drag.ox)+'px';drag.ghost.style.top=(lastY-drag.oy)+'px'}}
-  function reorder(){
-    var cards=[].slice.call(document.querySelectorAll('#slices .slice')),from=slices.findIndex(function(s){return s.id===drag.sid}),to=0;
-    cards.forEach(function(c,k){if(k===from)return;var r=c.getBoundingClientRect();if(lastY>r.top+r.height/2)to++});
-    to=Math.min(slices.length-1,to);
-    if(to!==from){var s=slices.splice(from,1)[0];slices.splice(to,0,s);renderPlan()}
-  }
-  function endDrag(){clearTimeout(drag.timer);cancelAnimationFrame(raf);if(drag.ghost)drag.ghost.remove();document.body.classList.remove('dragging');var was=drag.active;drag=null;if(was)renderPlan()}
-
-  /* ================= OUTCOME ================= */
-  function schedule(plan){var t=0;return plan.map(function(p){var o={p:p,start:t,end:t+p.effort};t=o.end;return o})}
-  function totalWeeks(plan){var t=0;plan.forEach(function(p){t+=p.effort});return t}
-  function weekly(plan,key,span){var sch=schedule(plan),out=[];for(var w=0;w<span;w++){var v=0;sch.forEach(function(o){if(o.end<=w)v=o.p[key]||0});out.push(v)}return out}
-  // span = how many weeks to look at; defaults to the plan's own length. Comparisons use the longer of the two plans,
-  // so a plan that finishes early keeps delivering its value while the other is still being built.
-  function stats(plan,span){
-    var T=totalWeeks(plan);span=Math.max(span||T,1);
-    var c=weekly(plan,'value',span),b=weekly(plan,'bval',span),first=c.findIndex(function(v,i){return v>0||b[i]>0});
-    var avg=function(a){return a.reduce(function(x,y){return x+y},0)/span};
-    var fin=plan.length?plan[plan.length-1]:{value:0,bval:0};
-    return {weeks:T,span:span,first:first<0?null:first+1,end:fin.value||0,endB:fin.bval||0,avg:avg(c),avgB:avg(b),
-      red:first<0?T:first};
-  }
-  var pct=function(v){return Math.round(v*100)+'%'};
-  function panelHTML(id,title,plan){
-    var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0;
-    var lane=function(inner){return '<div class="plot"><div></div><div>'+inner+'</div><div></div></div>'};
-    return '<div class="panel-title"><b>'+title+'</b><span>'+plan.length+' slices · '+total+' weeks of work</span></div>'+
-      '<div class="chart-wrap">'+
-      lane('<div class="axis-t">Share of cancellations</div>')+
-      '<div class="plot"><div class="ycol"><span class="yt" style="top:calc(6px + 0%)">100%</span><span class="yt" style="top:calc(6px + 50%)">50%</span><span class="yt" style="top:calc(6px + 100%)">0</span></div>'+
-        '<div class="chart" id="'+id+'-chart"><svg preserveAspectRatio="none" aria-hidden="true"></svg></div>'+
-        '<div class="endlab" id="'+id+'-end"></div></div>'+
-      lane('<div class="axis-t row-t">Slices, in the order they’re built</div><div class="timeline" id="'+id+'-tl"></div><div class="ticks" id="'+id+'-ticks"></div><div class="axis-t xt">weeks →</div>')+
-      lane('<div class="key"><span><i class="k-n"></i>weeks with nothing live: customers still have to phone</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds no value on its own</span></div>')+
-      '</div>'+
-      '<div class="stats" id="'+id+'-stats"></div>'+
-      '<ul class="story" id="'+id+'-story"></ul>';
-  }
-  function drawChart(id,plan,upTo,span){
-    var sch=schedule(plan),total=sch.length?sch[sch.length-1].end:0,S=Math.max(span||total+1,4),W=S*10,H=100;
-    var y=function(v){return H-v*H};
-    var vals=[],bv=[];for(var w=0;w<S;w++){var v=0,v2=0;sch.forEach(function(o){if(o.end<=w){v=o.p.value;v2=o.p.bval||0}});vals.push(v);bv.push(v2)}
-    var past=Math.min(upTo,S),svg='';
-    // gridlines
-    svg+='<line x1="0" x2="'+W+'" y1="50" y2="50" stroke="#E6E9F0" vector-effect="non-scaling-stroke"/>';
-    for(w=0;w<Math.min(upTo,total);w++)if(vals[w]===0&&bv[w]===0)svg+='<rect x="'+w*10+'" y="0" width="10.05" height="'+H+'" fill="#F4C7C7"/>';
-    if(S>total)svg+='<rect x="'+total*10+'" y="0" width="'+(S-total)*10+'" height="'+H+'" fill="#F7F8FA"/>';
-    if(past>0){
-      var line=function(arr){var d='M0 '+y(arr[0]);for(var w=0;w<past;w++)d+=' L'+w*10+' '+y(arr[w])+' L'+(w+1)*10+' '+y(arr[w]);return d};
-      var area='M0 '+H;for(w=0;w<past;w++)area+=' L'+w*10+' '+y(vals[w])+' L'+(w+1)*10+' '+y(vals[w]);area+=' L'+past*10+' '+H+' Z';
-      svg+='<path d="'+area+'" fill="#F2A91E" fill-opacity=".18"/>';
-      svg+='<path d="'+line(bv)+'" fill="none" stroke="#0E7A5F" stroke-width="3" vector-effect="non-scaling-stroke"/>';
-      svg+='<path d="'+line(vals)+'" fill="none" stroke="#D99000" stroke-width="3" vector-effect="non-scaling-stroke"/>';
-    }
-    var chart=$(id+'-chart');chart.querySelector('svg').setAttribute('viewBox','0 0 '+W+' '+H);chart.querySelector('svg').innerHTML=svg;
-    chart.querySelectorAll('.mark,.zone,.deadline').forEach(function(m){m.remove()});
-    var pc=function(v){return (v/S*100)+'%'};
-    // label the stretch before anything is live
-    var firstLive=vals.findIndex(function(v,i){return v>0||bv[i]>0});if(firstLive<0)firstLive=S;
-    var nothingTo=Math.min(firstLive,past);
-    if(nothingTo>=1&&chart.clientWidth*nothingTo/S>=64){var z=document.createElement('div');z.className='zone';z.style.left='0';z.style.width=pc(nothingTo);
-      z.textContent='Nothing live yet';chart.appendChild(z)}
-    if(S>total&&S-total>=2&&past>=total){var z2=document.createElement('div');z2.className='zone top';z2.style.left=pc(total);z2.style.width=pc(S-total);z2.textContent='all slices done';chart.appendChild(z2)}
-    sch.forEach(function(o,i){
-      var m=document.createElement('span');
-      var prevC=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,adds=o.p.value>prevC||(o.p.bval||0)>prevB;
-      m.className='mark'+(adds?'':' zero')+(o.end<=upTo?' on':'');
-      m.title='Slice '+(i+1)+' goes live';
-      m.style.left=pc(o.end);m.style.top=(y(Math.max(o.p.value,o.p.bval||0))/H*100)+'%';m.textContent=i+1;chart.appendChild(m);
-    });
-    $(id+'-tl').innerHTML=sch.map(function(o,i){
-      if(!o.p.effort)return '';var prevC=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,adds=o.p.value>prevC||(o.p.bval||0)>prevB;
-      return '<div class="blk'+(adds?'':' zero')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(i+1)+': '+esc(o.p.text)+'">'+(i+1)+'</div>';
-    }).join('');
-    var t='',step=S>14?2:1;for(w=1;w<=S;w+=step)t+='<span style="left:'+pc(w-.5)+'">'+w+'</span>';
-    $(id+'-ticks').innerHTML=t;
-    // direct labels at the end of each line
-    var at=past>0?Math.min(past,S)-1:0,cv=past>0?vals[at]:0,bvv=past>0?bv[at]:0;
-    var G=36,yc=y(cv),yb=y(bvv);if(Math.abs(yc-yb)<G){var mid=(yc+yb)/2;if(cv>=bvv){yc=mid-G/2;yb=mid+G/2}else{yc=mid+G/2;yb=mid-G/2}}
-    var lo=Math.min(yc,yb),hi=Math.max(yc,yb);if(lo<14){yc+=14-lo;yb+=14-lo}if(hi>H-14){yc-=hi-(H-14);yb-=hi-(H-14)}
-    $(id+'-end').innerHTML='<span class="c" style="top:'+yc+'%"><b>'+pct(cv)+'</b>Customers<br>done online</span>'+
-      '<span class="b" style="top:'+yb+'%"><b>'+pct(bvv)+'</b>Business<br>work saved</span>';
-  }
-  function storyHTML(plan){
-    var sch=schedule(plan),h='';
-    sch.forEach(function(o,i){
-      var prev=i?sch[i-1].p.value:0,prevB=i?sch[i-1].p.bval||0:0,g=Math.round((o.p.value-prev)*100),gb=Math.round(((o.p.bval||0)-prevB)*100),late=false;
-      var when='Week '+o.end;
-      var none=g<=0&&gb<=0;
-      h+='<li data-w="'+o.end+'"'+(late?' class="end"':'')+'><div class="when"><i class="'+(none?'zero':'')+'">'+(i+1)+'</i>'+when+
-        (late?'':none?'<span class="gain none">no change</span>':'<span class="gain up">'+(g>0?'<span class="gc">+'+g+'% online</span>':'')+(gb>0?' <span class="gb">+'+gb+'% work saved</span>':'')+'</span>')+'</div><span class="what">'+esc(o.p.text)+'</span>';
-      if(late){
-        h+='<div class="say c"><span class="who" aria-hidden="true">🙂</span><p><small>Customer</small>Still phoning to cancel'+(prev>0?' on the channels that aren’t done yet.':'.')+'</p></div>'+
-           '<div class="say b"><span class="who" aria-hidden="true">💼</span><p><small>Business</small>Slice '+(i+1)+' would land in week '+o.end+'. Until then it’s work in progress, worth nothing to anyone.</p></div>';
-      }else{
-        if(o.p.customer)h+='<div class="say c"><span class="who" aria-hidden="true">🙂</span><p><small>Customer</small>'+esc(o.p.customer)+'</p></div>';
-        if(o.p.business)h+='<div class="say b"><span class="who" aria-hidden="true">💼</span><p><small>Business</small>'+esc(o.p.business)+'</p></div>';
-      }
-      h+='</li>';
-    });
-    return h;
-  }
-  function statsHTML(s){
-    return '<div class="stat"><b>'+(s.first?'week '+s.first:'never')+'</b><span>First value</span></div>'+
-      '<div class="stat"><b class="c">'+pct(s.end)+'</b><span>Customers: done online at the end</span></div>'+
-      '<div class="stat"><b class="b">'+pct(s.endB)+'</b><span>Business: work saved at the end</span></div>'+
-      '<div class="stat"><b>'+s.red+'</b><span>Weeks with nothing live</span></div>';
-  }
-  function play(id,plan,done,span){
-    var T=totalWeeks(plan);span=span||T+1;
-    // reveal week by week: line grows, markers and story items appear as slices ship
-    $(id+'-stats').innerHTML=statsHTML(stats(plan));
-    $(id+'-story').innerHTML=storyHTML(plan);
-    var items=[].slice.call($(id+'-story').children),w=0;
-    function step(){
-      drawChart(id,plan,w,span);
-      items.forEach(function(li){if(+li.dataset.w<=w)li.classList.add('on')});
-      if(w>=span){items.forEach(function(li){li.classList.add('on')});if(done)done();return}
-      w++;setTimeout(step,reduce?0:320);
-    }
-    step();
-  }
-
-  var mine=null;
-  $('run').addEventListener('click',function(){
-    var texts=filled().map(function(s){return s.text.trim()});if(!texts.length)return;
-    var out=$('outcome');out.hidden=false;out.classList.remove('has-alt');
-    $('panels').classList.remove('both');$('p-alt').hidden=true;$('compare').hidden=true;$('show-alt').hidden=false;
-    $('p-you').className='panel on';
-    $('p-you').innerHTML='<div class="panel-title"><b>Your plan</b><span>'+texts.length+' slices</span></div><div class="thinking"><i></i>Working out how your plan plays out…</div>';
-    $('run').disabled=true;
-    out.scrollIntoView({behavior:reduce?'auto':'smooth'});
-    evaluate(document.querySelector('.brief').innerText,texts).then(function(res){
-      mine=texts.map(function(t,i){return {text:t,effort:res[i].effort,value:res[i].value,bval:res[i].bval,customer:res[i].customer,business:res[i].business}});
-      $('p-you').innerHTML=panelHTML('you','Your plan',mine);
-      play('you',mine);
-      updateRun();
-    });
-  });
-  $('show-alt').addEventListener('click',function(){
-    $('panels').classList.add('both');$('outcome').classList.add('has-alt');
-    var p=$('p-alt');p.hidden=false;p.innerHTML=panelHTML('alt','David’s plan',SOLUTION);
-    $('show-alt').hidden=true;
-    setTab('alt');
-    var span=Math.max(totalWeeks(mine),totalWeeks(SOLUTION))+1;
-    play('alt',SOLUTION,function(){compare()},span);
-    // redraw yours on the same week scale so the two charts line up
-    drawChart('you',mine,span,span);
-  });
-  function setTab(t){
-    document.querySelectorAll('#tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false')});
-    $('p-you').classList.toggle('on',t==='you');$('p-alt').classList.toggle('on',t==='alt');
-  }
-  $('tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-tab]');if(b)setTab(b.dataset.tab)});
-  function compare(){
-    var span=Math.max(totalWeeks(mine),totalWeeks(SOLUTION))+1,a=stats(mine,span),b=stats(SOLUTION,span);
-    var row=function(label,x,y){return '<tr><td>'+label+'</td><td class="num">'+x+'</td><td class="num">'+y+'</td></tr>'};
-    var v;
-    if(!a.first)v='Nothing you built reached a customer: every slice depended on the next one. Thin slices on the channel most people use get value out much sooner.';
-    else if(a.avg>=b.avg-0.005&&a.avgB>=b.avgB-0.005)v='Your plan did as well as mine, or better, for customers and the business. Nicely sliced.';
-    else if(a.avg>b.avg+0.005&&a.avgB<b.avgB-0.005)v='Customers got more out of your plan than mine, but the business got less: staff are still doing the work by hand. Both kinds of value count.';
-    else if(a.avgB>b.avgB+0.005&&a.avg<b.avg-0.005)v='Your plan saved the business more work, but customers waited longer. Both kinds of value count.';
-    else if(a.first<=b.first)v='You got value out early. The difference is in what came next: which slices moved the lines most for the effort?';
-    else v='Value arrived in week '+a.first+' for you, week '+b.first+' for me. What’s the smallest thing that would help one customer, on the channel most of them use?';
-    var c=$('compare');c.hidden=false;
-    c.innerHTML='<h3>Side by side</h3><table><thead><tr><th></th><th class="num">You</th><th class="num">David</th></tr></thead><tbody>'+
-      row('First value',a.first?'week '+a.first:'never',b.first?'week '+b.first:'never')+
-      row('Weeks with nothing live',a.red,b.red)+
-      row('Weeks of work in total',a.weeks,b.weeks)+
-      row('Customers: done online at the end',pct(a.end),pct(b.end))+
-      row('Business: work saved at the end',pct(a.endB),pct(b.endB))+
-      row('Customers: average over '+span+' weeks',pct(a.avg),pct(b.avg))+
-      row('Business: average over '+span+' weeks',pct(a.avgB),pct(b.avgB))+
-      '</tbody></table><p>'+v+'</p>'+
-      '<div class="btn-row"><a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Slice your real work with me</a></div>';
-  }
-  $('edit').addEventListener('click',function(){$('plan').scrollIntoView({behavior:reduce?'auto':'smooth'})});
-
-  $('year').textContent=new Date().getFullYear();
-  renderPlan();
-  window.__slicing={classify:classify,evaluate:function(t){return evaluateStandIn('',t)},panelHTML:panelHTML,drawChart:drawChart,storyHTML:storyHTML,statsHTML:statsHTML,stats:stats,totalWeeks:totalWeeks,SOLUTION:SOLUTION}; // for testing
+/* ======================= INIT ======================= */
+$('year').textContent=new Date().getFullYear();
+renderPlan();updateSimChoice();
+if(location.hash==='#simulate')setTab('sim');
+window.__slicing={classify,evaluate,measures,DAVID,SIM,weekResult,adoption,startSim:()=>startSim(),state:()=>G}; // for testing
 })();
 </script>
 </body>

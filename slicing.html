@@ -340,11 +340,17 @@ footer.site a:hover{color:var(--accent)}
 .slist li{animation:rise .4s ease both;animation-delay:calc(.1s + var(--k,0) * .06s)}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}}
 
+.gem{display:inline-block;width:20px;height:17px;flex:none;vertical-align:-3px}
+.gem-mark{position:absolute;width:26px;height:22px;margin:-40px 0 0 -13px;pointer-events:none;filter:drop-shadow(1px 2px 0 rgba(18,33,59,.18));animation:gem-pop .55s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(.35s + var(--d,0) * 1.2s);z-index:3}
+.gem-mark svg{width:100%;height:100%;display:block}
+@keyframes gem-pop{from{opacity:0;transform:translateY(8px) scale(.2) rotate(-20deg)}}
+.slist .pts{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.key .gem{width:16px;height:14px}
 .rubric{position:relative;overflow:hidden}
 .rubric td.bar{width:42%;padding-left:0}
 .rubric td.bar i{display:block;height:14px;border-radius:0 7px 7px 0;background:linear-gradient(90deg,rgba(242,169,30,.35),var(--accent))}
 @media (max-width:560px){.rubric td.bar{width:30%}}
-@media (prefers-reduced-motion:reduce){.chart svg,.mark,.blk,.gap,.slist li,.sp-bar i,.brief{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.chart svg,.mark,.gem-mark,.blk,.gap,.slist li,.sp-bar i,.brief{animation:none!important;transition:none!important}}
 </style>
 <script defer src="assets/js/track.js?v=2026-10-24b"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
@@ -591,6 +597,9 @@ function evaluate(texts){ // returns a Promise so the AI call can drop in here
   return new Promise(res=>setTimeout(()=>res(out),matchMedia('(prefers-reduced-motion: reduce)').matches?20:600));
 }
 
+/* The amber gem from David's book: value created. */
+const GEM='<svg class="gem" viewBox="0 0 24 21" aria-hidden="true"><path d="M4 1.5H20L23 7L12 20L1 7Z" fill="#F5B323"/><path d="M4 1.5H20L23 7H1Z" fill="#FFCF5C"/><path d="M4 1.5H20L23 7L12 20L1 7Z M1 7H23 M4 1.5L8 7L12 1.5L16 7L20 1.5 M8 7L12 20L16 7" fill="none" stroke="#12213B" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+
 /* ======================= PART 1: SCORING ======================= */
 function potentialOf(capSet){let v=0;capSet.forEach(c=>{v=Math.max(v,CAPS[c].v)});return v}
 function playOut(plan){
@@ -728,7 +737,8 @@ function chartBlock(id,runs,main,opts){
     svg+='<path d="'+stepPath(r.m.sch,S,y)+'" fill="none" '+sty[r.key]+' vector-effect="non-scaling-stroke"/>';
   });
   let marks='';
-  main.m.sch.forEach(o=>{marks+='<span class="mark'+(o.after>o.before?'':' zero')+'" style="--d:'+(o.end/S).toFixed(3)+';left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Slice '+(o.i+1)+' released">'+(o.i+1)+'</span>'});
+  main.m.sch.forEach(o=>{marks+='<span class="mark'+(o.after>o.before?'':' zero')+'" style="--d:'+(o.end/S).toFixed(3)+';left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Slice '+(o.i+1)+' released">'+(o.i+1)+'</span>';
+    if(o.after>o.before)marks+='<span class="gem-mark" style="--d:'+(o.end/S).toFixed(3)+';left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Value created: +'+(o.after-o.before)+'">'+GEM+'</span>'});
   let gap='';
   if(main.m.G>0)gap='<div class="gap" style="left:'+pc(main.m.gs)+';width:'+pc(main.m.G)+'"><span>longest wait: '+main.m.G+' wk</span></div>';
   // end labels
@@ -745,7 +755,7 @@ function chartBlock(id,runs,main,opts){
     '<div class="chart" id="'+id+'-chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+svg+'</svg>'+marks+'</div>'+
     '<div class="endlab">'+ends+'</div></div>'+
     '<div class="plot"><div></div><div><div class="axis-t row-t">'+(opts.barTitle||'Slices, in the order they’re released')+'</div><div class="timeline">'+blocks+gap+'</div><div class="ticks">'+ticks+'</div><div class="axis-t xt">weeks →</div>'+
-    '<div class="key">'+keyLines+'<span><i class="k-pink"></i>weeks of work that add no new value</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds none on its own</span><span><i class="k-gap"></i>longest wait for new value</span></div></div><div></div></div>'+
+    '<div class="key">'+keyLines+'<span><i class="k-pink"></i>weeks of work that add no new value</span><span>'+GEM+'value created</span><span><i class="k-v"></i>slice that adds value</span><span><i class="k-z"></i>slice that adds none on its own</span><span><i class="k-gap"></i>longest wait for new value</span></div></div><div></div></div>'+
     '</div>';
 }
 
@@ -775,7 +785,7 @@ function statTiles(m){
 function sliceList(m,withWhy){
   return '<ol class="slist">'+m.sch.map((o,k)=>{const up=o.after>o.before;
     return '<li style="--k:'+k+'"><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
-      '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
+      '<span class="pts '+(up?'up':'none')+'">'+(up?GEM+'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
 }
 function renderResult(){
   const runs=[{key:'you',label:REF_MODE&&rounds===1?'Reference':rounds>1?'This round':'Your plan',m:current.m}];

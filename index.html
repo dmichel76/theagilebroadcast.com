@@ -489,12 +489,14 @@ footer.site a{color:#C3CCDB}
 @media (max-width:860px){.hello-bubble{left:-2%;top:0;font-size:1.05rem;padding:10px 16px}}
 
 /* tools */
-#tools .tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:44px}
+#tools .tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:44px}
+@media (max-width:1080px){#tools .tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){#tools .tools{grid-template-columns:1fr}}
 .tool{display:flex;flex-direction:column;gap:12px;padding:26px;background:var(--soft);border-radius:12px;text-decoration:none;color:var(--ink);border-top:5px solid var(--c);transition:transform .15s,box-shadow .15s}
 .tool:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(18,33,59,.12)}
 .tool-reflect{--c:#16A37F}
 .tool-slice{--c:var(--accent)}
+.tool-carry{--c:#3B9BEF}
 .tool .tool-art{height:56px;display:flex;align-items:flex-end}
 .tool .tool-dots{display:flex;gap:8px}
 .tool .tool-dots i{width:22px;height:22px;border-radius:50%;border:1px solid #2B2B2B}
@@ -503,7 +505,7 @@ footer.site a{color:#C3CCDB}
 .tool .tool-meta{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-top:auto}
 @media (prefers-reduced-motion:reduce){.tool{transition:none}}
 </style>
-<script defer src="assets/js/track.js?v=2026-10-24b"></script>
+<script defer src="assets/js/track.js?v=2026-10-26"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
 </head>
 <body>
@@ -780,7 +782,7 @@ footer.site a{color:#C3CCDB}
       <div>
         <span class="eyebrow">Try it yourself</span>
         <h2>Tools</h2>
-        <p class="lede" style="margin-top:20px">Free, short exercises from my training. Use them on your own or with your team. Nothing you enter is stored or sent anywhere.</p>
+        <p class="lede" style="margin-top:20px">Free tools to use on your own or with your team: exercises from my training, and a way to look at your own sprint data. Nothing you enter or load is stored or sent anywhere.</p>
       </div>
     </div>
     <div class="tools">
@@ -795,6 +797,12 @@ footer.site a{color:#C3CCDB}
         <h3>Slice it right</h3>
         <p>Slice a real feature into releases and see when value reaches customers. Get a slicing score, then compare with a reference solution.</p>
         <span class="tool-meta">Slicing exercise · 5 minutes →</span>
+      </a>
+      <a class="tool tool-carry" href="carry-over.html">
+        <span class="tool-art" aria-hidden="true"><svg width="120" height="56" viewBox="0 0 120 56"><defs><pattern id="tool-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#B9DAF8"/><rect width="2.2" height="5" fill="#3B9BEF"/></pattern></defs><rect x="2" y="6" width="34" height="10" rx="2" fill="#3B9BEF"/><rect x="38" y="6" width="34" height="10" rx="2" fill="url(#tool-hatch)"/><rect x="26" y="23" width="34" height="10" rx="2" fill="#3B9BEF"/><rect x="62" y="23" width="34" height="10" rx="2" fill="url(#tool-hatch)"/><rect x="98" y="23" width="20" height="10" rx="2" fill="url(#tool-hatch)" opacity=".5"/><rect x="50" y="40" width="34" height="10" rx="2" fill="#3B9BEF"/><line x1="2" y1="54" x2="118" y2="54" stroke="#12213B" stroke-width="2"/></svg></span>
+        <h3>Sprint carry-over map</h3>
+        <p>See which work keeps rolling into the next sprint, and where it gets stuck. Explore the sample, or load a CSV from Azure DevOps or Jira.</p>
+        <span class="tool-meta">Backlog analysis · your own data →</span>
       </a>
     </div>
   </div>

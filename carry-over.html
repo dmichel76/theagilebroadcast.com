@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sprint Carry-Over Map · David Michel | The Agile Broadcast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="See which backlog items get carried over from sprint to sprint, and where work gets stuck. Explore the sample or load a CSV from Azure DevOps or Jira; it stays in your browser.">
+<link rel="canonical" href="https://theagilebroadcast.com/carry-over.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Sprint carry-over map.
+   Two style blocks, kept apart so neither leaks into the other:
+   1. Site chrome: the navy header and footer shared with the other pages, scoped to header.site / footer.site.
+   2. The tool: David's design (carry-over.html, 26 Oct 2026) reproduced as is, every rule scoped under .co,
+      with its colour tokens set on .co instead of :root. It follows the visitor's light/dark setting.
+   Data: the seeded sample loads first. Visitors can load a CSV; it's parsed in the browser and never sent anywhere. */
+
+/* ---------- 1. site chrome ---------- */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --on-navy:#DCE3EF;
+  --site-accent:#F2A91E;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+}
+[hidden]{display:none!important}
+body{margin:0}
+header.site,footer.site{font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+header.site *,footer.site *{box-sizing:border-box}
+header.site .wrap,footer.site .wrap{max-width:1200px;margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){header.site .wrap,footer.site .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+header.site .nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+header.site .brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+header.site .brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+header.site .brand span{font-family:var(--mono);font-size:.72rem;color:var(--site-accent);letter-spacing:.08em;text-transform:uppercase}
+header.site .nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+header.site .nav ul a{color:var(--on-navy);text-decoration:none}
+header.site .nav ul a:hover{color:var(--site-accent)}
+header.site .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;text-transform:uppercase;letter-spacing:.02em;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s;padding:10px 16px;font-size:.85rem;background:var(--site-accent);color:var(--navy)}
+header.site .btn:hover{background:#FFC04D}
+header.site a:focus-visible{outline:3px solid var(--site-accent);outline-offset:3px}
+@media (max-width:980px){header.site .nav ul{display:none}}
+@media (max-width:420px){header.site .nav .btn{padding:9px 12px;font-size:.78rem}header.site .brand span{display:none}}
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--site-accent)}
+
+/* ---------- 2. the tool (design reproduced, scoped under .co) ---------- */
+/* Layout: summary strip → insights → sprint calendar (one row per item, bars span sprints) → pattern panels */
+.co{
+  --bg:#f4f6f8; --surface:#ffffff; --fg:#17202b; --muted:#5d6b7a; --line:#dde3ea; --now:#fff4d6;
+  --accent:#2457c5;
+  --t-story:#3f78d8; --t-bug:#d6573b; --t-debt:#b88a16; --t-spike:#7d58c9;
+  --c1:#2f8f83; --c2:#3f78d8; --c3:#8a6bd1; --c4:#d6573b; --c5:#b88a16;
+  --d1:#cfe0d9; --d2:#f0cf86; --d3:#e8915e; --d4:#c2412f;
+  --heat:#c2412f; --on-heat:#ffffff;
+  /* extra group colours, only used when a visitor's CSV has more groups than the sample */
+  --t-5:#2f8f83; --t-6:#c2557f; --c6:#c2557f; --c7:#5f8a2b; --other:#8b97a6;
+  --font-display:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .co{
+  --bg:#10151c; --surface:#18202a; --fg:#e6ebf1; --muted:#93a1b1; --line:#2a3542; --now:#2e2a1c;
+  --accent:#7aa5f5;
+  --t-story:#6b9cf0; --t-bug:#ec7a5e; --t-debt:#d8ab3c; --t-spike:#a586ec;
+  --c1:#4fb3a6; --c2:#6b9cf0; --c3:#a586ec; --c4:#ec7a5e; --c5:#d8ab3c;
+  --d1:#2f4a43; --d2:#8a7130; --d3:#b8643a; --d4:#e0533c;
+  --heat:#e0533c; --on-heat:#ffffff; color-scheme:dark;
+  --t-5:#4fb3a6; --t-6:#e07fa5; --c6:#e07fa5; --c7:#9bbf5a; --other:#7d8b9b;
+}}
+:root[data-theme="dark"] .co{
+  --bg:#10151c; --surface:#18202a; --fg:#e6ebf1; --muted:#93a1b1; --line:#2a3542; --now:#2e2a1c;
+  --accent:#7aa5f5;
+  --t-story:#6b9cf0; --t-bug:#ec7a5e; --t-debt:#d8ab3c; --t-spike:#a586ec;
+  --c1:#4fb3a6; --c2:#6b9cf0; --c3:#a586ec; --c4:#ec7a5e; --c5:#d8ab3c;
+  --d1:#2f4a43; --d2:#8a7130; --d3:#b8643a; --d4:#e0533c;
+  --heat:#e0533c; --on-heat:#ffffff; color-scheme:dark;
+  --t-5:#4fb3a6; --t-6:#e07fa5; --c6:#e07fa5; --c7:#9bbf5a; --other:#7d8b9b;
+}
+.co{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.co *,.co *::before,.co *::after{box-sizing:content-box}
+.co .wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+.co h1{font-family:var(--font-display);font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance;font-weight:700;text-transform:none}
+.co h2{font-size:18px;margin:0;text-wrap:balance;font-family:inherit;font-weight:700;line-height:inherit;letter-spacing:normal;text-transform:none}
+.co .eyebrow{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.co .lede{color:var(--muted);max-width:68ch;margin:6px 0 0}
+.co .note{font-size:12px;color:var(--muted);margin:0}
+.co .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.co .stat{background:var(--surface);padding:14px 16px}
+.co .stat b{display:block;font-family:var(--font-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
+.co .stat span{font-size:12px;color:var(--muted)}
+.co .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.co .insights{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+.co .insights strong{font-weight:600}
+.co .controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
+.co .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.co .seg button{font:inherit;font-size:13px;background:transparent;color:var(--fg);border:0;padding:5px 11px;cursor:pointer}
+.co .seg button+button{border-left:1px solid var(--line)}
+.co .seg button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.co .ctl{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.co button:focus-visible,.co input:focus-visible,.co .bar:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.co .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.co .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.co .sw-carry{background:repeating-linear-gradient(135deg,var(--muted) 0 2px,transparent 2px 5px)!important;border:1px solid var(--muted)}
+/* calendar (the number of sprint columns comes from the data: --n) */
+.co .cal-scroll{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.co .cal{min-width:720px;--label:150px;--n:12;position:relative}
+.co .row{display:grid;grid-template-columns:var(--label) repeat(var(--n),1fr);align-items:center;height:20px}
+.co .row .lbl{font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
+.co .head{height:auto;position:sticky;top:0;background:var(--surface);z-index:2;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.co .head .sp{font-family:var(--font-mono);font-size:11px;text-align:center;line-height:1.25;color:var(--muted);min-width:0}
+.co .head .sp b{display:block;color:var(--fg);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co .head .sp.cur b{color:var(--accent)}
+.co .grp{height:auto;padding:12px 0 4px;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:baseline}
+.co .grp small{font-family:var(--font-mono);font-weight:400;color:var(--muted);font-size:11px}
+.co .cols{position:absolute;inset:0;display:grid;grid-template-columns:var(--label) repeat(var(--n),1fr);pointer-events:none;z-index:0}
+.co .cols div{border-left:1px dashed var(--line)}
+.co .cols div:first-child{border:0}
+.co .cols .cur{background:var(--now)}
+.co .rows{position:relative;z-index:1}
+.co .bar{grid-row:1;height:12px;display:flex;gap:2px;cursor:pointer;margin:0 3px;border-radius:3px}
+.co .bar .s{flex:1;border-radius:2px;background:var(--c)}
+.co .bar .s.carry{background:repeating-linear-gradient(135deg,var(--c) 0 3px,color-mix(in oklab,var(--c) 30%,transparent) 3px 6px)}
+.co .bar.open .s:last-child{mask-image:linear-gradient(90deg,#000 40%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 40%,transparent)}
+.co .bar:hover .s,.co .bar.sel .s{filter:brightness(1.12)}
+.co .bar.sel{outline:2px solid var(--fg);outline-offset:1px}
+.co .dim .bar{opacity:.18}
+.co .tip{position:fixed;z-index:20;background:var(--fg);color:var(--bg);padding:9px 11px;border-radius:7px;font-size:12.5px;line-height:1.4;max-width:270px;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.co .tip .m{font-family:var(--font-mono);font-size:11px;opacity:.75}
+/* pattern panels */
+.co .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:22px}
+.co .dist{display:flex;flex-direction:column;gap:9px}
+.co .drow{display:grid;grid-template-columns:130px 1fr 54px;gap:10px;align-items:center;font-size:13px}
+.co .drow .track{display:flex;height:18px;border-radius:4px;overflow:hidden;background:var(--line)}
+.co .drow .track div{height:100%}
+.co .drow .avg{font-family:var(--font-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.co .matrix{border-collapse:separate;border-spacing:3px;width:100%;font-size:12px}
+.co .matrix th{font-weight:500;color:var(--muted);text-align:left;padding:2px 4px}
+.co .matrix thead th{text-align:center;font-size:11px;line-height:1.2;vertical-align:bottom}
+.co .matrix td{text-align:center;border-radius:4px;padding:7px 2px;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.co .matrix td small{display:block;font-size:10px;opacity:.75}
+.co .mx-scroll{overflow-x:auto}
+.co svg text{fill:var(--muted);font-family:var(--font-mono);font-size:10px}
+@media (max-width:520px){.co .cal{--label:84px}.co .drow{grid-template-columns:96px 1fr 44px}}
+@media (prefers-reduced-motion:no-preference){.co .bar .s{transition:filter .15s}}
+
+/* your-data bar (added for CSV upload, in the design's own vocabulary: .seg-style buttons, .note text) */
+.co .databar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:16px}
+.co .dbtn{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer;background:var(--surface);color:var(--fg);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.co .dbtn:hover{border-color:var(--muted)}
+.co .dbtn.primary{background:var(--fg);color:var(--surface);border-color:var(--fg)}
+.co .dbtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.co .dbtn:focus-within,.co .dbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.co .databar .note{flex-basis:100%;max-width:80ch}
+.co .databar .note.err{color:var(--t-bug)}
+.co details.note summary{cursor:pointer;width:max-content}
+.co details.note ul{margin:6px 0 0;padding-left:18px}
+.co details.note code{font-family:var(--font-mono);font-size:11px}
+</style>
+<script defer src="assets/js/track.js?v=2026-10-26"></script>
+<script defer src="assets/js/menu.js?v=2026-10-25"></script>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#tools">Tools</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main class="co" id="co">
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">Backlog analysis · Sample team · S14–S25 · sample data</div>
+    <h1>Sprint carry-over map</h1>
+    <p class="lede" id="lede">Every item committed over the last 12 two-week sprints, drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into.</p>
+    <div class="databar">
+      <label class="dbtn primary"><input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv">Load your CSV</label>
+      <button type="button" class="dbtn" id="toSample" hidden>Back to sample data</button>
+      <a class="dbtn" id="dlSample" href="#" download="carry-over-sample.csv">Download the sample as CSV</a>
+      <p class="note" id="dataNote">Try it with your own backlog: an export from Azure DevOps or Jira works. Your file is read in this browser only. Nothing is uploaded or stored.</p>
+      <details class="note">
+        <summary>Which columns?</summary>
+        <ul>
+          <li><code>id</code>, <code>title</code>, <code>type</code>, <code>category</code>, <code>start sprint</code>, <code>end sprint</code>, <code>status</code>, in any order. The sample CSV shows the format.</li>
+          <li>Common export names work too: Work Item Type, Issue Type, Area Path, Component, State, Iteration Path, and Jira's repeated Sprint columns (first and last sprint are used).</li>
+          <li>Done, Closed, Resolved and similar count as done. Removed or cancelled items are left out. Open items run to the latest sprint in the file.</li>
+        </ul>
+      </details>
+    </div>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Summary"></section>
+
+  <section class="panel">
+    <h2>What stands out</h2>
+    <ul class="insights" id="insights"></ul>
+  </section>
+
+  <section class="panel">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:baseline">
+      <h2>Sprint calendar</h2>
+      <p class="note">Hover or tap a bar for details. Faded end = still open in the current sprint.</p>
+    </div>
+    <div class="controls">
+      <div class="ctl">Group by <span class="seg" id="groupBy"><button data-v="type" aria-pressed="true">Type</button><button data-v="cat" aria-pressed="false">Category</button></span></div>
+      <div class="ctl">Colour by <span class="seg" id="colorBy"><button data-v="type" aria-pressed="false">Type</button><button data-v="cat" aria-pressed="true">Category</button></span></div>
+      <label class="ctl" for="onlyCarry"><input type="checkbox" id="onlyCarry"> Carried over only</label>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="cal-scroll"><div class="cal" id="cal"></div></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Sprints to done, by <span id="distBy">type</span></h2>
+      <div class="legend">
+        <span><i style="background:var(--d1)"></i>1 sprint</span><span><i style="background:var(--d2)"></i>2</span><span><i style="background:var(--d3)"></i>3</span><span><i style="background:var(--d4)"></i>4+</span><span style="margin-left:auto">avg</span>
+      </div>
+      <div class="dist" id="dist"></div>
+      <p class="note">Completed items only. Follows the “Group by” switch above.</p>
+    </section>
+    <section class="panel">
+      <h2>Where it hurts: type × category</h2>
+      <div class="mx-scroll"><table class="matrix" id="matrix"></table></div>
+      <p class="note">Average sprints to done (completed items), with item count. Darker = longer.</p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>How much of each sprint is inherited work</h2>
+    <div class="legend"><span><i style="background:var(--accent)"></i>New this sprint</span><span><i class="sw-carry"></i>Carried in from earlier sprints</span></div>
+    <div id="load"></div>
+    <p class="note">Items active per sprint. A rising hatched share means the team starts each sprint with less room for new work.</p>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="./#tools">More tools</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t==null?"":t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const avg=a=>a.reduce((s,x)=>s+x.n,0)/(a.length||1);
+const fmt=x=>x.toFixed(1);
+const pct=x=>Math.round(x*100)+"%";
+const plural=w=>/[^aeiou]y$/i.test(w)?w.slice(0,-1)+"ies":/(s|x|ch|sh)$/i.test(w)?w+"es":w+"s";
+$("year").textContent=new Date().getFullYear();
+
+/* ======================= SAMPLE DATA (the design's seeded generator, unchanged) ======================= */
+function sampleData(){
+  const N_SPR=12, CUR=11, START=new Date(2026,4,18);
+  const sprints=[...Array(N_SPR)].map((_,i)=>{const d=new Date(START);d.setDate(d.getDate()+14*i);return{name:"S"+(14+i),date:d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})}});
+  const TYPES=[{k:"story",n:"Story",w:.45,f:.30,c:"--t-story",verb:"Add"},{k:"bug",n:"Bug",w:.25,f:.14,c:"--t-bug",verb:"Fix"},{k:"debt",n:"Tech debt",w:.18,f:.52,c:"--t-debt",verb:"Refactor"},{k:"spike",n:"Spike",w:.12,f:.40,c:"--t-spike",verb:"Investigate"}];
+  const CATS=[
+   {k:"checkout",n:"Checkout",m:1.0,c:"--c1",t:["promo code stacking","guest checkout address form","basket save-for-later","delivery slot picker","order summary totals","express checkout button"]},
+   {k:"search",n:"Search & browse",m:.8,c:"--c2",t:["size filter facets","sort by newest","zero-results suggestions","product tile lazy load","category landing banners","recently viewed rail"]},
+   {k:"account",n:"Account",m:.95,c:"--c3",t:["saved addresses list","order history paging","email preference centre","password reset flow","returns tracker","wishlist sharing"]},
+   {k:"payments",n:"Payments (3rd party)",m:1.65,c:"--c4",t:["Klarna instalments","3DS2 challenge flow","Apple Pay token refresh","refund webhook","PayPal vault","gift card balance API"]},
+   {k:"platform",n:"Platform",m:1.35,c:"--c5",t:["image CDN migration","feature flag SDK upgrade","search index rebuild job","API gateway timeouts","observability dashboards","Node 22 upgrade"]}
+  ];
+  let seed=20261026;const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const pick=arr=>{let r=rnd(),a=0;for(const x of arr){a+=x.w;if(r<a)return x}return arr[arr.length-1]};
+  const catW=[.24,.24,.18,.16,.18];CATS.forEach((c,i)=>c.w=catW[i]);
+  const items=[];
+  for(let i=0;i<86;i++){
+    const ty=pick(TYPES),ca=pick(CATS);
+    const p=Math.min(.82,ty.f*ca.m);
+    let n=1;while(rnd()<p&&n<7)n++;
+    const start=Math.floor(rnd()*N_SPR);
+    let end=start+n-1,open=false;
+    if(end>CUR){end=CUR;open=true}
+    const thing=ca.t[Math.floor(rnd()*ca.t.length)];
+    items.push({id:"ITM-"+(2140+i*7+Math.floor(rnd()*6)),title:ty.verb+" "+thing,type:ty,cat:ca,start,end,open,n:end-start+1,pts:[1,2,3,5,8][Math.floor(rnd()*5)]});
+  }
+  items.forEach(it=>{if(it.start===CUR)it.open=true});
+  return {sample:true,sprints,CUR,TYPES,CATS,items,
+    eyebrow:"Backlog analysis · Sample team · S14–S25 · sample data",
+    lede:"Every item committed over the last 12 two-week sprints, drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into."};
+}
+
+/* ======================= RENDER (the design's dashboard, driven by whatever data is loaded) ======================= */
+let D=null, done=[];
+const state={group:"type",color:"cat",only:false};
+const tip=$("tip");
+const cal=$("cal");
+
+function render(data){
+  D=data;
+  done=D.items.filter(i=>!i.open);
+  $("eyebrow").textContent=D.eyebrow;
+  $("lede").textContent=D.lede;
+  tip.hidden=true;
+  renderStats();renderInsights();legend();renderCal();renderDist();renderMatrix();renderLoad();
+}
+
+function renderStats(){
+  const {items}=D;
+  const carried=done.filter(i=>i.n>1);
+  const openCarried=items.filter(i=>i.open&&i.n>1);
+  const median=done.length?(()=>{const s=done.map(i=>i.n).sort((a,b)=>a-b);return s[Math.floor(s.length/2)]})():null;
+  const longest=done.length?done.reduce((m,i)=>i.n>m.n?i:m,done[0]):null;
+  $("stats").innerHTML=[
+   [items.length,"items committed"],
+   [done.length?pct(carried.length/done.length):"–","of done items carried over"],
+   [done.length?fmt(avg(done))+" sprints":"–","average cycle time"],
+   [median?median+" sprint"+(median>1?"s":""):"–","median cycle time"],
+   [openCarried.length,"open items already carried"],
+   [longest?longest.n+" sprints":"–",longest?"longest ("+esc(longest.id)+")":"longest"]
+  ].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+}
+
+function renderInsights(){
+  const {items,TYPES,CATS,sprints,CUR}=D;
+  const by=(arr,key)=>{const m=new Map();arr.forEach(i=>{const g=i[key];if(!m.has(g))m.set(g,[]);m.get(g).push(i)});return m};
+  const rest=(arr,f)=>arr.filter(i=>!f(i));
+  const catStats=[...by(done,"cat")].map(([c,a])=>({c,a,avg:avg(a),cr:a.filter(i=>i.n>1).length/a.length})).sort((x,y)=>y.avg-x.avg);
+  const typeStats=[...by(done,"type")].map(([t,a])=>({t,a,avg:avg(a),cr:a.filter(i=>i.n>1).length/a.length})).sort((x,y)=>y.avg-x.avg);
+  const wc=catStats[0],wt=typeStats[0],bt=typeStats[typeStats.length-1];
+  let cells=[];TYPES.forEach(t=>CATS.forEach(c=>{const a=done.filter(i=>i.type===t&&i.cat===c);if(a.length>=3)cells.push({t,c,a,avg:avg(a)})}));cells.sort((x,y)=>y.avg-x.avg);
+  const wcell=cells[0];
+  const share=s=>{const a=items.filter(i=>i.start<=s&&i.end>=s);return a.filter(i=>i.start<s).length/(a.length||1)};
+  const N=sprints.length;
+  // the design compares sprints 2–4 with the last three (S15–S17 vs S23–S25 in the sample)
+  const early=N>=5?(share(1)+share(2)+share(3))/3:0,late=N>=5?(share(N-3)+share(N-2)+share(N-1))/3:0;
+  // "outside team" only holds when the slowest category is third-party work
+  const outside=D.sample||/3rd|third|party|external|vendor|supplier|partner|outside/i.test(wc?wc.c.n:"");
+  $("insights").innerHTML=[
+   catStats.length>1?`<strong>${esc(wc.c.n)}</strong> items take ${fmt(wc.avg)} sprints on average and ${pct(wc.cr)} carry over, against ${fmt(avg(rest(done,i=>i.cat===wc.c)))} sprints for everything else.${outside?" Work that depends on an outside team is the clearest carry-over driver.":""}`:"",
+   typeStats.length>1?`<strong>${esc(wt.t.n)}</strong> is the slowest item type (${fmt(wt.avg)} sprints, ${pct(wt.cr)} carried). <strong>${esc(plural(bt.t.n))}</strong> are the most predictable at ${fmt(bt.avg)}.`:"",
+   wcell?`The worst combination is <strong>${esc(wcell.t.n)} × ${esc(wcell.c.n)}</strong>: ${wcell.a.length} items averaging ${fmt(wcell.avg)} sprints. A candidate for smaller slices or a spike before committing.`:"",
+   N>=5?`Inherited work is ${late>early?"growing":"stable"}: carried-in items made up ${pct(early)} of active work in ${esc(sprints[1].name)}–${esc(sprints[3].name)} and ${pct(late)} in ${esc(sprints[N-3].name)}–${esc(sprints[N-1].name)}.`:""
+  ].filter(Boolean).map(s=>`<li>${s}</li>`).join("")||`<li>Not enough completed items to compare yet.</li>`;
+}
+
+function legend(){
+  const set=state.color==="type"?D.TYPES:D.CATS;
+  $("legend").innerHTML=set.map(x=>`<span><i style="background:var(${x.c})"></i>${esc(x.n)}</span>`).join("")+`<span><i class="sw-carry"></i>Carried-over sprint</span>`;
+}
+
+function renderCal(){
+  const {items,sprints,CUR,TYPES,CATS}=D;
+  const N=sprints.length;
+  cal.style.setProperty("--n",N);
+  cal.style.minWidth=N>12?`calc(var(--label) + ${N*48}px)`:"";
+  const groups=state.group==="type"?TYPES:CATS;
+  const curLbl=D.sample?"now":"latest";
+  let h=`<div class="cols"><div></div>${sprints.map((_,i)=>`<div class="${i===CUR?"cur":""}"></div>`).join("")}</div><div class="rows">`;
+  h+=`<div class="row head"><div class="lbl">Item</div>${sprints.map((s,i)=>`<div class="sp ${i===CUR?"cur":""}"${s.full?` title="${esc(s.full)}"`:""}><b>${esc(s.name)}</b>${i===CUR?curLbl:(s.date?esc(s.date):"&nbsp;")}</div>`).join("")}</div>`;
+  groups.forEach(g=>{
+    let a=items.filter(i=>(state.group==="type"?i.type:i.cat)===g);
+    if(state.only)a=a.filter(i=>i.n>1);
+    a.sort((x,y)=>x.start-y.start||y.n-x.n);
+    const d=a.filter(i=>!i.open);
+    h+=`<div class="row grp"><span>${esc(g.n)}</span><small>${a.length} items · avg ${d.length?fmt(avg(d)):"–"} sprints</small></div>`;
+    a.forEach(it=>{
+      const col=state.color==="type"?it.type.c:it.cat.c;
+      const segs=[...Array(it.n)].map((_,k)=>`<span class="s ${k>0?"carry":""}"></span>`).join("");
+      h+=`<div class="row"><div class="lbl" title="${esc(it.title)}">${esc(it.id)} ${esc(it.title)}</div><div class="bar ${it.open?"open":""}" tabindex="0" data-i="${items.indexOf(it)}" style="--c:var(${col});grid-column:${it.start+2}/${it.end+3}">${segs}</div></div>`;
+    });
+  });
+  cal.innerHTML=h+"</div>";
+}
+
+function showTip(el,x,y){
+  const {items,sprints,CUR}=D;
+  const it=items[+el.dataset.i];
+  tip.innerHTML=`<div class="m">${esc(it.id)} · ${esc(it.type.n)}${it.pts!=null?" · "+esc(it.pts)+" pts":""}</div><div><b>${esc(it.title)}</b></div><div>${esc(it.cat.n)}</div><div class="m">${esc(sprints[it.start].name)} → ${it.open?"still open in "+esc(sprints[CUR].name):esc(sprints[it.end].name)} · ${it.n} sprint${it.n>1?"s":""}${it.n>1?" ("+(it.n-1)+" carried)":""}</div>`;
+  tip.hidden=false;
+  const r=tip.getBoundingClientRect();
+  let left=Math.min(x+14,innerWidth-r.width-12),top=y+16;
+  if(top+r.height>innerHeight-8)top=y-r.height-12;
+  tip.style.left=Math.max(8,left)+"px";tip.style.top=Math.max(8,top)+"px";
+}
+cal.addEventListener("pointermove",e=>{const b=e.target.closest(".bar");if(b)showTip(b,e.clientX,e.clientY);else tip.hidden=true});
+cal.addEventListener("pointerleave",()=>tip.hidden=true);
+cal.addEventListener("click",e=>{const b=e.target.closest(".bar");cal.querySelectorAll(".bar.sel").forEach(x=>x.classList.remove("sel"));if(b){b.classList.add("sel");showTip(b,e.clientX,e.clientY)}});
+cal.addEventListener("focusin",e=>{const b=e.target.closest(".bar");if(b){const r=b.getBoundingClientRect();showTip(b,r.left,r.bottom)}});
+cal.addEventListener("focusout",()=>tip.hidden=true);
+addEventListener("scroll",()=>tip.hidden=true,{passive:true});
+
+function renderDist(){
+  const groups=state.group==="type"?D.TYPES:D.CATS;
+  $("distBy").textContent=state.group==="type"?"type":"category";
+  $("dist").innerHTML=groups.map(g=>{
+    const a=done.filter(i=>(state.group==="type"?i.type:i.cat)===g);
+    const b=[1,2,3,4].map(k=>a.filter(i=>k<4?i.n===k:i.n>=4).length/(a.length||1));
+    return `<div class="drow"><span>${esc(g.n)}</span><div class="track" role="img" aria-label="${esc(g.n)}: ${b.map((v,k)=>(k<3?k+1:"4+")+" sprints "+pct(v)).join(", ")}">${b.map((v,k)=>`<div style="width:${v*100}%;background:var(--d${k+1})" title="${k<3?k+1:"4+"} sprint${k?"s":""}: ${pct(v)}"></div>`).join("")}</div><span class="avg">${a.length?fmt(avg(a)):"–"}</span></div>`;
+  }).join("");
+}
+
+function renderMatrix(){
+  const {TYPES,CATS}=D;
+  let h=`<thead><tr><th></th>${CATS.map(c=>`<th>${esc(c.n)}</th>`).join("")}</tr></thead><tbody>`;
+  TYPES.forEach(t=>{
+    h+=`<tr><th>${esc(t.n)}</th>`;
+    CATS.forEach(c=>{
+      const a=done.filter(i=>i.type===t&&i.cat===c);
+      if(!a.length){h+=`<td style="color:var(--muted)">–</td>`;return}
+      const v=avg(a),k=Math.max(6,Math.min(92,(v-1)/2.6*92));
+      h+=`<td style="background:color-mix(in oklab,var(--heat) ${k}%,var(--surface));color:${k>55?"var(--on-heat)":"var(--fg)"}">${fmt(v)}<small>n=${a.length}</small></td>`;
+    });
+    h+="</tr>";
+  });
+  $("matrix").innerHTML=h+"</tbody>";
+}
+
+function renderLoad(){
+  const {items,sprints}=D;
+  const N=sprints.length;
+  const data=sprints.map((s,i)=>{const a=items.filter(it=>it.start<=i&&it.end>=i);return{s,nw:a.filter(it=>it.start===i).length,cr:a.filter(it=>it.start<i).length}});
+  const max=Math.max(1,...data.map(d=>d.nw+d.cr));
+  // gridlines every 5 items, as designed; larger files get a coarser step so the axis stays readable
+  const step=max<=40?5:(()=>{const raw=max/8,p=Math.pow(10,Math.floor(Math.log10(raw)));return [1,2,5,10].map(m=>m*p).find(v=>v>=raw)})();
+  const top=Math.ceil(max/step)*step;
+  const W=Math.max(720,36+N*50),H=220,L=30,B=34,T=10,cw=(W-L-6)/N,bw=cw*.6,y=v=>T+(H-T-B)*(1-v/top);
+  const short=s=>s.length>8?s.slice(0,7)+"…":s;
+  let g=`<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--surface)"/><rect width="2.5" height="6" fill="var(--muted)"/></pattern></defs>`;
+  for(let v=0;v<=top;v+=step)g+=`<line x1="${L}" x2="${W-4}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+  data.forEach((d,i)=>{
+    const x=L+i*cw+(cw-bw)/2, nm=esc(d.s.name);
+    g+=`<rect x="${x}" y="${y(d.cr)}" width="${bw}" height="${y(0)-y(d.cr)}" fill="url(#hatch)" stroke="var(--muted)" stroke-width=".6"><title>${nm}: ${d.cr} carried in</title></rect>`;
+    g+=`<rect x="${x}" y="${y(d.cr+d.nw)}" width="${bw}" height="${y(d.cr)-y(d.cr+d.nw)}" fill="var(--accent)"><title>${nm}: ${d.nw} new</title></rect>`;
+    const sh=Math.round(d.cr/(d.cr+d.nw||1)*100);
+    g+=`<text x="${x+bw/2}" y="${y(d.cr+d.nw)-4}" text-anchor="middle">${sh}%</text>`;
+    g+=`<text x="${x+bw/2}" y="${H-B+16}" text-anchor="middle" style="fill:var(--fg)">${esc(short(d.s.name))}</text>`;
+  });
+  g+=`<text x="${L}" y="${H-4}">% above each bar = share carried in</text>`;
+  $("load").innerHTML=`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.max(520,W*.72)}px;display:block" role="img" aria-label="Active items per sprint split into new and carried-in">${g}</svg></div>`;
+}
+
+function seg(id,key,after){
+  const el=$(id);
+  el.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;state[key]=b.dataset.v;el.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));after()});
+}
+seg("groupBy","group",()=>{renderCal();renderDist()});
+seg("colorBy","color",()=>{legend();renderCal()});
+$("onlyCarry").addEventListener("change",e=>{state.only=e.target.checked;renderCal()});
+
+/* ======================= CSV (read in the browser only; nothing is sent anywhere) ======================= */
+function parseCSV(text){
+  text=text.replace(/^﻿/,"");
+  const first=text.split(/\r?\n/,1)[0];
+  const count=d=>first.split(d).length-1;
+  const delim=[",",";","\t"].sort((a,b)=>count(b)-count(a))[0];
+  const rows=[];let row=[],f="",q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){
+      if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}
+      else f+=ch;
+    }else if(ch==='"')q=true;
+    else if(ch===delim){row.push(f);f=""}
+    else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&text[i+1]==="\n")i++;row.push(f);rows.push(row);row=[];f=""}
+    else f+=ch;
+  }
+  if(f!==""||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(c=>c.trim()!==""));
+}
+
+const ALIASES={
+  id:["id","key","issuekey","issueid","workitemid","itemid","ticket","ticketid"],
+  title:["title","summary","name","itemtitle"],
+  type:["type","workitemtype","issuetype","itemtype"],
+  cat:["category","areapath","area","component","components","componentname","epic","epiclink","theme","team","label","labels"],
+  start:["startsprint","start","firstsprint","sprintstart","fromsprint","startiteration"],
+  end:["endsprint","end","lastsprint","sprintend","tosprint","enditeration","donesprint"],
+  sprint:["sprint","sprints","iteration","iterationpath"],
+  status:["status","state","statuscategory"],
+  pts:["storypoints","points","storypointestimate","estimate","effort","size"]
+};
+const TYPE_COLOURS=[[/stor|backlog item|pbi|feature|requirement/i,"--t-story"],[/bug|defect|incident/i,"--t-bug"],[/debt|tech|chore|refactor/i,"--t-debt"],[/spike|research|investigat/i,"--t-spike"]];
+const DONE=/done|closed|resolved|complet|released|shipped|finished|accepted|deployed/i;
+const DROPPED=/remov|cancel|won.?t|duplicate|reject|abandon/i;
+const lastSeg=v=>String(v||"").split("\\").pop().trim();
+
+function fromCSV(text,fileName){
+  const rows=parseCSV(text);
+  if(rows.length<2)throw new Error("The file has no data rows.");
+  const head=rows[0].map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,""));
+  const col=k=>{for(const a of ALIASES[k]){const i=head.indexOf(a);if(i>=0)return i}return -1};
+  const C={id:col("id"),title:col("title"),type:col("type"),cat:col("cat"),start:col("start"),end:col("end"),status:col("status"),pts:col("pts")};
+  const sprintCols=head.map((h,i)=>ALIASES.sprint.includes(h)?i:-1).filter(i=>i>=0);
+  if(C.start<0&&C.end<0&&!sprintCols.length)throw new Error("I couldn't find a sprint column. Expected start sprint and end sprint (or Sprint / Iteration Path).");
+  if(C.status<0)throw new Error("I couldn't find a status column (Status or State).");
+
+  // collect rows and every sprint name they mention
+  const raw=[],names=new Set();let dropped=0,noSprint=0;
+  rows.slice(1).forEach((r,ri)=>{
+    const get=i=>i>=0?(r[i]||"").trim():"";
+    const status=get(C.status);
+    if(DROPPED.test(status)){dropped++;return}
+    const s=sprintCols.map(i=>lastSeg(r[i])).filter(Boolean);
+    let st=lastSeg(get(C.start)),en=lastSeg(get(C.end));
+    const list=[st,en,...s].filter(Boolean);
+    if(!list.length){noSprint++;return}
+    list.forEach(n=>names.add(n));
+    raw.push({id:get(C.id)||"#"+(ri+2),title:get(C.title),type:get(C.type)||"Unspecified",cat:lastSeg(get(C.cat))||"Unspecified",st,en,list,done:DONE.test(status),pts:C.pts>=0&&get(C.pts)!==""&&!isNaN(+get(C.pts))?+get(C.pts):null});
+  });
+  if(!raw.length)throw new Error("No usable rows: every row was removed, cancelled or had no sprint.");
+
+  // order sprints: a shared prefix with numbers ("Sprint 14", "BRW Sprint 15") fills gaps and shortens to S14, S15…
+  let order=[...names],shortOf=n=>n;
+  const m=order.map(n=>n.match(/^(.*?)(\d+)\s*$/));
+  const prefix=m[0]&&m[0][1].trim().toLowerCase();
+  if(m.every(x=>x&&x[1].trim().toLowerCase()===prefix)){
+    const nums=m.map(x=>+x[2]),lo=Math.min(...nums),hi=Math.max(...nums);
+    const pre=m[0][1];
+    const byNum=new Map(m.map((x,i)=>[+x[2],order[i]]));
+    if(hi-lo<=60)order=[...Array(hi-lo+1)].map((_,i)=>byNum.get(lo+i)||(pre+(lo+i)));
+    else order.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    if(prefix!=="")shortOf=n=>"S"+n.match(/(\d+)\s*$/)[1];
+  }else order.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const idx=new Map(order.map((n,i)=>[n,i]));
+  const sprints=order.map(n=>{const s=shortOf(n);return{name:s,full:s!==n?n:null,date:null}});
+  const CUR=sprints.length-1;
+
+  // groups: colours by rank; types keep their meaning (stories blue, bugs red…), overflow goes to "Other"
+  const rank=k=>{const c=new Map();raw.forEach(r=>c.set(r[k],(c.get(r[k])||0)+1));return[...c].sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
+  const OTHER_T={n:"Other",c:"--other"},OTHER_C={n:"Other",c:"--other"};
+  const tNames=rank("type"),tCol=new Map(),free=["--t-story","--t-bug","--t-debt","--t-spike","--t-5","--t-6"];
+  tNames.forEach(name=>{const want=(TYPE_COLOURS.find(([re])=>re.test(name))||[])[1];if(want&&free.includes(want)){tCol.set(name,want);free.splice(free.indexOf(want),1)}});
+  tNames.forEach(name=>{if(!tCol.has(name)&&free.length)tCol.set(name,free.shift())});
+  const TYPES=[],tMap=new Map();
+  tNames.forEach(name=>{if(tCol.has(name)){const t={n:name,c:tCol.get(name)};TYPES.push(t);tMap.set(name,t)}else tMap.set(name,OTHER_T)});
+  if([...tMap.values()].includes(OTHER_T))TYPES.push(OTHER_T);
+  const CATS=[],cMap=new Map(),cc=["--c1","--c2","--c3","--c4","--c5","--c6","--c7"];
+  rank("cat").forEach((name,i)=>{if(i<cc.length){const c={n:name,c:cc[i]};CATS.push(c);cMap.set(name,c)}else cMap.set(name,OTHER_C)});
+  if([...cMap.values()].includes(OTHER_C))CATS.push(OTHER_C);
+
+  const items=raw.map(r=>{
+    const ix=r.list.map(n=>idx.get(n));
+    let start=r.st?idx.get(r.st):Math.min(...ix),end=r.en?idx.get(r.en):Math.max(...ix);
+    if(!r.st&&r.en)start=Math.min(...ix);
+    if(start>end)[start,end]=[end,start];
+    const open=!r.done;
+    if(open)end=CUR;
+    return{id:r.id,title:r.title,type:tMap.get(r.type),cat:cMap.get(r.cat),start,end,open,n:end-start+1,pts:r.pts};
+  });
+  const range=sprints[0].name+(CUR?"–"+sprints[CUR].name:"");
+  return {data:{sample:false,sprints,CUR,TYPES,CATS,items,
+      eyebrow:`Backlog analysis · ${fileName} · ${range} · your data`,
+      lede:`Every item in ${fileName}, across ${sprints.length} sprint${sprints.length>1?"s":""}, drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into. Open items run to the latest sprint in the file.`},
+    dropped,noSprint};
+}
+
+function toCSV(data){
+  const q=v=>/[",\n]/.test(v=String(v))?'"'+v.replace(/"/g,'""')+'"':v;
+  const lines=[["id","title","type","category","start sprint","end sprint","status"].join(",")];
+  data.items.forEach(it=>lines.push([it.id,it.title,it.type.n,it.cat.n,data.sprints[it.start].name,data.sprints[it.end].name,it.open?"Active":"Done"].map(q).join(",")));
+  return lines.join("\n")+"\n";
+}
+
+const SAMPLE=sampleData();
+const note=$("dataNote"),noteDefault=note.textContent;
+$("dlSample").href="data:text/csv;charset=utf-8,"+encodeURIComponent(toCSV(SAMPLE));
+$("csvFile").addEventListener("change",e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const r=fromCSV(String(reader.result),file.name);
+      render(r.data);
+      const skipped=[r.dropped?r.dropped+" removed or cancelled":"",r.noSprint?r.noSprint+" with no sprint":""].filter(Boolean);
+      note.classList.remove("err");
+      note.textContent=`Showing ${r.data.items.length} items from ${file.name}`+(skipped.length?`. Skipped ${skipped.join(" and ")}.`:".")+" Read in this browser only; nothing was uploaded.";
+      $("toSample").hidden=false;
+      try{window.umami&&window.umami.track("Carry-over: CSV loaded",{items:r.data.items.length})}catch(_){}
+    }catch(err){
+      note.classList.add("err");
+      note.textContent=err.message+" Download the sample to see the expected columns.";
+    }
+    e.target.value="";
+  };
+  reader.onerror=()=>{note.classList.add("err");note.textContent="That file couldn't be read."};
+  reader.readAsText(file);
+});
+$("toSample").addEventListener("click",()=>{render(SAMPLE);$("toSample").hidden=true;note.classList.remove("err");note.textContent=noteDefault});
+
+render(SAMPLE);
+})();
+</script>
+</body>
+</html>

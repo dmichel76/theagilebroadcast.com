@@ -6,7 +6,9 @@
      LinkedIn                  click through to LinkedIn
      Menu: <name>              menu and in-page links, e.g. "Menu: Training"
      Self-reflection started   link to the self-assessment
-     Self-reflection completed results shown on the self-assessment page */
+     Self-reflection completed results shown on the self-assessment page
+     Carry-over map opened     link to the sprint carry-over map
+     Carry-over: CSV loaded    a visitor loaded their own CSV on the carry-over map (sent from carry-over.html; the file itself never leaves the browser) */
 (function () {
   var UMAMI_WEBSITE_ID = '53310796-e37c-4a64-98a3-dfda55a4ba7c';
 
@@ -35,6 +37,7 @@
     else if (/youtube\.com|youtu\.be/.test(href)) track('YouTube', { section: section(a) });
     else if (/linkedin\.com/.test(href)) track('LinkedIn', { section: section(a) });
     else if (/self-assessment\.html/.test(href)) track('Self-reflection started', { section: section(a) });
+    else if (/carry-over\.html/.test(href)) track('Carry-over map opened', { section: section(a) });
     else if (/^#[a-z]/.test(href)) {
       var name = (a.textContent || href.slice(1)).trim().replace(/\s+/g, ' ');
       track('Menu: ' + name);

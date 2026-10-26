@@ -192,6 +192,23 @@ footer.site a:hover{color:var(--site-accent)}
 .co details.cols-help[open]{flex-basis:100%}
 .co details.cols-help ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .co details.cols-help code{font-family:var(--font-mono);font-size:11px}
+/* empty state (before any data) and the sample-data banner */
+.co #dash{display:contents}
+.co #dash[hidden]{display:none!important}
+.co .empty{align-items:center;text-align:center;padding:36px 18px 40px;gap:12px;border-style:dashed}
+.co .empty .ghost{width:min(360px,100%);height:auto;margin-bottom:6px}
+.co .empty p{margin:0;color:var(--muted);max-width:52ch}
+.co .cta{font:inherit;font-size:14px;font-weight:600;background:var(--fg);color:var(--surface);border:0;border-radius:8px;padding:10px 18px;cursor:pointer;margin-top:6px;transition:transform .15s}
+.co .cta:hover{transform:translateY(-1px)}
+.co .sample-banner{position:sticky;top:calc(72px + env(safe-area-inset-top,0px) + 10px);z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;border-radius:10px;font-size:13px;
+  background:color-mix(in oklab,var(--t-debt) 16%,var(--surface));border:1px solid color-mix(in oklab,var(--t-debt) 45%,transparent);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.co .sample-banner .tag{font-family:var(--font-mono);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;background:var(--t-debt);color:var(--surface);padding:3px 8px;border-radius:5px}
+.co .sample-banner .txt{flex:1;min-width:200px}
+.co .sample-banner .acts{display:flex;gap:16px}
+.co .sample-banner .lnk{color:var(--fg);font-weight:600}
+.co .sample-banner .txt-short{display:none}
+@media (max-width:560px){.co .sample-banner{flex-wrap:nowrap;gap:8px;padding:8px 10px;font-size:12px}.co .sample-banner .txt{display:none}.co .sample-banner .txt-short{display:block;flex:1;min-width:0}.co .sample-banner .acts{gap:10px}.co .sample-banner #loadOwn{display:none}}
+@media (prefers-reduced-motion:no-preference){.co .empty:not([hidden]){animation:co-up .4s ease both}}
 /* page-wide drop: dragging a file anywhere lights up the zone */
 .co.dragging .drop{border-color:var(--accent)}
 /* a little motion when data (re)loads; off for reduced motion */
@@ -205,7 +222,7 @@ footer.site a:hover{color:var(--site-accent)}
 @keyframes co-up{from{transform:translateY(8px);opacity:0}}
 @keyframes co-pop{40%{transform:scale(1.03)}}
 </style>
-<script defer src="assets/js/track.js?v=2026-10-26"></script>
+<script defer src="assets/js/track.js?v=2026-10-26b"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
 </head>
 <body>
@@ -235,10 +252,10 @@ footer.site a:hover{color:var(--site-accent)}
 <div class="wrap">
   <header class="hero">
     <div class="hero-text">
-      <div class="eyebrow" id="eyebrow">Backlog analysis · Sample team · S14–S25 · sample data</div>
+      <div class="eyebrow" id="eyebrow">Backlog analysis · no data loaded yet</div>
       <h1>Sprint carry-over map</h1>
       <p class="intro">Carry-over is work a team commits to in a sprint but doesn't finish, so it rolls into the next one. A little is normal. A lot means plans that don't hold and less room for new work every sprint. This map shows how much carry-over there is, and where it comes from.</p>
-      <p class="lede" id="lede">Every item committed over the last 12 two-week sprints, drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into.</p>
+      <p class="lede" id="lede">Every item you load is drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into.</p>
       <ul class="see">
         <li><span class="mk" style="--c:var(--c4)"><i></i><i></i><i></i></span><b>Where it comes from</b>Which item types and areas of work keep rolling over.</li>
         <li><span class="mk" style="--c:var(--c1)"><i></i><i></i></span><b>How long work really takes</b>Sprints to done, from start to finish, not just the estimate.</li>
@@ -255,7 +272,7 @@ footer.site a:hover{color:var(--site-accent)}
         <span class="status" id="dropStatus" hidden></span>
       </label>
       <div class="side-links">
-        <button type="button" class="lnk" id="toSample" hidden>Back to sample data</button>
+        <button type="button" class="lnk" id="toSample" hidden>Show sample data</button>
         <a class="lnk" id="dlSample" href="#" download="carry-over-sample.csv">Download the sample CSV</a>
         <details class="cols-help">
           <summary>Which columns?</summary>
@@ -268,6 +285,21 @@ footer.site a:hover{color:var(--site-accent)}
       </div>
     </div>
   </header>
+
+  <section class="panel empty" id="empty">
+    <svg class="ghost" viewBox="0 0 360 96" aria-hidden="true"><g fill="var(--line)"><rect x="0" y="6" width="60" height="10" rx="3"/><rect x="64" y="6" width="56" height="10" rx="3" opacity=".55"/><rect x="40" y="26" width="70" height="10" rx="3"/><rect x="114" y="26" width="56" height="10" rx="3" opacity=".55"/><rect x="174" y="26" width="56" height="10" rx="3" opacity=".55"/><rect x="120" y="46" width="64" height="10" rx="3"/><rect x="200" y="66" width="60" height="10" rx="3"/><rect x="264" y="66" width="56" height="10" rx="3" opacity=".55"/><rect x="300" y="86" width="60" height="10" rx="3"/></g></svg>
+    <h2>Nothing to show yet</h2>
+    <p>Drop a CSV from Azure DevOps or Jira above to map your own team's sprints. Or look around first with a made-up team's sample data.</p>
+    <button type="button" class="cta" id="showSample">Show sample data</button>
+  </section>
+
+  <div id="dash" hidden>
+  <div class="sample-banner" id="sampleBanner" hidden role="status">
+    <span class="tag">Sample data</span>
+    <span class="txt">You're looking at a made-up team: 86 items over 12 sprints. None of this is real.</span>
+    <span class="txt-short">A made-up team, not real data.</span>
+    <span class="acts"><button type="button" class="lnk" id="loadOwn">Load your own CSV</button><button type="button" class="lnk" id="hideSample">Hide sample</button></span>
+  </div>
 
   <section class="stats" id="stats" aria-label="Summary"></section>
 
@@ -312,6 +344,7 @@ footer.site a:hover{color:var(--site-accent)}
     <div id="load"></div>
     <p class="note">Items active per sprint. A rising hatched share means the team starts each sprint with less room for new work.</p>
   </section>
+  </div>
 </div>
 <div class="tip" id="tip" hidden></div>
 </main>
@@ -372,8 +405,17 @@ const state={group:"type",color:"cat",only:false};
 const tip=$("tip");
 const cal=$("cal");
 
+const EMPTY={eyebrow:"Backlog analysis · no data loaded yet",lede:"Every item you load is drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into."};
+// back to the empty state: nothing shown until the visitor loads a file or asks for the sample
+function clear(){
+  D=null;done=[];tip.hidden=true;
+  $("dash").hidden=true;$("empty").hidden=false;
+  $("eyebrow").textContent=EMPTY.eyebrow;$("lede").textContent=EMPTY.lede;
+}
 function render(data){
   D=data;
+  $("empty").hidden=true;$("dash").hidden=false;
+  $("sampleBanner").hidden=!D.sample;
   done=D.items.filter(i=>!i.open);
   $("eyebrow").textContent=D.eyebrow;
   $("lede").textContent=D.lede;
@@ -662,7 +704,7 @@ function dropState(kind,html){
   $("dropOr").innerHTML=touch?(kind==="ready"?"<u>Choose a file</u>":"<u>Choose another file</u>"):(kind==="ready"?"or <u>choose a file</u>":"Drop another file, or <u>choose one</u>");
   $("dropSmall").hidden=kind!=="ready";
   status.hidden=kind==="ready";status.innerHTML=html||"";
-  $("toSample").hidden=D.sample;
+  $("toSample").hidden=!!(D&&D.sample);
   drop.classList.remove("pop");void drop.offsetWidth;if(kind!=="ready")drop.classList.add("pop");
 }
 function loadFile(file){
@@ -690,10 +732,17 @@ addEventListener("dragenter",e=>{if(!hasFiles(e))return;e.preventDefault();depth
 addEventListener("dragleave",e=>{if(!hasFiles(e))return;if(--depth<=0){depth=0;co.classList.remove("dragging");drop.classList.remove("over")}});
 addEventListener("dragover",e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect="copy";drop.classList.toggle("over",drop.contains(e.target))});
 addEventListener("drop",e=>{if(!hasFiles(e))return;e.preventDefault();depth=0;co.classList.remove("dragging");drop.classList.remove("over");loadFile(e.dataTransfer.files[0])});
-$("toSample").addEventListener("click",()=>{render(SAMPLE);dropState("ready")});
+function showSample(){
+  render(SAMPLE);dropState("ready");
+  try{window.umami&&window.umami.track("Carry-over: sample shown")}catch(_){}
+}
+$("toSample").addEventListener("click",showSample);
+$("showSample").addEventListener("click",showSample);
+$("hideSample").addEventListener("click",()=>{clear();dropState("ready");scrollTo({top:0,behavior:"smooth"})});
+$("loadOwn").addEventListener("click",()=>{scrollTo({top:0,behavior:"smooth"});$("csvFile").click()});
 
-render(SAMPLE);
-if(touch)dropState("ready");
+// start empty; ?sample opens straight onto the sample (handy for links from posts and slides)
+if(/[?&]sample\b/.test(location.search))showSample();else{clear();dropState("ready")}
 })();
 </script>
 </body>

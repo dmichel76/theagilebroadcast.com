@@ -8,6 +8,7 @@
      Self-reflection started   link to the self-assessment
      Self-reflection completed results shown on the self-assessment page
      Carry-over map opened     link to the sprint carry-over map
+     Carry-over: sample shown  a visitor chose to see the sample data on the carry-over map
      Carry-over: CSV loaded    a visitor loaded their own CSV on the carry-over map (sent from carry-over.html; the file itself never leaves the browser) */
 (function () {
   var UMAMI_WEBSITE_ID = '53310796-e37c-4a64-98a3-dfda55a4ba7c';

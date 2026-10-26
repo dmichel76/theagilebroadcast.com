@@ -1,0 +1,9 @@
+{
+  "name": "theagilebroadcast.com",
+  "private": true,
+  "description": "Plain HTML site, no build step. This file only sets up the unit tests (Node 20+, no dependencies).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

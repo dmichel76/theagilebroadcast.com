@@ -10,6 +10,23 @@ Plain HTML and CSS, no build step. Hosted free on GitHub Pages.
 - `assets/img/` – photos and sketches
 - `CNAME` – tells GitHub Pages to serve the site on theagilebroadcast.com
 
+## Backlog Currents (backlog-currents.html)
+
+The backlog flow analyser. The page holds the markup and styles; the code is plain ES modules in `assets/js/backlog-currents/` (no build step):
+
+- `csv.js` – reads the CSV exports into dated snapshots (`parseCSV`, `parseDate`, `buildSource`)
+- `model.js` – ranks, arrivals, departures, moves and section flows (`buildModel`)
+- `example.js` – the built-in example (20 weekly snapshots, seeded, so always the same)
+- `insights.js` – the nine "So what?" cards as data (`computeLearn`)
+- `views/` – drawing: the animated backlog, the flow map, the cards, the histogram
+- `app.js` – wiring: drop zone, playback, highlights
+
+After editing a module, change the date in every `?v=...` on its import lines and on `app.js?v=...` in the page, so browsers fetch the new version.
+
+### Tests
+
+Unit tests for the pure functions are in `tests/`. With Node 20 or later installed, run `npm test` in this folder. There's nothing to install.
+
 ## Add or change a training course
 
 Open `assets/js/courses.js`, copy one course block, paste it at the end of the list and edit it.

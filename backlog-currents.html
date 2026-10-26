@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Backlog Currents · David Michel | The Agile Broadcast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Drop weekly Azure DevOps or Jira backlog exports to see what climbs, sinks, stalls and skips the queue. Explore the example first; your files stay in your browser.">
+<link rel="canonical" href="https://theagilebroadcast.com/backlog-currents.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://theagilebroadcast.com/backlog-currents.html">
+<meta property="og:site_name" content="The Agile Broadcast">
+<meta property="og:title" content="Backlog Currents · The Agile Broadcast">
+<meta property="og:description" content="See how items really move through your prioritised backlog: what climbs, sinks, stalls and skips the queue.">
+<meta property="og:image" content="https://theagilebroadcast.com/assets/img/hero-david.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Backlog Currents (backlog flow analyser).
+   Same page structure as carry-over.html: shared navy header and footer, then the tool, scoped under .bc.
+   Styled with the site's design system (navy, amber, Archivo headlines, IBM Plex), like slicing.html.
+   It follows the visitor's light/dark setting, as the carry-over map does.
+   Code: assets/js/backlog-currents/ (ES modules, no build step). Tests: tests/backlog-currents.test.mjs.
+   After editing any module, bump ?v=... on the import lines (every module) and on app.js below. */
+
+/* ---------- 1. site chrome (same as carry-over.html) ---------- */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --on-navy:#DCE3EF;
+  --site-accent:#F2A91E;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+}
+[hidden]{display:none!important}
+body{margin:0}
+header.site,footer.site{font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+header.site *,footer.site *{box-sizing:border-box}
+header.site .wrap,footer.site .wrap{max-width:1200px;margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){header.site .wrap,footer.site .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+header.site .nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+header.site .brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+header.site .brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+header.site .brand span{font-family:var(--mono);font-size:.72rem;color:var(--site-accent);letter-spacing:.08em;text-transform:uppercase}
+header.site .nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+header.site .nav ul a{color:var(--on-navy);text-decoration:none}
+header.site .nav ul a:hover{color:var(--site-accent)}
+header.site .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;text-transform:uppercase;letter-spacing:.02em;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s;padding:10px 16px;font-size:.85rem;background:var(--site-accent);color:var(--navy)}
+header.site .btn:hover{background:#FFC04D}
+header.site a:focus-visible{outline:3px solid var(--site-accent);outline-offset:3px}
+@media (max-width:980px){header.site .nav ul{display:none}}
+@media (max-width:420px){header.site .nav .btn{padding:9px 12px;font-size:.78rem}header.site .brand span{display:none}}
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--site-accent)}
+
+/* ---------- 2. the tool, scoped under .bc ---------- */
+.bc{
+  --paper:#FFFFFF; --soft:#F1F3F7; --surface:#FFFFFF; --ink:#12213B; --muted:#56637A; --line:#D9DEE8;
+  --accent:#F2A91E; --accent-ink:#B87700;
+  /* movement colours, from the site palette: Flow blue, Value green, red, amber, grey */
+  --new:#1E88E5; --up:#16A37F; --down:#C62828; --started:#D99000; --gone:#98A3B5; --steady:#CBD3DF;
+  --shadow:0 1px 0 var(--line),0 18px 40px rgba(18,33,59,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bc{
+  --paper:#0B1424; --soft:#13203A; --surface:#101B30; --ink:#E6EBF3; --muted:#9AA8BF; --line:#26385A;
+  --accent:#F2A91E; --accent-ink:#F5BC4E;
+  --new:#5AA9F5; --up:#3CC79E; --down:#F0705E; --started:#F2B84A; --gone:#6E7E98; --steady:#2E4268;
+  --shadow:0 1px 0 var(--line),0 18px 40px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"] .bc{
+  --paper:#0B1424; --soft:#13203A; --surface:#101B30; --ink:#E6EBF3; --muted:#9AA8BF; --line:#26385A;
+  --accent:#F2A91E; --accent-ink:#F5BC4E;
+  --new:#5AA9F5; --up:#3CC79E; --down:#F0705E; --started:#F2B84A; --gone:#6E7E98; --steady:#2E4268;
+  --shadow:0 1px 0 var(--line),0 18px 40px rgba(0,0,0,.3); color-scheme:dark}
+.bc{display:block;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:clip}
+.bc *,.bc *::before,.bc *::after{box-sizing:border-box}
+.bc h1,.bc h2,.bc h3{font-family:var(--display);font-weight:800;line-height:1.05;letter-spacing:-.01em;text-wrap:balance;margin:0;text-transform:uppercase}
+.bc h1 em,.bc h2 em{font-style:normal;color:var(--accent)}
+.bc p{margin:0}
+.bc button,.bc input{font:inherit;color:inherit}
+.bc .wrap{max-width:1200px;margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){.bc .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+.bc .eyebrow{display:block;font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:10px}
+.bc .mono{font-family:var(--mono)}
+.bc .band{padding-block:clamp(32px,4.5vw,60px)}
+.bc .band.soft{background:var(--soft)}
+.bc .section-head{display:grid;gap:10px;margin-bottom:22px}
+.bc .section-head h2{font-size:clamp(1.6rem,3.4vw,2.3rem)}
+.bc .section-head .lede{color:var(--muted);max-width:68ch}
+.bc :is(a,button,input,summary):focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* buttons (the site's) */
+.bc .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:var(--display);font-weight:750;font-size:.92rem;text-transform:uppercase;letter-spacing:.02em;padding:12px 18px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s;background:none}
+.bc .btn-primary{background:var(--accent);color:#12213B}
+.bc .btn-primary:hover{background:#FFC04D}
+.bc .btn-ghost{border-color:currentColor;color:var(--ink)}
+.bc .btn-ghost:hover,.bc .btn-ghost[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bc .btn-sm{padding:8px 12px;font-size:.78rem}
+.bc .lnk{font:inherit;background:none;border:0;padding:0;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+/* panels (the site's: square, hairline, soft shadow) */
+.bc .panel{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);min-width:0}
+.bc .panel-title{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.bc .panel-title b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1rem}
+.bc .panel-title span{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.04em}
+.bc .panel-body{padding:14px 16px;display:grid;gap:10px}
+.bc .panel-body p{color:var(--muted);font-size:.95rem}
+.bc .panel-body p b{color:var(--ink);font-weight:600}
+
+/* hero: navy band, text left, drop zone right (the carry-over layout) */
+.bc .hero{background:var(--navy);color:var(--on-navy);padding-block:clamp(36px,5vw,64px);position:relative;overflow:hidden}
+.bc .hero::after{content:"";position:absolute;right:-30px;bottom:-10px;width:min(56vw,620px);aspect-ratio:2/1;pointer-events:none;opacity:.13;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300' fill='none' stroke='%23F2A91E' stroke-width='6' stroke-linecap='round'%3E%3Cpath d='M10 60 H330 C420 60 430 150 520 150 H590'/%3E%3Cpath d='M10 150 H590' stroke-opacity='.5' stroke-dasharray='4 14'/%3E%3Cpath d='M10 240 H240 C320 240 330 150 420 150'/%3E%3C/svg%3E") no-repeat right bottom/contain}
+.bc .hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px clamp(24px,4vw,56px);align-items:stretch}
+@media (max-width:860px){.bc .hero .wrap{grid-template-columns:1fr}}
+.bc .hero .eyebrow{color:var(--accent)}
+.bc .hero h1{color:#fff;font-size:clamp(2.3rem,6vw,4.2rem);letter-spacing:-.02em;line-height:.95}
+.bc .hero-text{display:flex;flex-direction:column;gap:16px;min-width:0}
+.bc .intro{font-size:clamp(1.02rem,1.5vw,1.15rem);max-width:56ch;color:#C3CCDB}
+.bc .key{list-style:none;margin:6px 0 0;padding:14px 0 0;border-top:1px solid var(--navy-2);display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.88rem;color:#C3CCDB}
+.bc .key li{display:flex;align-items:center;gap:8px}
+.bc .key i{width:18px;height:10px;flex:none}
+.bc .side{display:flex;flex-direction:column;gap:12px;min-width:0}
+/* drop zone: same structure and states as carry-over (ready / over / loaded / err / pop) */
+.bc .drop{--paper:#FFFFFF;--soft:#F1F3F7;--ink:#12213B;--muted:#56637A;--line:#D9DEE8;
+  position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;min-height:220px;padding:22px 18px;
+  border:2px dashed #8D9AB0;background:var(--paper);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.bc .drop:hover{border-color:var(--accent)}
+.bc .drop:focus-within{outline:3px solid var(--accent);outline-offset:3px}
+.bc .drop.over{border-color:var(--accent);border-style:solid;background:#FFF6E3;transform:scale(1.015)}
+.bc .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.bc .drop .ico{width:64px;height:64px;transition:transform .2s}
+.bc .drop.over .ico{transform:translateY(-4px) rotate(-4deg)}
+.bc .drop strong{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.05rem;letter-spacing:.01em}
+.bc .drop .or{font-size:.9rem;color:var(--muted)}
+.bc .drop .or u{color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+.bc .drop .small{font-size:.82rem;color:var(--muted);max-width:36ch}
+.bc .drop .small b{color:var(--ink);font-weight:600}
+.bc .drop.loaded{border-style:solid;border-color:#16A37F;background:#EAF7F2}
+.bc .drop.err{border-style:solid;border-color:#C62828}
+.bc .drop .status{font-size:.88rem;max-width:38ch}
+.bc .drop.err .status{color:#C62828}
+.bc .drop .status b{font-family:var(--mono);font-weight:500;word-break:break-all}
+.bc.dragging .drop{border-color:var(--accent)}
+.bc .side-links{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:.85rem;color:#C3CCDB}
+.bc .side-links .lnk{color:#fff}
+.bc details.help summary{cursor:pointer;color:#fff;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px;list-style:none;width:max-content;max-width:100%}
+.bc details.help summary::-webkit-details-marker{display:none}
+.bc details.help[open]{flex-basis:100%}
+.bc .help-body{display:grid;gap:14px;margin-top:10px;padding:14px 16px;background:var(--navy-2);color:var(--on-navy);font-size:.86rem}
+.bc .help-body b{color:#fff;font-weight:600}
+.bc .help-body ol{margin:4px 0 0;padding-left:18px;display:grid;gap:3px}
+.bc .help-body code{font-family:var(--mono);font-size:.78rem;background:rgba(255,255,255,.08);padding:0 4px;overflow-wrap:anywhere}
+.bc .help-body .btn{color:#fff;margin-top:8px}
+.bc .help-body .btn:hover{background:#fff;color:var(--navy);border-color:#fff}
+
+/* example banner (carry-over's sample banner, in amber) */
+.bc .example-banner{position:sticky;top:calc(72px + env(safe-area-inset-top,0px) + 10px);z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;margin-top:clamp(20px,3vw,32px);font-size:.88rem;
+  background:color-mix(in oklab,var(--accent) 16%,var(--surface));border:1px solid color-mix(in oklab,var(--accent) 55%,transparent);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.bc .example-banner .tag{font-family:var(--mono);font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;background:var(--accent);color:#12213B;padding:3px 8px}
+.bc .example-banner .txt{flex:1;min-width:200px}
+.bc .example-banner .acts{display:flex;gap:16px}
+.bc .example-banner .lnk{font-weight:600}
+.bc .example-banner .txt-short{display:none}
+@media (max-width:560px){.bc .example-banner{flex-wrap:nowrap;gap:8px;padding:8px 10px;font-size:.8rem}.bc .example-banner .txt{display:none}.bc .example-banner .txt-short{display:block;flex:1;min-width:0}.bc .example-banner .acts{gap:10px}.bc .example-banner #loadOwn{display:none}}
+/* empty state, after "Hide example" */
+.bc .empty{text-align:center;padding:40px 18px;display:grid;justify-items:center;gap:12px;border-style:dashed;box-shadow:none}
+.bc .empty p{color:var(--muted);max-width:52ch}
+
+/* state chips */
+.bc .states{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.85rem;color:var(--muted);margin-bottom:16px}
+.bc .chip{font:500 .8rem var(--body);border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:transparent;color:var(--muted);cursor:pointer}
+.bc .chip:hover{border-color:var(--ink);color:var(--ink)}
+.bc .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* player */
+.bc .player{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.bc #play{min-width:112px}
+.bc .scrub{flex:1 1 260px;display:grid;gap:2px;min-width:0}
+.bc .scrub input{width:100%;accent-color:var(--accent);margin:0}
+.bc .scrub .ends{display:flex;justify-content:space-between;font:500 .75rem var(--mono);color:var(--muted)}
+.bc .seg{display:inline-flex;border:2px solid var(--ink)}
+.bc .seg button{font:500 .8rem var(--mono);background:transparent;border:0;color:var(--ink);padding:6px 10px;cursor:pointer}
+.bc .seg button+button{border-left:2px solid var(--ink)}
+.bc .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.bc .stage{display:grid;grid-template-columns:minmax(0,1fr) 330px;align-items:start}
+.bc .board{padding:12px;position:relative;min-width:0}
+.bc canvas{display:block;width:100%;touch-action:pan-y;cursor:pointer}
+.bc .hlbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--soft);border-left:4px solid var(--accent);padding:6px 10px;margin-bottom:8px;font-size:.88rem}
+.bc .week{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);border-left:1px solid var(--line);padding:16px;display:grid;gap:14px;align-content:start}
+.bc .week .eyebrow{margin:0}
+.bc .nowdate{font:800 1.5rem/1.1 var(--display);text-transform:uppercase}
+.bc .counts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bc .cnt{display:flex;align-items:center;gap:8px;font-size:.88rem}
+.bc .cnt i{width:12px;height:12px;flex:none}
+.bc .cnt b{font:500 .95rem var(--mono);font-variant-numeric:tabular-nums;min-width:22px}
+.bc .notable{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.bc .notable button{width:100%;text-align:left;background:transparent;border:0;padding:6px;cursor:pointer;color:var(--ink);display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;align-items:baseline}
+.bc .notable button:hover{background:var(--soft)}
+.bc .notable .mv{font:500 .8rem var(--mono);font-variant-numeric:tabular-nums}
+.bc .notable .tt{font-size:.85rem;line-height:1.3;overflow-wrap:anywhere}
+.bc .notable .tt small{display:block;color:var(--muted);font-family:var(--mono);font-size:.72rem}
+.bc .quiet,.bc .fine{font-size:.82rem;color:var(--muted)}
+.bc .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:.8rem;line-height:1.4;padding:7px 9px;max-width:260px;z-index:3}
+.bc .tip .m{font-family:var(--mono);opacity:.8}
+.bc .detail{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:14px 16px;border-top:1px solid var(--line);border-left:5px solid var(--started)}
+.bc .detail .info{flex:1 1 300px;min-width:0;display:grid;gap:2px}
+.bc .detail .eyebrow{margin:0}
+.bc .detail .ttl{font-weight:600}
+.bc .detail .facts{font-size:.88rem;color:var(--muted)}
+.bc .detail svg{width:240px;max-width:100%;height:56px;flex:none}
+@media (max-width:900px){.bc .stage{grid-template-columns:1fr}.bc .week{position:static;order:-1;border-left:0;border-bottom:1px solid var(--line)}}
+
+/* arrivals and departures */
+.bc .fstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:14px;margin-bottom:16px}
+.bc .fs{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--c);padding:14px 16px;display:grid;gap:2px}
+.bc .fs .k{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.bc .fs .v{font:800 2.2rem/1.1 var(--display);font-variant-numeric:tabular-nums;color:var(--c)}
+.bc .fs .v small{font:500 .82rem var(--body);color:var(--muted);margin-left:4px}
+.bc .fs .n{font-size:.82rem;color:var(--muted)}
+.bc .flowbox{padding:12px 14px}
+.bc #flow svg{display:block;width:100%;height:auto;overflow:visible}
+.bc #flow text{font-family:var(--body)}
+.bc .ribbon{fill:none;stroke-linecap:butt;opacity:.85}
+.bc .stream{fill:none;stroke:var(--surface);stroke-linecap:round;opacity:.6;stroke-dasharray:2 11;animation:bc-stream 1.1s linear infinite}
+@keyframes bc-stream{to{stroke-dashoffset:-26}}
+
+/* "So what?" cards: the site's left-border cards (red = worth a conversation, green = looks healthy) */
+.bc .lcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px}
+.bc .lc{--c:var(--up);background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.bc .lc.warn{--c:var(--down)}
+.bc .lc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.bc .lc-tag{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.95rem}
+.bc .verdict{font-family:var(--mono);font-size:.7rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--c);border:1px solid currentColor;padding:2px 8px}
+.bc .ldraw{display:block;width:100%;height:76px;background:var(--soft)}
+.bc .ldraw text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.bc .ldraw .lb{font-family:var(--body);font-size:11px;font-weight:600;fill:var(--ink)}
+.bc .lc .hl{font:600 1.18rem/1.3 var(--body);text-wrap:balance}
+.bc .lc .hl em{font-style:normal;font-family:var(--display);font-weight:800;color:var(--c)}
+.bc .lc .ev{font-size:.88rem;color:var(--muted)}
+.bc .lc dl{margin:0;display:grid;gap:8px}
+.bc .lc dt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-ink)}
+.bc .lc dd{margin:2px 0 0;font-size:.95rem;max-width:62ch}
+.bc .lc dd.ask{font-style:italic}
+.bc .lc .show{justify-self:start}
+
+/* histogram + about */
+.bc .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.bc .hrow{display:grid;grid-template-columns:52px minmax(0,1fr) 30px;gap:10px;align-items:center;font-size:.82rem}
+.bc .hrow .rl{font-family:var(--mono);color:var(--muted);text-align:right}
+.bc .hrow .hb{height:14px;background:var(--soft);overflow:hidden}
+.bc .hrow .hb i{display:block;height:100%}
+.bc .hrow .hc{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* motion */
+@keyframes bc-pop{40%{transform:scale(1.03)}}
+@media (prefers-reduced-motion:no-preference){.bc .drop.pop{animation:bc-pop .5s cubic-bezier(.2,1.5,.4,1)}}
+@media (prefers-reduced-motion:reduce){.bc .stream{animation:none;display:none}.bc *{transition:none!important}}
+</style>
+<script defer src="assets/js/track.js?v=2026-10-26d"></script>
+<script defer src="assets/js/menu.js?v=2026-10-25"></script>
+<script type="module" src="assets/js/backlog-currents/app.js?v=2026-10-26"></script>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#tools">Tools</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main class="bc" id="bc">
+  <section class="hero" aria-labelledby="bc-title">
+    <div class="wrap">
+      <div class="hero-text">
+        <span class="eyebrow">Backlog analysis · free tool</span>
+        <h1 id="bc-title">Backlog <em>currents</em></h1>
+        <p class="intro">Watch how items really move through a prioritised backlog: what climbs, what sinks, what never moves, and what skips the queue. Then see what that flow says about how your team really chooses work.</p>
+        <ul class="key" aria-label="Colour key">
+          <li><i style="background:var(--new)"></i>New</li>
+          <li><i style="background:var(--up)"></i>Moved up</li>
+          <li><i style="background:var(--down)"></i>Moved down</li>
+          <li><i style="background:var(--started)"></i>Started</li>
+          <li><i style="background:var(--gone)"></i>Removed or left</li>
+        </ul>
+      </div>
+      <div class="side">
+        <label class="drop" id="drop">
+          <input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv" multiple>
+          <svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 6h26l12 12v38a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" fill="#fff" stroke="#56637A" stroke-width="2"/><path d="M40 6v12h12" fill="none" stroke="#56637A" stroke-width="2"/><rect x="18" y="24" width="28" height="5" fill="#CBD3DF"/><rect x="18" y="32" width="28" height="5" fill="#16A37F" opacity=".35"/><rect x="18" y="32" width="3" height="5" fill="#16A37F"/><rect x="18" y="40" width="28" height="5" fill="#CBD3DF"/><rect x="24" y="48" width="22" height="5" fill="#D99000" opacity=".35"/><rect x="24" y="48" width="3" height="5" fill="#D99000"/></svg>
+          <span id="dropMain"><strong>Drop your CSVs here</strong></span>
+          <span class="or" id="dropOr">or <u>choose files</u></span>
+          <span class="small" id="dropSmall">Weekly backlog exports from Azure DevOps or Jira, one file per week, or one file with a date column. <b>Read in this browser only. Nothing is uploaded or stored.</b></span>
+          <span class="status" id="dropStatus" role="status" hidden></span>
+        </label>
+        <div class="side-links">
+          <button type="button" class="lnk" id="toExample" hidden>Show example data</button>
+          <details class="help">
+            <summary>What files do I need?</summary>
+            <div class="help-body">
+              <div><b>Azure DevOps</b>
+                <ol>
+                  <li>Make a query for your backlog items with State not Done or Closed, sorted by <code>Backlog Priority</code>.</li>
+                  <li>Columns: <code>ID</code>, <code>Title</code>, <code>State</code>, <code>Backlog Priority</code>.</li>
+                  <li>Export to CSV once a week or sprint. Put the date in the file name, e.g. <code>backlog-2026-10-19.csv</code>.</li>
+                </ol></div>
+              <div><b>Jira</b>
+                <ol>
+                  <li>Filter: <code>project = ABC AND statusCategory != Done ORDER BY Rank</code>.</li>
+                  <li>Export CSV with <code>Issue key</code>, <code>Summary</code>, <code>Status</code>. Row order is used as the rank.</li>
+                  <li>Same routine: one dated file per week or sprint.</li>
+                </ol></div>
+              <div><b>One file with history</b>
+                <ol>
+                  <li>Columns <code>Date</code>, <code>ID</code>, <code>Title</code>, <code>State</code>, <code>Rank</code>, one row per item per snapshot (e.g. from ADO Analytics).</li>
+                  <li>Keep just-started items (Active, Committed, In Progress) in the export so the page can tell started work from removed work.</li>
+                </ol>
+                <button class="btn btn-ghost btn-sm" id="copySample" type="button">Copy a sample CSV</button></div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="panel empty band" id="empty" hidden style="margin-top:32px">
+      <h2>Nothing to show yet</h2>
+      <p>Drop weekly CSV exports from Azure DevOps or Jira above to see your own backlog move. Or look around first with the example.</p>
+      <button type="button" class="btn btn-primary" id="showExample">Show example data</button>
+    </section>
+  </div>
+
+  <div id="dash">
+    <div class="wrap">
+      <div class="example-banner" id="exampleBanner" role="status">
+        <span class="tag">Example data</span>
+        <span class="txt">You’re looking at a made-up team: 20 weekly Azure DevOps snapshots. None of this is real.</span>
+        <span class="txt-short">A made-up team, not real data.</span>
+        <span class="acts"><button type="button" class="lnk" id="loadOwn">Load your own CSVs</button><button type="button" class="lnk" id="hideExample">Hide example</button></span>
+      </div>
+    </div>
+
+    <section class="band" aria-labelledby="watch-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow" style="margin:0">Week by week</span>
+          <h2 id="watch-title">Watch it <em>move</em></h2>
+          <p class="lede">Each bar is a backlog item, rank 1 at the top. Hover or tap one to follow it.</p>
+        </div>
+        <div class="states" id="states" hidden></div>
+        <div class="panel">
+          <div class="player" id="player" aria-label="Playback">
+            <button class="btn btn-primary" id="play" type="button" aria-pressed="false">Play</button>
+            <div class="scrub">
+              <input type="range" id="scrub" min="0" max="1" step="0.01" value="0" aria-label="Snapshot">
+              <div class="ends"><span id="d0"></span><span id="d1"></span></div>
+            </div>
+            <div class="seg" id="speed" role="group" aria-label="Speed">
+              <button type="button" data-speed="0.5" aria-pressed="false">0.5×</button>
+              <button type="button" data-speed="1" aria-pressed="true">1×</button>
+              <button type="button" data-speed="2" aria-pressed="false">2×</button>
+            </div>
+          </div>
+          <div class="stage">
+            <div class="board" id="board">
+              <div class="hlbar" id="hlbar" hidden><span id="hltxt"></span><button class="btn btn-ghost btn-sm" id="hlclear" type="button">Clear</button></div>
+              <canvas id="col" aria-label="Animated backlog, rank 1 at the top"></canvas>
+              <div class="tip" id="tip" hidden></div>
+            </div>
+            <aside class="week" aria-live="polite" aria-label="This week">
+              <div><span class="eyebrow" id="nowlab">Snapshot</span><div class="nowdate" id="nowdate"></div></div>
+              <div class="counts">
+                <div class="cnt"><i style="background:var(--new)"></i><b id="c-new">0</b>new</div>
+                <div class="cnt"><i style="background:var(--started)"></i><b id="c-started">0</b>started</div>
+                <div class="cnt"><i style="background:var(--up)"></i><b id="c-up">0</b>moved up</div>
+                <div class="cnt"><i style="background:var(--down)"></i><b id="c-down">0</b>moved down</div>
+                <div class="cnt"><i style="background:var(--gone)"></i><b id="c-gone">0</b>removed / left</div>
+                <div class="cnt"><i style="background:var(--steady)"></i><b id="c-size">0</b>in backlog</div>
+              </div>
+              <div style="display:grid;gap:6px"><span class="eyebrow" style="margin:0">Notable moves</span><ul class="notable" id="notable"></ul></div>
+              <p class="fine">“Moved” means re-prioritised by 3+ places against the items that stayed, so shifts caused by work leaving the top don’t count.</p>
+            </aside>
+          </div>
+          <div class="detail" id="detail" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band soft" aria-labelledby="flow-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow" style="margin:0">Across the whole period</span>
+          <h2 id="flow-title">Arrivals and <em>departures</em></h2>
+          <p class="lede">Average items per week. Arrow thickness shows the rate. Promotions curve up on the left, demotions curve down on the right. Average stay uses Little’s law: average items in a section ÷ departures per week.</p>
+        </div>
+        <div class="fstats" id="fstats"></div>
+        <div class="panel flowbox"><div id="flow"></div></div>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="learn-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow" style="margin:0">What it suggests</span>
+          <h2 id="learn-title">So <em>what?</em></h2>
+          <p class="lede">Worked out from the data above. Each card is a conversation starter for your next refinement or retro, not a verdict.</p>
+        </div>
+        <div class="lcards" id="learn"></div>
+      </div>
+    </section>
+
+    <section class="band soft">
+      <div class="wrap two">
+        <div class="panel">
+          <div class="panel-title"><b>Where started work came from</b><span>rank when picked</span></div>
+          <div class="panel-body">
+            <p>Rank each item held in the snapshot before it was started.</p>
+            <div id="hist" style="display:grid;gap:6px"></div>
+          </div>
+        </div>
+        <div class="panel" id="about"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="./#tools">More tools</a></span>
+  </div>
+</footer>
+<script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body>
+</html>

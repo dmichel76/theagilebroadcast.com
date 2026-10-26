@@ -10,7 +10,10 @@
      Carry-over map opened     link to the sprint carry-over map
      Download                  a file downloaded from the site (file = its name, e.g. the Claude skill zip)
      Carry-over: sample shown  a visitor chose to see the sample data on the carry-over map
-     Carry-over: CSV loaded    a visitor loaded their own CSV on the carry-over map (sent from carry-over.html; the file itself never leaves the browser) */
+     Carry-over: CSV loaded    a visitor loaded their own CSV on the carry-over map (sent from carry-over.html; the file itself never leaves the browser)
+     Backlog currents opened   link to the Backlog Currents flow analyser
+     Backlog currents: example shown  a visitor chose to see the example again (sent from backlog-currents.html)
+     Backlog currents: CSV loaded     a visitor loaded their own CSVs (files and snapshot counts only; the files never leave the browser) */
 (function () {
   var UMAMI_WEBSITE_ID = '53310796-e37c-4a64-98a3-dfda55a4ba7c';
 
@@ -41,6 +44,7 @@
     else if (/self-assessment\.html/.test(href)) track('Self-reflection started', { section: section(a) });
     else if (/\.zip(\?|$)/.test(href)) track('Download', { file: href.split('/').pop() });
     else if (/carry-over\.html/.test(href)) track('Carry-over map opened', { section: section(a) });
+    else if (/backlog-currents\.html/.test(href)) track('Backlog currents opened', { section: section(a) });
     else if (/^#[a-z]/.test(href)) {
       var name = (a.textContent || href.slice(1)).trim().replace(/\s+/g, ' ');
       track('Menu: ' + name);

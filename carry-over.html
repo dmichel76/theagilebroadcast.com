@@ -233,6 +233,18 @@ footer.site a:hover{color:var(--site-accent)}
 .co .sample-banner .txt-short{display:none}
 @media (max-width:560px){.co .sample-banner{flex-wrap:nowrap;gap:8px;padding:8px 10px;font-size:12px}.co .sample-banner .txt{display:none}.co .sample-banner .txt-short{display:block;flex:1;min-width:0}.co .sample-banner .acts{gap:10px}.co .sample-banner #loadOwn{display:none}}
 @media (prefers-reduced-motion:no-preference){.co .empty:not([hidden]){animation:co-up .4s ease both}}
+/* Claude skill download */
+.co .skill{gap:16px;background:radial-gradient(90% 120% at 100% 0%,color-mix(in oklab,var(--t-spike) 12%,transparent),transparent 60%),var(--surface);scroll-margin-top:90px}
+.co .skill-head{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between}
+.co .skill-text{display:flex;flex-direction:column;gap:6px;max-width:68ch;flex:1 1 380px}
+.co .skill-text p{margin:0;color:var(--muted)}
+.co .skill .cta{margin:0;text-decoration:none;display:inline-block;white-space:nowrap}
+.co .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:st}
+@media (max-width:760px){.co .steps{grid-template-columns:1fr}}
+.co .steps li{counter-increment:st;position:relative;padding:12px 12px 12px 44px;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.45;color:var(--muted);background:color-mix(in oklab,var(--surface) 80%,transparent)}
+.co .steps li::before{content:counter(st);position:absolute;left:12px;top:11px;width:22px;height:22px;border-radius:50%;background:var(--fg);color:var(--surface);font-family:var(--font-mono);font-size:12px;display:grid;place-items:center}
+.co .steps b{color:var(--fg);font-weight:600}
+.co .skill code{font-family:var(--font-mono);font-size:11px}
 /* page-wide drop: dragging a file anywhere lights up the zone */
 .co.dragging .drop{border-color:var(--accent)}
 /* a little motion when data (re)loads; off for reduced motion */
@@ -246,7 +258,7 @@ footer.site a:hover{color:var(--site-accent)}
 @keyframes co-up{from{transform:translateY(8px);opacity:0}}
 @keyframes co-pop{40%{transform:scale(1.03)}}
 </style>
-<script defer src="assets/js/track.js?v=2026-10-26b"></script>
+<script defer src="assets/js/track.js?v=2026-10-26c"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
 </head>
 <body>
@@ -307,6 +319,7 @@ footer.site a:hover{color:var(--site-accent)}
       <div class="side-links">
         <button type="button" class="lnk" id="toSample" hidden>Show sample data</button>
         <a class="lnk" id="dlSample" href="#" download="carry-over-sample.csv">Download the sample CSV</a>
+        <a class="lnk" href="#skill">Get the Claude skill</a>
         <details class="cols-help">
           <summary>Which columns?</summary>
           <ul>
@@ -378,6 +391,23 @@ footer.site a:hover{color:var(--site-accent)}
     <p class="note">Items active per sprint. A rising hatched share means the team starts each sprint with less room for new work.</p>
   </section>
   </div>
+
+  <section class="panel skill" id="skill">
+    <div class="skill-head">
+      <div class="skill-text">
+        <div class="eyebrow">Claude skill · free download</div>
+        <h2>Run it on your live data with Claude</h2>
+        <p>This page reads a CSV. The Claude skill goes further: it reads each item's sprint history straight from Azure DevOps or Jira, then builds this same map for you. It works with a CSV too.</p>
+      </div>
+      <a class="cta" href="assets/downloads/sprint-carry-over-map.zip" download>Download the skill (.zip)</a>
+    </div>
+    <ol class="steps">
+      <li><b>Download</b> the zip file. No need to unzip it.</li>
+      <li><b>Add it to Claude:</b> Customize → Skills → + → Create skill → Upload a skill. Code execution and file creation need to be switched on.</li>
+      <li><b>Ask for your map:</b> “Build my sprint carry-over map from Azure DevOps”, “…from my Jira board”, or attach a CSV.</li>
+    </ol>
+    <p class="note">Live data needs a read-only token, and Claude needs to be allowed to reach Azure DevOps or Jira: add the domain in Claude's Settings → Capabilities (an admin does this on Team and Enterprise plans), or use Claude Code and unzip the skill into <code>~/.claude/skills/</code>. The skill tells Claude to use your token for that one run only and never save or show it.</p>
+  </section>
 </div>
 <div class="tip" id="tip" hidden></div>
 </main>

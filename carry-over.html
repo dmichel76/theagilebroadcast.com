@@ -160,11 +160,6 @@ footer.site a:hover{color:var(--site-accent)}
 .co .hero h1{margin-top:2px}
 .co .intro{font-size:17px;line-height:1.5;max-width:56ch;margin:0;color:var(--fg)}
 .co .hero .lede{margin:0}
-.co .see{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-@media (max-width:560px){.co .see{grid-template-columns:1fr}}
-.co .see li{background:color-mix(in oklab,var(--surface) 70%,transparent);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;line-height:1.4;color:var(--muted);display:flex;flex-direction:column;gap:8px}
-.co .see li b{color:var(--fg);font-weight:600;font-size:13.5px}
-.co .see .mk{width:84px;height:28px;color:var(--fg);opacity:.7;display:block}
 .co .drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;min-height:220px;padding:22px 18px;border:2px dashed color-mix(in oklab,var(--muted) 45%,transparent);border-radius:14px;background:color-mix(in oklab,var(--bg) 75%,transparent);cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
 .co .drop:hover{border-color:var(--accent)}
 .co .drop:focus-within{outline:2px solid var(--accent);outline-offset:3px}
@@ -190,6 +185,37 @@ footer.site a:hover{color:var(--site-accent)}
 .co details.cols-help[open]{flex-basis:100%}
 .co details.cols-help ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .co details.cols-help code{font-family:var(--font-mono);font-size:11px}
+/* concept: what a carry-over is (two example items over three sprints) */
+.co .concept{margin:4px 0 2px;padding:14px 16px 12px;border:1px solid var(--line);border-radius:12px;background:color-mix(in oklab,var(--surface) 75%,transparent)}
+.co .cg{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:6px}
+.co .ccols{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);pointer-events:none}
+.co .ccols div+div{border-left:1px dashed var(--line)}
+.co .ch{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center;padding-bottom:4px}
+.co .cbar{position:relative;display:flex;gap:2px;height:14px;margin:0 4px;align-items:center}
+.co .cbar .cs{flex:1;height:100%;border-radius:3px;background:var(--c);transform-origin:left center}
+.co .cbar .cs.carry{background:repeating-linear-gradient(135deg,var(--c) 0 3px,color-mix(in oklab,var(--c) 30%,transparent) 3px 6px)}
+.co .cbar .ok{position:absolute;right:1px;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;background:var(--c1);color:#fff;display:grid;place-items:center;font-size:8px;line-height:1;font-weight:700;box-shadow:0 0 0 2px var(--surface)}
+.co .ca{grid-column:1;--c:color-mix(in oklab,var(--fg) 45%,var(--surface));margin-top:6px}
+.co .cbk{grid-column:1/4;--c:var(--accent);margin-top:22px;margin-bottom:4px}
+.co .ckey{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.4;color:var(--muted)}
+.co .ckey li{display:flex;gap:8px;align-items:baseline}
+.co .ckey strong{color:var(--fg);font-weight:600}
+.co .ckey i{flex:none;width:18px;height:8px;border-radius:2px;transform:translateY(-1px)}
+.co .ckey .sw-a{background:color-mix(in oklab,var(--fg) 45%,var(--surface))}
+.co .ckey .sw-b{background:linear-gradient(90deg,var(--accent) 0 40%,transparent 40%),repeating-linear-gradient(135deg,var(--accent) 0 3px,color-mix(in oklab,var(--accent) 30%,transparent) 3px 6px)}
+.co .ctag{position:absolute;bottom:100%;margin-bottom:3px;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;color:var(--accent);white-space:nowrap;background:var(--surface);padding:0 4px;border-radius:4px}
+.co .ctag::after{content:"↓";margin-left:3px}
+.co .ctag.t1{left:calc(100%/3)}
+.co .ctag.t2{left:calc(200%/3)}
+@media (max-width:420px){.co .ctag{font-size:9px}.co .ctag::after{display:none}}
+@media (prefers-reduced-motion:no-preference){
+  .co .cbk .cs{animation:co-grow .5s cubic-bezier(.2,.8,.2,1) both}
+  .co .cbk .s2{animation-delay:.7s}.co .cbk .s3{animation-delay:1.4s}
+  .co .cbk .t1{animation:co-fade .35s ease .55s both}.co .cbk .t2{animation:co-fade .35s ease 1.25s both}
+  .co .cbk .ok{animation:co-fade .3s ease 2s both}
+  .co .ca .cs{animation:co-grow .5s cubic-bezier(.2,.8,.2,1) both}.co .ca .ok{animation:co-fade .3s ease .5s both}
+}
+@keyframes co-fade{from{opacity:0}}
 /* empty state (before any data) and the sample-data banner */
 .co #dash{display:contents}
 .co #dash[hidden]{display:none!important}
@@ -253,12 +279,21 @@ footer.site a:hover{color:var(--site-accent)}
       <div class="eyebrow" id="eyebrow">Backlog analysis · no data loaded yet</div>
       <h1>Sprint carry-over map</h1>
       <p class="intro">Carry-over is work a team commits to in a sprint but doesn't finish, so it rolls into the next one. A little is normal. A lot means plans that don't hold and less room for new work every sprint. This map shows how much carry-over there is, and where it comes from.</p>
+
+      <figure class="concept" aria-label="Example: one item done in the sprint it started; another not finished, carried into sprint 2 and sprint 3, then done. Its cycle time is 3 sprints.">
+        <div class="cg">
+          <div class="ccols" aria-hidden="true"><div></div><div></div><div></div></div>
+          <div class="ch">Sprint 1</div><div class="ch">Sprint 2</div><div class="ch">Sprint 3</div>
+          <div class="cbar ca"><span class="cs"></span><b class="ok">✓</b></div>
+          <div class="cbar cbk"><span class="cs s1"></span><span class="cs s2 carry"></span><span class="cs s3 carry"></span><b class="ok">✓</b>
+            <span class="ctag t1">carried over</span><span class="ctag t2">carried over</span></div>
+        </div>
+        <ul class="ckey">
+          <li><i class="sw-a"></i><span><strong>Done in the sprint it started:</strong> 1 sprint, no carry-over.</span></li>
+          <li><i class="sw-b"></i><span><strong>Not finished, so it rolls into the next sprint, twice.</strong> Done in sprint 3: 3 sprints, 2 of them carried over.</span></li>
+        </ul>
+      </figure>
       <p class="lede" id="lede">Every item you load is drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into.</p>
-      <ul class="see">
-        <li><svg class="mk" viewBox="0 0 84 28" aria-hidden="true"><defs><pattern id="mkh1" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="currentColor"/></pattern></defs><rect x="0" y="2" width="22" height="6" rx="1.5" fill="currentColor" opacity=".35"/><rect x="14" y="11" width="22" height="6" rx="1.5" fill="currentColor"/><rect x="38" y="11" width="22" height="6" rx="1.5" fill="url(#mkh1)" stroke="currentColor" stroke-width=".8"/><rect x="62" y="11" width="22" height="6" rx="1.5" fill="url(#mkh1)" stroke="currentColor" stroke-width=".8"/><rect x="30" y="20" width="22" height="6" rx="1.5" fill="currentColor" opacity=".35"/></svg><b>Where it comes from</b>Which item types and areas of work keep rolling over.</li>
-        <li><svg class="mk" viewBox="0 0 84 28" aria-hidden="true"><defs><pattern id="mkh2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="currentColor"/></pattern></defs><rect x="0" y="4" width="26" height="7" rx="1.5" fill="currentColor"/><rect x="29" y="4" width="26" height="7" rx="1.5" fill="url(#mkh2)" stroke="currentColor" stroke-width=".8"/><rect x="58" y="4" width="26" height="7" rx="1.5" fill="url(#mkh2)" stroke="currentColor" stroke-width=".8"/><g fill="currentColor" font-family="var(--font-mono)" font-size="8" text-anchor="middle"><text x="13" y="25">1</text><text x="42" y="25">2</text><text x="71" y="25">3</text></g></svg><b>How long work really takes</b>Sprints to done, from start to finish, not just the estimate.</li>
-        <li><svg class="mk" viewBox="0 0 84 28" aria-hidden="true"><defs><pattern id="mkh3" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="currentColor"/></pattern></defs><g><rect x="2" y="14" width="14" height="13" fill="currentColor"/><rect x="24" y="17" width="14" height="5" fill="currentColor"/><rect x="24" y="22" width="14" height="5" fill="url(#mkh3)" stroke="currentColor" stroke-width=".8"/><rect x="46" y="10" width="14" height="6" fill="currentColor"/><rect x="46" y="16" width="14" height="11" fill="url(#mkh3)" stroke="currentColor" stroke-width=".8"/><rect x="68" y="6" width="14" height="5" fill="currentColor"/><rect x="68" y="11" width="14" height="16" fill="url(#mkh3)" stroke="currentColor" stroke-width=".8"/></g></svg><b>How much is inherited</b>The share of each sprint already taken by old work.</li>
-      </ul>
     </div>
     <div class="side">
       <label class="drop" id="drop">

@@ -152,18 +152,58 @@ footer.site a:hover{color:var(--site-accent)}
 @media (max-width:520px){.co .cal{--label:84px}.co .drow{grid-template-columns:96px 1fr 44px}}
 @media (prefers-reduced-motion:no-preference){.co .bar .s{transition:filter .15s}}
 
-/* your-data bar (added for CSV upload, in the design's own vocabulary: .seg-style buttons, .note text) */
-.co .databar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:16px}
-.co .dbtn{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer;background:var(--surface);color:var(--fg);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
-.co .dbtn:hover{border-color:var(--muted)}
-.co .dbtn.primary{background:var(--fg);color:var(--surface);border-color:var(--fg)}
-.co .dbtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.co .dbtn:focus-within,.co .dbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.co .databar .note{flex-basis:100%;max-width:80ch}
-.co .databar .note.err{color:var(--t-bug)}
-.co details.note summary{cursor:pointer;width:max-content}
-.co details.note ul{margin:6px 0 0;padding-left:18px}
-.co details.note code{font-family:var(--font-mono);font-size:11px}
+/* ---------- intro + drop zone (added 26 Oct; built from the design's own tokens) ---------- */
+.co .hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px 36px;align-items:stretch;padding:28px;border:1px solid var(--line);border-radius:14px;
+  background:radial-gradient(120% 90% at 100% 0%,color-mix(in oklab,var(--accent) 13%,transparent),transparent 60%),radial-gradient(80% 70% at 0% 100%,color-mix(in oklab,var(--t-debt) 10%,transparent),transparent 65%),var(--surface)}
+@media (max-width:860px){.co .hero{grid-template-columns:1fr;padding:22px 18px}}
+.co .hero-text{display:flex;flex-direction:column;gap:12px;min-width:0}
+.co .hero h1{margin-top:2px}
+.co .intro{font-size:17px;line-height:1.5;max-width:56ch;margin:0;color:var(--fg)}
+.co .hero .lede{margin:0}
+.co .see{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.co .see{grid-template-columns:1fr}}
+.co .see li{background:color-mix(in oklab,var(--surface) 70%,transparent);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;line-height:1.4;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+.co .see li b{color:var(--fg);font-weight:600;font-size:13.5px}
+.co .see .mk{display:flex;gap:2px;height:8px}
+.co .see .mk i{width:22px;border-radius:2px;background:var(--c)}
+.co .see .mk i+i{background:repeating-linear-gradient(135deg,var(--c) 0 3px,color-mix(in oklab,var(--c) 30%,transparent) 3px 6px)}
+.co .drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;min-height:220px;padding:22px 18px;border:2px dashed color-mix(in oklab,var(--muted) 45%,transparent);border-radius:14px;background:color-mix(in oklab,var(--bg) 75%,transparent);cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.co .drop:hover{border-color:var(--accent)}
+.co .drop:focus-within{outline:2px solid var(--accent);outline-offset:3px}
+.co .drop.over{border-color:var(--accent);border-style:solid;background:color-mix(in oklab,var(--accent) 10%,var(--surface));transform:scale(1.015)}
+.co .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.co .drop .ico{width:64px;height:64px;transition:transform .2s}
+.co .drop.over .ico{transform:translateY(-4px) rotate(-4deg)}
+.co .drop strong{font-size:17px;font-weight:600}
+.co .drop .or{font-size:13px;color:var(--muted)}
+.co .drop .or u{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:3px}
+.co .drop .small{font-size:12px;color:var(--muted);max-width:34ch}
+.co .drop.loaded{border-style:solid;border-color:color-mix(in oklab,var(--c1) 60%,transparent);background:color-mix(in oklab,var(--c1) 8%,var(--surface))}
+.co .drop.err{border-color:var(--t-bug)}
+.co .drop .status{font-size:13px;color:var(--fg);max-width:36ch}
+.co .drop.err .status{color:var(--t-bug)}
+.co .drop .status b{font-family:var(--font-mono);font-weight:500;word-break:break-all}
+.co .side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.co .side .drop{flex:1}
+.co .side-links{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12px;color:var(--muted)}
+.co .lnk{font:inherit;background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.co details.cols-help summary{cursor:pointer;color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;list-style:none}
+.co details.cols-help summary::-webkit-details-marker{display:none}
+.co details.cols-help[open]{flex-basis:100%}
+.co details.cols-help ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.co details.cols-help code{font-family:var(--font-mono);font-size:11px}
+/* page-wide drop: dragging a file anywhere lights up the zone */
+.co.dragging .drop{border-color:var(--accent)}
+/* a little motion when data (re)loads; off for reduced motion */
+@media (prefers-reduced-motion:no-preference){
+  .co .cal.anim .bar{animation:co-grow .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k,0) * 9ms);transform-origin:left center}
+  .co .stats.anim .stat{animation:co-up .45s ease both;animation-delay:calc(var(--k,0) * 60ms)}
+  .co .insights.anim li{animation:co-up .45s ease both;animation-delay:calc(.2s + var(--k,0) * 80ms)}
+  .co .drop.pop{animation:co-pop .5s cubic-bezier(.2,1.5,.4,1)}
+}
+@keyframes co-grow{from{transform:scaleX(0);opacity:0}}
+@keyframes co-up{from{transform:translateY(8px);opacity:0}}
+@keyframes co-pop{40%{transform:scale(1.03)}}
 </style>
 <script defer src="assets/js/track.js?v=2026-10-26"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
@@ -193,23 +233,39 @@ footer.site a:hover{color:var(--site-accent)}
 
 <main class="co" id="co">
 <div class="wrap">
-  <header>
-    <div class="eyebrow" id="eyebrow">Backlog analysis · Sample team · S14–S25 · sample data</div>
-    <h1>Sprint carry-over map</h1>
-    <p class="lede" id="lede">Every item committed over the last 12 two-week sprints, drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into.</p>
-    <div class="databar">
-      <label class="dbtn primary"><input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv">Load your CSV</label>
-      <button type="button" class="dbtn" id="toSample" hidden>Back to sample data</button>
-      <a class="dbtn" id="dlSample" href="#" download="carry-over-sample.csv">Download the sample as CSV</a>
-      <p class="note" id="dataNote">Try it with your own backlog: an export from Azure DevOps or Jira works. Your file is read in this browser only. Nothing is uploaded or stored.</p>
-      <details class="note">
-        <summary>Which columns?</summary>
-        <ul>
-          <li><code>id</code>, <code>title</code>, <code>type</code>, <code>category</code>, <code>start sprint</code>, <code>end sprint</code>, <code>status</code>, in any order. The sample CSV shows the format.</li>
-          <li>Common export names work too: Work Item Type, Issue Type, Area Path, Component, State, Iteration Path, and Jira's repeated Sprint columns (first and last sprint are used).</li>
-          <li>Done, Closed, Resolved and similar count as done. Removed or cancelled items are left out. Open items run to the latest sprint in the file.</li>
-        </ul>
-      </details>
+  <header class="hero">
+    <div class="hero-text">
+      <div class="eyebrow" id="eyebrow">Backlog analysis · Sample team · S14–S25 · sample data</div>
+      <h1>Sprint carry-over map</h1>
+      <p class="intro">Carry-over is work a team commits to in a sprint but doesn't finish, so it rolls into the next one. A little is normal. A lot means plans that don't hold and less room for new work every sprint. This map shows how much carry-over there is, and where it comes from.</p>
+      <p class="lede" id="lede">Every item committed over the last 12 two-week sprints, drawn across the sprint calendar. Cycle time is counted in sprints touched: an item done in the sprint it started scores 1. Hatched segments are sprints the item was carried into.</p>
+      <ul class="see">
+        <li><span class="mk" style="--c:var(--c4)"><i></i><i></i><i></i></span><b>Where it comes from</b>Which item types and areas of work keep rolling over.</li>
+        <li><span class="mk" style="--c:var(--c1)"><i></i><i></i></span><b>How long work really takes</b>Sprints to done, from start to finish, not just the estimate.</li>
+        <li><span class="mk" style="--c:var(--accent)"><i></i><i></i><i></i><i></i></span><b>How much is inherited</b>The share of each sprint already taken by old work.</li>
+      </ul>
+    </div>
+    <div class="side">
+      <label class="drop" id="drop">
+        <input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv">
+        <svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 6h26l12 12v38a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"/><path d="M40 6v12h12" fill="none" stroke="var(--muted)" stroke-width="2"/><rect x="18" y="26" width="12" height="5" rx="1.5" fill="var(--c2)"/><rect x="31" y="26" width="10" height="5" rx="1.5" fill="var(--c2)" opacity=".45"/><rect x="24" y="35" width="12" height="5" rx="1.5" fill="var(--c4)"/><rect x="37" y="35" width="9" height="5" rx="1.5" fill="var(--c4)" opacity=".45"/><rect x="20" y="44" width="14" height="5" rx="1.5" fill="var(--c1)"/></svg>
+        <span id="dropMain"><strong>Drop your CSV here</strong></span>
+        <span class="or" id="dropOr">or <u>choose a file</u></span>
+        <span class="small" id="dropSmall">An export from Azure DevOps or Jira. It's read in this browser only. Nothing is uploaded or stored.</span>
+        <span class="status" id="dropStatus" hidden></span>
+      </label>
+      <div class="side-links">
+        <button type="button" class="lnk" id="toSample" hidden>Back to sample data</button>
+        <a class="lnk" id="dlSample" href="#" download="carry-over-sample.csv">Download the sample CSV</a>
+        <details class="cols-help">
+          <summary>Which columns?</summary>
+          <ul>
+            <li><code>id</code>, <code>title</code>, <code>type</code>, <code>category</code>, <code>start sprint</code>, <code>end sprint</code>, <code>status</code>, in any order. The sample CSV shows the format.</li>
+            <li>Common export names work too: Work Item Type, Issue Type, Area Path, Component, State, Iteration Path, and Jira's repeated Sprint columns (first and last sprint are used).</li>
+            <li>Done, Closed, Resolved and similar count as done. Removed or cancelled items are left out. Open items run to the latest sprint in the file.</li>
+          </ul>
+        </details>
+      </div>
     </div>
   </header>
 
@@ -323,6 +379,18 @@ function render(data){
   $("lede").textContent=D.lede;
   tip.hidden=true;
   renderStats();renderInsights();legend();renderCal();renderDist();renderMatrix();renderLoad();
+  animate();
+}
+// replay the entrance motion when new data lands (bars grow in, stats and insights rise)
+let animTimer;
+function animate(){
+  const els=[cal,$("stats"),$("insights")];
+  [...$("stats").children].forEach((e,k)=>e.style.setProperty("--k",k));
+  [...$("insights").children].forEach((e,k)=>e.style.setProperty("--k",k));
+  cal.querySelectorAll(".bar").forEach((e,k)=>e.style.setProperty("--k",Math.min(k,90)));
+  els.forEach(e=>e.classList.remove("anim"));void cal.offsetWidth;
+  els.forEach(e=>e.classList.add("anim"));
+  clearTimeout(animTimer);animTimer=setTimeout(()=>els.forEach(e=>e.classList.remove("anim")),2000);
 }
 
 function renderStats(){
@@ -583,32 +651,49 @@ function toCSV(data){
 }
 
 const SAMPLE=sampleData();
-const note=$("dataNote"),noteDefault=note.textContent;
+const drop=$("drop"),status=$("dropStatus"),co=$("co");
+const touch=matchMedia("(hover: none)").matches;
 $("dlSample").href="data:text/csv;charset=utf-8,"+encodeURIComponent(toCSV(SAMPLE));
-$("csvFile").addEventListener("change",e=>{
-  const file=e.target.files[0];if(!file)return;
+// three looks for the drop zone: ready (sample showing), loaded (their file), error
+function dropState(kind,html){
+  drop.classList.toggle("loaded",kind==="loaded");
+  drop.classList.toggle("err",kind==="err");
+  $("dropMain").innerHTML=kind==="loaded"?"<strong>Your data is showing</strong>":kind==="err"?"<strong>That didn't work</strong>":touch?"<strong>Load your CSV</strong>":"<strong>Drop your CSV here</strong>";
+  $("dropOr").innerHTML=touch?(kind==="ready"?"<u>Choose a file</u>":"<u>Choose another file</u>"):(kind==="ready"?"or <u>choose a file</u>":"Drop another file, or <u>choose one</u>");
+  $("dropSmall").hidden=kind!=="ready";
+  status.hidden=kind==="ready";status.innerHTML=html||"";
+  $("toSample").hidden=D.sample;
+  drop.classList.remove("pop");void drop.offsetWidth;if(kind!=="ready")drop.classList.add("pop");
+}
+function loadFile(file){
+  if(!file)return;
   const reader=new FileReader();
   reader.onload=()=>{
     try{
       const r=fromCSV(String(reader.result),file.name);
       render(r.data);
       const skipped=[r.dropped?r.dropped+" removed or cancelled":"",r.noSprint?r.noSprint+" with no sprint":""].filter(Boolean);
-      note.classList.remove("err");
-      note.textContent=`Showing ${r.data.items.length} items from ${file.name}`+(skipped.length?`. Skipped ${skipped.join(" and ")}.`:".")+" Read in this browser only; nothing was uploaded.";
-      $("toSample").hidden=false;
+      dropState("loaded",`<b>${esc(file.name)}</b><br>${r.data.items.length} items across ${r.data.sprints.length} sprint${r.data.sprints.length>1?"s":""}`+(skipped.length?`. Skipped ${skipped.join(" and ")}.`:".")+"<br>Read in this browser only; nothing was uploaded.");
       try{window.umami&&window.umami.track("Carry-over: CSV loaded",{items:r.data.items.length})}catch(_){}
     }catch(err){
-      note.classList.add("err");
-      note.textContent=err.message+" Download the sample to see the expected columns.";
+      dropState("err",esc(err.message)+" Download the sample CSV to see the expected columns.");
     }
-    e.target.value="";
   };
-  reader.onerror=()=>{note.classList.add("err");note.textContent="That file couldn't be read."};
+  reader.onerror=()=>dropState("err","That file couldn't be read.");
   reader.readAsText(file);
-});
-$("toSample").addEventListener("click",()=>{render(SAMPLE);$("toSample").hidden=true;note.classList.remove("err");note.textContent=noteDefault});
+}
+$("csvFile").addEventListener("change",e=>{loadFile(e.target.files[0]);e.target.value=""});
+// drag and drop: the zone itself, plus anywhere on the page so a stray drop never opens the file in the browser
+const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes("Files");
+let depth=0;
+addEventListener("dragenter",e=>{if(!hasFiles(e))return;e.preventDefault();depth++;co.classList.add("dragging")});
+addEventListener("dragleave",e=>{if(!hasFiles(e))return;if(--depth<=0){depth=0;co.classList.remove("dragging");drop.classList.remove("over")}});
+addEventListener("dragover",e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect="copy";drop.classList.toggle("over",drop.contains(e.target))});
+addEventListener("drop",e=>{if(!hasFiles(e))return;e.preventDefault();depth=0;co.classList.remove("dragging");drop.classList.remove("over");loadFile(e.dataTransfer.files[0])});
+$("toSample").addEventListener("click",()=>{render(SAMPLE);dropState("ready")});
 
 render(SAMPLE);
+if(touch)dropState("ready");
 })();
 </script>
 </body>

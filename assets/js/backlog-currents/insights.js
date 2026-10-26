@@ -3,7 +3,7 @@
    evidence, So what / Try / Ask the team, the items a "Show me" button highlights, and the numbers each card's
    drawing needs (card.d). The drawings themselves live in views/learn.js.
    Thresholds and copy are the prototype's, unchanged. */
-import { fmtD } from './format.js?v=2026-10-26';
+import { fmtD } from './format.js?v=2026-10-26b';
 
 const DAY7 = 864e5 * 7;
 export const median = a => { if (!a.length) return null; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };

@@ -1,14 +1,14 @@
 /* Backlog Currents: page wiring. Import (drop zone, file picker, state chips), playback, highlights and rendering.
    Files are read with File.text() in this browser; nothing is uploaded, sent or stored. */
-import { buildSource, REMOVED_ST } from './csv.js?v=2026-10-26';
-import { buildModel } from './model.js?v=2026-10-26';
-import { exampleCSV, EXAMPLE_FILE_NAME, SAMPLE_HISTORY_CSV } from './example.js?v=2026-10-26';
-import { computeLearn, HIGHLIGHT_LABELS } from './insights.js?v=2026-10-26';
-import { esc, fmtD } from './format.js?v=2026-10-26';
-import { createPlayer } from './views/player.js?v=2026-10-26';
-import { renderFlow, renderFlowStats } from './views/flow.js?v=2026-10-26';
-import { renderLearnCards } from './views/learn.js?v=2026-10-26';
-import { renderHist, renderAbout } from './views/extras.js?v=2026-10-26';
+import { buildSource, REMOVED_ST } from './csv.js?v=2026-10-26b';
+import { buildModel } from './model.js?v=2026-10-26b';
+import { exampleCSV, EXAMPLE_FILE_NAME, SAMPLE_HISTORY_CSV } from './example.js?v=2026-10-26b';
+import { computeLearn, HIGHLIGHT_LABELS } from './insights.js?v=2026-10-26b';
+import { esc, fmtD } from './format.js?v=2026-10-26b';
+import { createPlayer } from './views/player.js?v=2026-10-26b';
+import { renderFlow, renderFlowStats } from './views/flow.js?v=2026-10-26b';
+import { renderLearnCards } from './views/learn.js?v=2026-10-26b';
+import { renderHist, renderAbout } from './views/extras.js?v=2026-10-26b';
 
 const $ = s => document.querySelector(s);
 const root = $('#bc');
@@ -57,9 +57,12 @@ function load(src, resetT) {
   const sc = $('#scrub'); sc.max = S.M.N - 1; sc.value = S.t;
   $('#d0').textContent = fmtD(S.M.dates[0], true); $('#d1').textContent = fmtD(S.M.dates[S.M.N - 1], true);
   $('#exampleBanner').hidden = !S.isExample;
+  $('#eyebrow').textContent = S.isExample ? EYEBROW.example : EYEBROW.yours;
   $('#dash').hidden = false; $('#empty').hidden = true;
   player.fit(); renderStates(); renderAnalysis(); player.renderDetail(); player.updateSide(true); S.dirty = true;
 }
+
+const EYEBROW = { empty: 'Backlog analysis · no data loaded yet', example: 'Backlog analysis · example data', yours: 'Backlog analysis · your data' };
 
 /* ---------- drop zone: same behaviour as the carry-over map ---------- */
 const drop = $('#drop'), status = $('#dropStatus');
@@ -97,20 +100,22 @@ addEventListener('dragleave', e => { if (!hasFiles(e)) return; if (--depth <= 0)
 addEventListener('dragover', e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; drop.classList.toggle('over', drop.contains(e.target)); });
 addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); depth = 0; root.classList.remove('dragging'); drop.classList.remove('over'); handleFiles(e.dataTransfer.files); });
 
-function showExample(fromClick) {
+// the example, as carry-over's sample: shown on request (or with ?sample), playing unless the visitor prefers reduced motion
+function showExample() {
   S.isExample = true;
   load(buildSource([{ name: EXAMPLE_FILE_NAME, text: exampleCSV() }]), true);
   dropState('ready');
-  if (fromClick) { track('Backlog currents: example shown'); setPlaying(!reduce); }
+  track('Backlog currents: example shown');
+  setPlaying(!reduce);
 }
-function hideExample() {
-  setPlaying(false); S.M = null; S.isExample = false;
-  $('#dash').hidden = true; $('#exampleBanner').hidden = true; $('#empty').hidden = false; $('#states').hidden = true;
-  dropState('ready'); $('#toExample').hidden = false;
+function clear() {
+  setPlaying(false); S.M = null; S.isExample = false; $('#tip').hidden = true;
+  $('#dash').hidden = true; $('#empty').hidden = false; $('#states').hidden = true;
+  $('#eyebrow').textContent = EYEBROW.empty;
 }
-$('#toExample').addEventListener('click', () => showExample(true));
-$('#showExample').addEventListener('click', () => showExample(true));
-$('#hideExample').addEventListener('click', () => { hideExample(); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
+$('#toExample').addEventListener('click', showExample);
+$('#showExample').addEventListener('click', showExample);
+$('#hideExample').addEventListener('click', () => { clear(); dropState('ready'); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
 $('#loadOwn').addEventListener('click', () => { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); $('#csvFile').click(); });
 
 $('#copySample').addEventListener('click', e => {
@@ -133,7 +138,7 @@ $('#learn').addEventListener('click', e => {
   if (k === 'churn') { setHighlight(null, '', null); S.t = show.churnWeek; scrub.value = S.t; setPlaying(false); player.reset(); S.dirty = true; }
   else if (S.learnKey === k) { setHighlight(null, '', null); return; }
   else setHighlight(show[k], HIGHLIGHT_LABELS[k], k);
-  $('#player').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  $('#player-panel').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
 });
 
 /* ---------- playback ---------- */
@@ -159,7 +164,29 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
-/* ---------- start: the example, playing unless the visitor prefers reduced motion ---------- */
-showExample(false);
-if (!reduce) setPlaying(true);
+/* ---------- (i) popup on the skill download (as on carry-over) ---------- */
+const infoBtn = $('#skillInfoBtn'), info = $('#skillInfo');
+if (infoBtn && info) {
+  const setInfo = open => { info.hidden = !open; infoBtn.setAttribute('aria-expanded', open); if (open) $('#skillInfoClose').focus(); };
+  infoBtn.addEventListener('click', () => setInfo(info.hidden));
+  $('#skillInfoClose').addEventListener('click', () => { setInfo(false); infoBtn.focus(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !info.hidden) { setInfo(false); infoBtn.focus(); } });
+  document.addEventListener('click', e => { if (!info.hidden && !info.contains(e.target) && e.target !== infoBtn) setInfo(false); });
+}
+
+/* ---------- start ----------
+   1. Data embedded by the Claude skill (<script type="text/csv" id="bc-data">): show it as the visitor's data.
+   2. ?sample, or the skill's data-example="1": open straight onto the example (for links in posts and slides).
+   3. Otherwise start empty, like carry-over. */
+const embedded = document.getElementById('bc-data');
+const embeddedText = embedded ? embedded.textContent.trim() : '';
+if (embeddedText) {
+  try {
+    S.isExample = false;
+    load(buildSource([{ name: embedded.dataset.name || 'backlog.csv', text: embeddedText }]), true);
+    if (embedded.dataset.label) $('#eyebrow').textContent = embedded.dataset.label;
+    dropState('loaded', `<b>${esc(embedded.dataset.name || 'Your backlog')}</b><br>${S.M.N} snapshots, ${S.M.items.length} items, ${fmtD(S.M.dates[0], true)} to ${fmtD(S.M.dates[S.M.N - 1], true)}.`);
+    setPlaying(!reduce);
+  } catch (err) { clear(); dropState('err', esc(err.message)); }
+} else if (/[?&]sample\b/.test(location.search) || (embedded && embedded.dataset.example === '1')) showExample(); else { clear(); dropState('ready'); }
 requestAnimationFrame(frame);

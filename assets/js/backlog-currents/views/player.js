@@ -1,7 +1,7 @@
 /* Backlog Currents: the animated backlog column, the "This week" side panel and the followed item.
    Shared state (t, selected, hover, highlighted set, model) lives in `S`, owned by app.js. */
-import { esc, fmtD } from '../format.js?v=2026-10-26';
-import { SECTIONS, rlab } from '../model.js?v=2026-10-26';
+import { esc, fmtD } from '../format.js?v=2026-10-26b';
+import { SECTIONS, rlab } from '../model.js?v=2026-10-26b';
 
 const ease = f => f < .5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
 const lerp = (a, b, f) => a + (b - a) * f;
@@ -37,10 +37,10 @@ export function createPlayer(S, els) {
     SECTIONS.forEach((sc, i) => {
       if (sc.from > M.maxSize) return; const y0 = Y(sc.from), y1 = Y(Math.min(sc.to, M.maxSize) + 1);
       ctx.fillStyle = i % 2 ? C.surface : C.soft; ctx.fillRect(0, y0, x1, y1 - y0);
-      ctx.textAlign = 'left'; ctx.fillStyle = C.ink; ctx.font = '800 11px "Archivo","Arial Black",sans-serif'; ctx.fillText(sc.name.toUpperCase(), 6, y0 + 15);
-      ctx.fillStyle = C.muted; ctx.font = '500 11px "IBM Plex Mono",monospace'; ctx.fillText('#' + rlab(sc), 6, y0 + 29);
+      ctx.textAlign = 'left'; ctx.fillStyle = C.ink; ctx.font = '600 12px "Instrument Sans","Segoe UI",sans-serif'; ctx.fillText(sc.name, 6, y0 + 15);
+      ctx.fillStyle = C.muted; ctx.font = '500 11px "JetBrains Mono",monospace'; ctx.fillText('#' + rlab(sc), 6, y0 + 29);
     });
-    ctx.fillStyle = C.muted; ctx.font = '500 11px "IBM Plex Mono",monospace'; ctx.textAlign = 'left'; ctx.fillText('rank 1 ▾', x0, padT - 10);
+    ctx.fillStyle = C.muted; ctx.font = '500 11px "JetBrains Mono",monospace'; ctx.textAlign = 'left'; ctx.fillText('rank 1 ▾', x0, padT - 10);
     ctx.textAlign = 'center'; ctx.fillText('started ▸', x1 + laneR / 2, padT - 10);
     const draws = [], arcs = [];
     const exitOf = (it, k) => it.exits.find(d => d.k === k);
@@ -70,11 +70,11 @@ export function createPlayer(S, els) {
       ctx.beginPath(); const dir = a.y1 < a.y0 ? 1 : -1; ctx.moveTo(bx, a.y1); ctx.lineTo(bx + 5, a.y1 + 4 * dir); ctx.stroke();
     }
     draws.sort((p, q) => (emph(p.it) ? 1 : 0) - (emph(q.it) ? 1 : 0));
-    hits = []; const showText = rowH >= 12; ctx.font = '11px "IBM Plex Sans",system-ui'; ctx.textAlign = 'left';
+    hits = []; const showText = rowH >= 12; ctx.font = '11px "Instrument Sans","Segoe UI",system-ui'; ctx.textAlign = 'left';
     for (const d of draws) {
       const col = C[d.kind], dim = active() && !emph(d.it) ? .22 : 1, al = d.al * dim;
       ctx.globalAlpha = al * (d.kind === 'steady' ? 1 : .24); ctx.fillStyle = d.kind === 'steady' ? C.steady : col;
-      ctx.fillRect(d.x, d.y, d.wd, bh);
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(d.x, d.y, d.wd, bh, 2) : ctx.rect(d.x, d.y, d.wd, bh); ctx.fill();
       if (d.kind !== 'steady') { ctx.globalAlpha = al; ctx.fillStyle = col; ctx.fillRect(d.x, d.y, 3, bh); }
       if (showText && d.wd > 60) {
         ctx.globalAlpha = al; ctx.fillStyle = C.ink; let txt = d.it.id + '  ' + d.it.title; const max = d.wd - 12;
@@ -126,11 +126,11 @@ export function createPlayer(S, els) {
     const W = 240, H = 56, mx = Math.max(...pts.map(p => p[1]), 10);
     const P = pts.map(([k, r]) => [(4 + k / (N - 1) * (W - 8)).toFixed(1), (4 + (r - 1) / (mx - 1 || 1) * (H - 8)).toFixed(1)]);
     el.innerHTML = `<div class="info"><span class="eyebrow">Following</span><span class="ttl">${esc(it.title || it.id)}</span><span class="facts mono">${esc(it.id)}${it.type ? ' · ' + esc(it.type) : ''}</span><span class="facts">${esc(facts.join('; '))}.</span></div>
-      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rank history, top is rank 1"><rect x="0" y="0" width="${W}" height="${H}" fill="var(--soft)"/>
-      ${P.length > 1 ? `<polyline points="${P.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--started)" stroke-width="2" stroke-linejoin="round"/>` : ''}
-      ${P.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="1.8" fill="var(--started)"/>`).join('')}
-      <text x="6" y="13" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono, monospace">#1</text></svg>
-      <button class="btn btn-ghost btn-sm" type="button" data-clear>Clear</button>`;
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rank history, top is rank 1"><rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="var(--soft)"/>
+      ${P.length > 1 ? `<polyline points="${P.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>` : ''}
+      ${P.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="1.8" fill="var(--accent)"/>`).join('')}
+      <text x="6" y="13" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">#1</text></svg>
+      <button class="btn" type="button" data-clear>Clear</button>`;
     el.hidden = false;
     el.querySelector('[data-clear]').onclick = () => { S.selected = null; renderDetail(); S.dirty = true; };
   }

@@ -3,7 +3,7 @@
    Same seed and logic as the prototype, so the same example every time. Things it contains on purpose:
    a stakeholder escalation that jumps the queue (week 6), a mid-quarter re-plan (week 10), a grooming session (week 14),
    P1 bugs going straight into work, and sprint planning every other week. */
-import { iso } from './csv.js?v=2026-10-26';
+import { iso } from './csv.js?v=2026-10-26b';
 
 export function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 

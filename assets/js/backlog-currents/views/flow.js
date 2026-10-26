@@ -2,21 +2,21 @@
    Arrivals come in from the left, exits leave to the right, promotions arc up on the left, demotions arc down on the right.
    Stroke width is proportional to the rate; animated dashes show direction (off for reduced motion, in CSS).
    Below 700px wide the compact phone layout is used. */
-import { esc } from '../format.js?v=2026-10-26';
-import { SECTIONS, rlab } from '../model.js?v=2026-10-26';
-import { flowStats } from '../insights.js?v=2026-10-26';
+import { esc } from '../format.js?v=2026-10-26b';
+import { SECTIONS, rlab } from '../model.js?v=2026-10-26b';
+import { flowStats } from '../insights.js?v=2026-10-26b';
 
-const DISPLAY = 'Archivo, Arial Black, sans-serif';
-const MONO = 'IBM Plex Mono, monospace';
+const DISPLAY = 'Instrument Sans, Segoe UI, sans-serif';
+const MONO = 'JetBrains Mono, monospace';
 
 export function renderFlowStats(el, M) {
   const s = flowStats(M);
-  const stat = (k, v, unit, n, c) => `<div class="fs" style="--c:${c}"><span class="k">${k}</span><span class="v">${v}<small>${unit}</small></span><span class="n">${n}</span></div>`;
+  const stat = (v, label, n, c) => `<div class="stat"><b style="color:${c}">${v}<small>/ week</small></b><span>${label} · ${n}</span></div>`;
   el.innerHTML =
-    stat('Arriving', s.arriving.toFixed(1), '/ week', `${s.newTotal} new items in ${M.N - 1} weeks`, 'var(--new)') +
-    stat('Started', s.started.toFixed(1), '/ week', s.straight ? `incl. ${s.straight} straight into work` : 'taken into work', 'var(--started)') +
-    stat('Removed or left', s.gone.toFixed(1), '/ week', `${s.goneTotal} items cleared out`, 'var(--gone)') +
-    stat('Net change', (s.net > 0 ? '+' : '') + s.net.toFixed(1), '/ week', `backlog ${M.sizes[0]} → ${M.sizes[M.N - 1]} items`, s.net > 0.05 ? 'var(--down)' : s.net < -0.05 ? 'var(--up)' : 'var(--muted)');
+    stat(s.arriving.toFixed(1), 'Arriving', `${s.newTotal} new items in ${M.N - 1} weeks`, 'var(--new)') +
+    stat(s.started.toFixed(1), 'Started', s.straight ? `incl. ${s.straight} straight into work` : 'taken into work', 'var(--started)') +
+    stat(s.gone.toFixed(1), 'Removed or left', `${s.goneTotal} items cleared out`, 'var(--gone)') +
+    stat((s.net > 0 ? '+' : '') + s.net.toFixed(1), 'Net change', `backlog ${M.sizes[0]} → ${M.sizes[M.N - 1]} items`, s.net > 0.05 ? 'var(--down)' : s.net < -0.05 ? 'var(--up)' : 'var(--fg)');
 }
 
 export function renderFlow(el, M) {
@@ -61,14 +61,14 @@ export function renderFlow(el, M) {
       const w = thick(o.news), x0 = narrow ? 2 : 16;
       ribbon(`M${x0},${y}L${bx - 8},${y}`, w, 'var(--new)', `${r1(o.news)} new items per week land in ${s.name}`); out.push(tri(bx - 1, y, 'r', w, 'var(--new)'));
       out.push(narrow ? T1(x0, y - w / 2 - 5, r1(o.news), 'start', `font-size="12" font-family="${MONO}" font-weight="500" fill="var(--new)"`)
-        : `<text x="${x0}" y="${y - w / 2 - 8}"><tspan font-family="${DISPLAY}" font-weight="800" font-size="22" fill="var(--new)">${r1(o.news)}</tspan><tspan dx="6" font-size="12" fill="var(--muted)">new / wk</tspan></text>`);
+        : `<text x="${x0}" y="${y - w / 2 - 8}"><tspan font-family="${DISPLAY}" font-weight="700" font-size="22" fill="var(--new)">${r1(o.news)}</tspan><tspan dx="6" font-size="12" fill="var(--muted)">new / wk</tspan></text>`);
     }
     const lane = [['started', 'var(--started)', 'started', -1], ['gone', 'var(--gone)', 'removed', 1]];
     lane.forEach(([key, col, lab, sg]) => {
       const c = o[key]; if (!c) return; const w = thick(c), yy = y + sg * (narrow ? 16 : 22), x1 = W - (narrow ? 2 : 8);
       ribbon(`M${bR + 1},${yy}L${x1 - 8},${yy}`, w, col, `${r1(c)} ${lab} per week from ${s.name}`); out.push(tri(x1, yy, 'r', w, col));
       out.push(narrow ? T1(x1, yy + (sg < 0 ? -w / 2 - 5 : w / 2 + 13), r1(c), 'end', `font-size="12" font-family="${MONO}" font-weight="500" fill="${col}"`)
-        : `<text x="${x1}" y="${sg < 0 ? yy - w / 2 - 7 : yy + w / 2 + 17}" text-anchor="end"><tspan font-family="${DISPLAY}" font-weight="800" font-size="${key === 'started' ? 22 : 17}" fill="${key === 'started' ? 'var(--started)' : 'var(--muted)'}">${r1(c)}</tspan><tspan dx="6" font-size="12" fill="var(--muted)">${lab} / wk</tspan></text>`);
+        : `<text x="${x1}" y="${sg < 0 ? yy - w / 2 - 7 : yy + w / 2 + 17}" text-anchor="end"><tspan font-family="${DISPLAY}" font-weight="700" font-size="${key === 'started' ? 22 : 17}" fill="${key === 'started' ? 'var(--started)' : 'var(--muted)'}">${r1(c)}</tspan><tspan dx="6" font-size="12" fill="var(--muted)">${lab} / wk</tspan></text>`);
     });
   });
   // section boxes
@@ -76,11 +76,11 @@ export function renderFlow(el, M) {
   secs.forEach(({ i, s }, k) => {
     const o = T[i], y = top(k), ins = o.news + o.below + o.above, outs = o.started + o.up + o.down + o.gone, net = (ins - outs) / wk, stay = outs ? o.avg / (outs / wk) : null;
     const netCol = net > 0.05 ? 'var(--down)' : net < -0.05 ? 'var(--up)' : 'var(--muted)', netTxt = Math.abs(net) < 0.05 ? 'balanced' : (net > 0 ? 'filling +' : 'draining ') + net.toFixed(1) + '/wk';
-    let g = `<rect x="${bx}" y="${y}" width="${bw}" height="${bh}" fill="var(--soft)" stroke="var(--line)"/><rect x="${bx}" y="${y}" width="4" height="${bh}" fill="var(--ink)"/>`;
-    g += T1(bx + 14, y + 22, s.name.toUpperCase(), 'start', `font-size="${narrow ? 13 : 15}" font-family="${DISPLAY}" font-weight="800" fill="var(--ink)"`);
+    let g = `<rect x="${bx}" y="${y}" width="${bw}" height="${bh}" rx="10" fill="var(--soft)" stroke="var(--line)"/>`;
+    g += T1(bx + 14, y + 22, s.name, 'start', `font-size="${narrow ? 13 : 15}" font-family="${DISPLAY}" font-weight="600" fill="var(--ink)"`);
     g += T1(bx + 14, y + 38, '#' + rlab(s), 'start', `font-size="11" font-family="${MONO}" fill="var(--muted)"`);
     const sx = narrow ? bx + 14 : bR - 12, sa = narrow ? 'start' : 'end';
-    g += `<text x="${sx}" y="${y + (narrow ? 62 : 30)}" text-anchor="${sa}"><tspan font-family="${DISPLAY}" font-weight="800" font-size="${narrow ? 20 : 26}" fill="var(--ink)">${stay == null ? '–' : stay.toFixed(1)}</tspan><tspan dx="4" font-size="11" fill="var(--muted)">wk stay</tspan></text>`;
+    g += `<text x="${sx}" y="${y + (narrow ? 62 : 30)}" text-anchor="${sa}"><tspan font-family="${DISPLAY}" font-weight="700" font-size="${narrow ? 20 : 26}" fill="var(--ink)">${stay == null ? '–' : stay.toFixed(1)}</tspan><tspan dx="4" font-size="11" fill="var(--muted)">wk stay</tspan></text>`;
     g += T1(sx, y + (narrow ? 77 : 48), `${Math.round(o.avg)} items avg`, sa, 'font-size="11.5" fill="var(--muted)"');
     g += T1(bx + 14, y + (narrow ? 94 : 60), netTxt, 'start', `font-size="12" font-weight="600" fill="${netCol}"`);
     if (!narrow) {

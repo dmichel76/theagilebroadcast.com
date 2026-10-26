@@ -226,3 +226,20 @@ test('numeric ranks with thousands separators and decimals sort as numbers', () 
   assert.equal(src.rankNumeric, true);
   assert.deepEqual(ids(buildModel(src).lists[0]), ['B', 'C', 'A']);
 });
+
+/* ---------- the downloadable skill ---------- */
+test('the skill build bundles the modules into one page that runs', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const { mkdtempSync, readFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const out = join(mkdtempSync(join(tmpdir(), 'bc-')), 'template.html');
+  try { execFileSync('python3', ['tools/build_backlog_currents_skill.py', '--template', out], { stdio: 'pipe' }); }
+  catch (e) { if (e.code === 'ENOENT') return; throw e; } // no Python here: skip
+  const html = readFileSync(out, 'utf8');
+  assert.ok(html.includes('<script type="text/csv" id="bc-data" data-name="" data-label="" data-example="0">'));
+  for (const gone of ['class="site"', 'track.js', 'menu.js', 'type="module"', 'id="skill"']) assert.ok(!html.includes(gone), gone);
+  const js = html.split('<script>\n').pop().split('\n</script>')[0];
+  assert.doesNotThrow(() => new Function(js), 'bundle parses');
+  assert.match(js, /M\['csv\.js'\] = \(\(\) => \{/);
+});

@@ -23,9 +23,27 @@ The backlog flow analyser. The page holds the markup and styles; the code is pla
 
 After editing a module, change the date in every `?v=...` on its import lines and on `app.js?v=...` in the page, so browsers fetch the new version.
 
+The page matches the carry-over map (same hero, drop zone, panels, sample banner and Claude skill row). It starts empty; `backlog-currents.html?sample` opens straight onto the example.
+
+### The downloadable Claude skill
+
+`assets/downloads/backlog-currents.zip` is built, never edited by hand. Its sources:
+
+- `skills/backlog-currents/SKILL.md` – the instructions
+- `skills/backlog-currents/scripts/` – the Azure DevOps and Jira scripts
+- the page itself: `template.html` inside the zip is generated from `backlog-currents.html` and the modules (site header, footer and analytics removed, code bundled inline)
+
+After changing any of these (or the page or a module), rebuild the zip and commit it:
+
+```
+python3 tools/build_backlog_currents_skill.py
+```
+
+It also updates the zip size shown in the page's (i) popup. Rebuilding without changes gives an identical zip.
+
 ### Tests
 
-Unit tests for the pure functions are in `tests/`. With Node 20 or later installed, run `npm test` in this folder. There's nothing to install.
+Unit tests for the pure functions (and a check that the skill's page builds) are in `tests/`. With Node 20 or later installed, run `npm test` in this folder. There's nothing to install.
 
 ## Add or change a training course
 

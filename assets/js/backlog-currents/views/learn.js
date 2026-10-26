@@ -1,7 +1,7 @@
 /* Backlog Currents: the "So what?" cards and their small data-driven drawings.
    Numbers come from insights.js; this file only draws. Colours are CSS variables set on .bc (and --c per card). */
-import { esc } from '../format.js?v=2026-10-26';
-import { START_BUCKETS } from '../insights.js?v=2026-10-26';
+import { esc } from '../format.js?v=2026-10-26b';
+import { START_BUCKETS } from '../insights.js?v=2026-10-26b';
 
 const P = x => Math.round(x);
 const f1 = x => x.toFixed(1);
@@ -10,20 +10,20 @@ const SV = g => `<svg class="ldraw" viewBox="0 0 300 76" preserveAspectRatio="xM
 const DRAW = {
   order({ counts: c }) {
     const m = Math.max(1, ...c);
-    return SV(START_BUCKETS.map((b, i) => { const x = 22 + i * 34, h = Math.max(1.5, c[i] / m * 44); return `<rect x="${x}" y="${56 - h}" width="24" height="${h}" rx="1" fill="${b[0] > 10 ? 'var(--down)' : 'var(--ink)'}"/><text x="${x + 12}" y="69" text-anchor="middle">${b[2]}</text>`; }).join('')
+    return SV(START_BUCKETS.map((b, i) => { const x = 22 + i * 34, h = Math.max(1.5, c[i] / m * 44); return `<rect x="${x}" y="${56 - h}" width="24" height="${h}" rx="2" fill="${b[0] > 10 ? 'var(--down)' : 'var(--accent)'}"/><text x="${x + 12}" y="69" text-anchor="middle">${b[2]}</text>`; }).join('')
       + `<line x1="18" x2="290" y1="56.5" y2="56.5" stroke="var(--line)"/><text x="226" y="12" text-anchor="middle">skipped the queue</text>`);
   },
   wait({ avgSize, little }) {
     const nb = Math.max(4, Math.min(16, Math.round(avgSize / 4))); let g = '';
-    for (let i = 0; i < nb; i++) { const x = 24 + i * 14; g += `<rect x="${x}" y="38" width="10" height="16" rx="1" fill="${i === nb - 1 ? 'var(--accent)' : 'var(--steady)'}"/>`; }
+    for (let i = 0; i < nb; i++) { const x = 24 + i * 14; g += `<rect x="${x}" y="38" width="10" height="16" rx="2" fill="${i === nb - 1 ? 'var(--accent)' : 'var(--steady)'}"/>`; }
     const dx = 24 + nb * 14 + 18;
-    g += `<rect x="${dx}" y="26" width="18" height="28" rx="1" fill="none" stroke="var(--ink)" stroke-width="1.5"/><circle cx="${dx + 13}" cy="41" r="1.5" fill="var(--ink)"/><line x1="16" x2="292" y1="54.5" y2="54.5" stroke="var(--line)"/>`;
+    g += `<rect x="${dx}" y="26" width="18" height="28" rx="2" fill="none" stroke="var(--ink)" stroke-width="1.5"/><circle cx="${dx + 13}" cy="41" r="1.5" fill="var(--ink)"/><line x1="16" x2="292" y1="54.5" y2="54.5" stroke="var(--line)"/>`;
     g += `<path d="M24,26 L${dx - 8},26" stroke="var(--c)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/><path d="M${dx - 12},22 L${dx - 6},26 L${dx - 12},30" stroke="var(--c)" stroke-width="1.5" fill="none"/><text x="${(24 + dx) / 2}" y="18" text-anchor="middle" class="lb">${little == null ? '?' : f1(little)} weeks in the queue</text><text x="${dx + 9}" y="67" text-anchor="middle">work</text><text x="24" y="67">new request</text>`;
     return SV(g);
   },
   bottom({ pb }) {
     let g = '';
-    for (let i = 0; i < 8; i++) { const y = 6 + i * 7.6, lo = i >= 4; g += `<rect x="40" y="${y}" width="${150 - i * 3}" height="5.5" rx="1" fill="${lo ? 'var(--steady)' : 'var(--ink)'}" opacity="${lo ? .9 : .75}"/>`; }
+    for (let i = 0; i < 8; i++) { const y = 6 + i * 7.6, lo = i >= 4; g += `<rect x="40" y="${y}" width="${150 - i * 3}" height="5.5" rx="2" fill="${lo ? 'var(--steady)' : 'var(--accent)'}" opacity="${lo ? .9 : .75}"/>`; }
     const w = 2 + 14 * pb / 100;
     g += `<text x="34" y="20" text-anchor="end">top</text><text x="34" y="54" text-anchor="end">bottom</text><path d="M196,49 C230,49 236,30 270,30" stroke="var(--c)" stroke-width="${w.toFixed(1)}" fill="none"/><path d="M268,${30 - w / 2 - 4} L280,30 L268,${30 + w / 2 + 4}Z" fill="var(--c)"/><text x="238" y="66" text-anchor="middle" class="lb">${P(pb)}% ever started</text>`;
     return SV(g);
@@ -52,7 +52,7 @@ const DRAW = {
     let x = 20, g = '', lx = 20;
     for (const [v, c] of segs) { if (v <= 0) continue; const w = 260 * v / tot; g += `<rect x="${x}" y="26" width="${w}" height="20" fill="${c}"/>`; x += w; }
     g = `<clipPath id="bc-wclip"><rect x="20" y="26" width="260" height="20" rx="2"/></clipPath><g clip-path="url(#bc-wclip)">${g}</g><text x="20" y="18" class="lb">${reached} ${lab} items</text>`;
-    for (const [v, c, l] of segs) { if (v <= 0) continue; g += `<rect x="${lx}" y="56" width="8" height="8" rx="1" fill="${c}"/><text x="${lx + 11}" y="64">${v} ${l}</text>`; lx += 24 + (String(v).length + l.length) * 6; }
+    for (const [v, c, l] of segs) { if (v <= 0) continue; g += `<rect x="${lx}" y="56" width="8" height="8" rx="2" fill="${c}"/><text x="${lx + 11}" y="64">${v} ${l}</text>`; lx += 24 + (String(v).length + l.length) * 6; }
     return SV(g);
   },
   topsrc({ news, below, rawNews, rawBelow }) {
@@ -68,5 +68,5 @@ export function renderLearnCards(el, cards, activeKey) {
     <div class="lc-top"><span class="lc-tag">${c.tag}</span><span class="verdict">${c.warn ? 'Worth a conversation' : 'Looks healthy'}</span></div>
     ${DRAW[c.k](c.d)}<p class="hl">${c.hl}</p><p class="ev">${esc(c.ev)}</p>
     <dl><div><dt>So what</dt><dd>${esc(c.so)}</dd></div><div><dt>Try</dt><dd>${esc(c.tr)}</dd></div><div><dt>Ask the team</dt><dd class="ask">${esc(c.ask)}</dd></div></dl>
-    ${c.show ? `<button class="btn btn-ghost btn-sm show" type="button" data-k="${c.k}" aria-pressed="${activeKey === c.k}">${c.show}</button>` : ''}</article>`).join('');
+    ${c.show ? `<button class="btn show" type="button" data-k="${c.k}" aria-pressed="${activeKey === c.k}">${c.show}</button>` : ''}</article>`).join('');
 }

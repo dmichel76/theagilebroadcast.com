@@ -251,6 +251,21 @@ blockquote.quote footer{margin-top:8px;color:var(--muted);font-size:.95rem}
 .about-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,6vw,88px);align-items:center}
 .about-grid img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:45% 30%}
 .about .stack p{max-width:62ch}
+/* About: career path + keyword cloud */
+.career{list-style:none;margin:6px 0 4px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}
+.career::before{content:"";position:absolute;left:6%;right:6%;top:15px;border-top:2px dashed var(--line);z-index:0}
+.career li{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.career .dot{width:32px;height:32px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--mono);font-size:.72rem;font-weight:500}
+.career li:last-child .dot{background:var(--accent);border-color:var(--accent);color:var(--navy)}
+.career b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:.95rem;line-height:1.05;letter-spacing:.01em}
+.career small{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px;padding:0;list-style:none;align-items:center}
+.tags li{font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;padding:6px 11px;border:1.5px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);transition:transform .15s,border-color .15s}
+.tags li:hover{transform:translateY(-2px) rotate(-1deg);border-color:var(--ink)}
+.tags .l{font-size:1rem;padding:8px 15px;border-color:var(--ink);font-weight:500}
+.tags .core{background:var(--accent);border-color:var(--accent);color:var(--navy);font-family:var(--display);font-weight:800;font-size:1.05rem;padding:8px 16px}
+.tags .s{color:var(--muted)}
+@media (max-width:560px){.career{grid-template-columns:1fr 1fr;row-gap:18px}.career::before{display:none}}
 @media (max-width:760px){.about-grid{grid-template-columns:1fr}.about-grid img{aspect-ratio:1/1}}
 
 .contact{background:var(--navy);color:var(--on-navy)}
@@ -847,10 +862,21 @@ footer.site a{color:#C3CCDB}
     <img src="assets/img/about-david.jpg" alt="David Michel speaking to an audience" width="900" height="1125" loading="lazy">
     <div class="stack">
       <span class="eyebrow">Scientist turned agilist</span>
-      <h2>Hello, I'm David Michel</h2>
-      <p>Before I worked with product teams, I was a scientist. I did a PhD in physical chemistry and spent the early part of my career in research, then moved into software development and later worked as a business analyst and project manager.</p>
-      <p>That background stayed with me. I approach organisations the way I approached research: understand the system, question assumptions, look for evidence, run experiments and learn from what happens.</p>
-      <p>For more than a decade I've helped teams and organisations improve how they deliver products and services. My focus is value delivery: how organisations identify value, organise work around it, reduce uncertainty, and find out quickly whether what they're doing is making a difference.</p>
+      <h2>Hello, I'm <em>David Michel</em></h2>
+      <ol class="career" aria-label="Career path">
+        <li><span class="dot">01</span><b>Scientist</b><small>PhD, physical chemistry</small></li>
+        <li><span class="dot">02</span><b>Software engineer</b><small>Building the thing</small></li>
+        <li><span class="dot">03</span><b>Product owner / BA</b><small>Deciding what to build</small></li>
+        <li><span class="dot">04</span><b>Agile coach</b><small>15 years and counting</small></li>
+      </ol>
+      <p>I started in research, and it stayed with me. I approach organisations the way I approached the lab: understand the system, question assumptions, look for evidence, run experiments and learn from what happens.</p>
+      <p>For 15 years I've helped teams and organisations improve how they deliver products and services. My focus is value delivery: how organisations identify value, organise work around it, reduce uncertainty, and find out quickly whether what they're doing is making a difference.</p>
+      <ul class="tags" aria-label="What I work on">
+        <li class="core">Value</li><li class="s">Experiments</li><li class="l">Story slicing</li><li class="core">Flow</li>
+        <li>Outcomes over outputs</li><li class="s">Evidence</li><li class="l">Flight Levels</li><li>Feedback loops</li>
+        <li class="core">Learning</li><li class="s">Systems thinking</li><li>Lean portfolio</li><li class="l">Flow metrics</li>
+        <li class="s">Hypotheses</li><li>Change management</li>
+      </ul>
       <div class="btn-row" style="margin-top:8px">
         <a class="btn btn-ghost" href="https://www.linkedin.com/in/davidjmichel/" target="_blank" rel="noopener">Connect on LinkedIn</a>
       </div>

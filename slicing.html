@@ -192,7 +192,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 @media (max-width:700px){.score-total{border-right:0;border-bottom:1px solid var(--line)}}
 .score-total b{font:800 clamp(2.6rem,6vw,3.6rem)/1 var(--display)}
 .score-total b small{font-size:.4em;color:var(--muted);margin-left:4px}
-.score-total span{font:500 .68rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.score-total>span{font:500 .68rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
 .score-total p{font-size:.85rem;color:var(--muted);margin-top:8px}
 .score-parts{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
 .sp-head{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:.92rem}
@@ -273,6 +273,78 @@ footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:
 footer.site a{color:#C3CCDB;text-decoration:none}
 footer.site a:hover{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.thinking i{animation:none}}
+
+/* ======== polish layer: borrows the homepage's stickers, hand notes and rotated cards ======== */
+.hero{position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-20px;bottom:-6px;width:min(52vw,640px);aspect-ratio:2/1;pointer-events:none;opacity:.16;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300' fill='none' stroke='%23F2A91E' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 290 H90 V250 H190 V190 H270 V150 H370 V90 H450 V40 H590'/%3E%3Cpath d='M10 290 H590' stroke-opacity='.5' stroke-dasharray='4 14'/%3E%3C/svg%3E") no-repeat right bottom/contain}
+.hero .wrap{position:relative;z-index:1}
+.steps{display:flex;flex-wrap:wrap;gap:10px 22px;list-style:none;margin:26px 0 0;padding:0;counter-reset:st}
+.steps li{display:flex;align-items:center;gap:10px;font-family:var(--hand);font-size:1.08rem;color:#fff;counter-increment:st}
+.steps li::before{content:counter(st);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--navy);font:800 .9rem var(--display)}
+.brief{position:relative;border-radius:12px;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.brief:hover{transform:rotate(0) translateY(-6px)}
+.sticker{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;width:96px;height:96px;border-radius:50%;font-family:var(--hand);font-weight:500;font-size:1.05rem;line-height:1.05;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+.brief .sticker{top:-34px;right:-22px;background:var(--accent);color:var(--navy);transform:rotate(14deg);border:3px dashed rgba(18,33,59,.35)}
+@media (max-width:560px){.brief .sticker{width:78px;height:78px;font-size:.92rem;right:-6px;top:-40px}}
+
+.board-grid{display:grid;grid-template-columns:minmax(0,760px) minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:start}
+@media (max-width:980px){.board-grid{grid-template-columns:1fr}}
+.board{background:var(--soft) radial-gradient(circle,#CBD2DF 1.2px,transparent 1.4px) 0 0/22px 22px;border:1px solid var(--line);border-radius:12px;padding:clamp(14px,2.4vw,26px)}
+.slices{gap:14px}
+.slice{background:#FFE58A;border:0;border-radius:3px 3px 14px 3px;padding:10px 10px 10px 4px;box-shadow:0 1px 1px rgba(18,33,59,.12),4px 8px 14px -6px rgba(18,33,59,.28);transform:rotate(-.5deg);transition:transform .2s,box-shadow .2s}
+.slice:nth-child(2n){transform:rotate(.45deg);background:#FFDF73}
+.slice:nth-child(3n){transform:rotate(-.2deg);background:#FFE99C}
+.slice:focus-within{transform:rotate(0) scale(1.01);box-shadow:0 1px 1px rgba(18,33,59,.12),6px 14px 22px -8px rgba(18,33,59,.35)}
+.slice .n{font-family:var(--hand);font-size:.95rem;color:#8A6A10;padding-top:9px}
+.grip{color:#9C7B1C}
+.stext{font:500 1.08rem/1.4 var(--hand);border-bottom-color:rgba(138,106,16,.3)}
+.stext::placeholder{color:#A88A3A}
+.slice .icon{background:transparent;border-color:rgba(138,106,16,.35);border-radius:50%;color:#6E5410}
+.slice .icon:hover{background:#fff;border-color:var(--navy);color:var(--navy)}
+.new-slice{border-radius:10px;background:rgba(255,255,255,.6);border-color:#A7B0C0;color:var(--muted);transition:background .15s,border-color .15s,color .15s}
+.new-slice:hover{background:#fff;border-color:var(--navy);color:var(--ink)}
+.ghost{transform:rotate(-2.5deg) scale(1.04)!important}
+#run{font-size:1rem;padding:16px 24px;box-shadow:5px 6px 0 var(--navy);transition:transform .15s,box-shadow .15s,background .15s}
+#run:not(:disabled):hover{transform:translate(-2px,-2px);box-shadow:7px 8px 0 var(--navy)}
+#run:not(:disabled):active{transform:translate(3px,3px);box-shadow:2px 3px 0 var(--navy)}
+#run:disabled{box-shadow:none}
+.tips{position:relative;background:#fff;border:3px solid var(--navy);border-radius:28px 34px 26px 36px/30px 24px 34px 26px;box-shadow:6px 7px 0 var(--accent);padding:22px 22px 18px;transform:rotate(1.5deg);margin-top:8px}
+.tips h3{font-family:var(--hand);font-weight:500;text-transform:none;font-size:1.45rem}
+.tips ol{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.tips li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;font-size:.93rem;line-height:1.4;color:var(--muted)}
+.tips li b{display:block;color:var(--ink);font-family:var(--hand);font-weight:500;font-size:1.08rem}
+.tips li::before{content:attr(data-n);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--navy);color:var(--accent);font:800 .8rem var(--display);margin-top:2px}
+@media (max-width:980px){.tips{transform:none;max-width:760px}}
+
+.panel,.rubric,.sim-cta,.summary,.decide,.card{border-radius:12px}
+.panel{overflow:hidden}
+.score{position:relative}
+.score-total{background:var(--navy);color:#fff;border-right:0;position:relative}
+.score-total>span,.score-total p{color:#AEB9CC}
+.score-total b{color:#fff}
+.score-total b small{color:#8D9AB0}
+.verdict{display:inline-block;align-self:flex-start;margin-top:12px;background:var(--accent);color:var(--navy);font-family:var(--hand);font-weight:500;font-size:1.1rem;line-height:1.1;padding:6px 14px;border-radius:14px 18px 12px 20px/18px 12px 20px 14px;transform:rotate(-3deg);box-shadow:3px 4px 0 rgba(0,0,0,.25)}
+.verdict.lo{background:#F4C7C7;color:#7A1F1F}
+.verdict.hi{background:#9FE3C9;color:#0B4F3E}
+.sp-bar{height:10px;border-radius:6px;overflow:hidden}
+.sp-bar i{border-radius:6px;transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes grow{from{transform:scaleX(0)}}
+.chart svg{animation:reveal 1.3s cubic-bezier(.45,.05,.3,1) .2s both}
+@keyframes reveal{from{clip-path:inset(-10px 100% -10px 0)}to{clip-path:inset(-10px -10px -10px 0)}}
+.mark{animation:pop .45s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(.25s + var(--d,0) * 1.2s)}
+@keyframes pop{from{opacity:0;transform:scale(.3)}}
+.timeline{border-radius:6px}
+.blk{animation:fadein .4s ease both;animation-delay:calc(.25s + var(--d,0) * 1.2s)}
+@keyframes fadein{from{opacity:0}}
+.gap{animation:fadein .4s ease 1.5s both}
+.slist li{animation:rise .4s ease both;animation-delay:calc(.1s + var(--k,0) * .06s)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+
+.rubric{position:relative;overflow:hidden}
+.rubric td.bar{width:42%;padding-left:0}
+.rubric td.bar i{display:block;height:14px;border-radius:0 7px 7px 0;background:linear-gradient(90deg,rgba(242,169,30,.35),var(--accent))}
+@media (max-width:560px){.rubric td.bar{width:30%}}
+@media (prefers-reduced-motion:reduce){.chart svg,.mark,.blk,.gap,.slist li,.sp-bar i,.brief{animation:none!important;transition:none!important}}
 </style>
 <script defer src="assets/js/track.js?v=2026-10-24b"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
@@ -304,11 +376,13 @@ footer.site a:hover{color:var(--accent)}
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow">Slicing game · about 5 minutes</span>
+      <span class="eyebrow">The slicing game</span>
       <h1>Slice it <em>right</em></h1>
       <p class="lede">Slice a real feature into releases and see when value becomes available. A good plan gets usable value out early and avoids long waits with nothing new.</p>
+      <ol class="steps"><li>Write your slices</li><li>Put them in order</li><li>See when value arrives</li></ol>
     </div>
     <div class="brief">
+      <span class="sticker" aria-hidden="true">about<br>5 min</span>
       <span class="eyebrow">The brief</span>
       <h2>“As a customer, I want to cancel an order by myself”</h2>
       <p>An online retailer sells through <b>its website</b>. Today, customers who want to cancel an order have to <b>phone the contact centre</b>, where staff handle it. The business wants self-service cancellation on the website, to cut cancellation calls and the cost of handling them.</p>
@@ -326,13 +400,23 @@ footer.site a:hover{color:var(--accent)}
       <h2>How would you slice it?</h2>
       <p>One sticky per slice, in the order you’d release them. Say what customers can do once it’s live. Drag the ⋮⋮ handle to reorder (press and hold on a phone).</p>
     </div>
-    <div class="plan">
+    <div class="board-grid">
+    <div class="plan board">
       <div class="slices" id="slices"></div>
       <div class="plan-foot">
         <button class="btn btn-primary" id="run" type="button" disabled>See when value arrives</button>
         <span class="hint" id="hint"></span>
         <a class="linkbtn" id="ref-link" href="slicing-reference.html" target="_blank" rel="noopener">Stuck? See the reference solution ↗</a>
       </div>
+    </div>
+    <aside class="tips" aria-label="What makes a good slice">
+      <h3>What makes a good slice?</h3>
+      <ol>
+        <li data-n="1"><span><b>Customers can use it</b>Say what someone can do once it’s live, not what the team builds.</span></li>
+        <li data-n="2"><span><b>Value comes early</b>Put the slices that unlock the most, soonest, at the top.</span></li>
+        <li data-n="3"><span><b>No long waits</b>Keep slices small, so something new lands every week or two.</span></li>
+      </ol>
+    </aside>
     </div>
 
     <div id="result" hidden tabindex="-1" style="margin-top:40px">
@@ -347,12 +431,12 @@ footer.site a:hover{color:var(--accent)}
         <h3>The value scale behind the chart</h3>
         <p>Every plan is scored on the same fixed scale, so different slicing strategies can be compared. Points are an agreed assumption about increasing capability, not a measure of business impact.</p>
         <table>
-          <tr><td class="p">5</td><td>Show whether an order is cancellable</td></tr>
-          <tr><td class="p">25</td><td>Request cancellation online, processed manually</td></tr>
-          <tr><td class="p">40</td><td>Automatically cancel single-item orders</td></tr>
-          <tr><td class="p">55</td><td>Automatically cancel entire multi-item orders</td></tr>
-          <tr><td class="p">80</td><td>Cancel selected items within an order</td></tr>
-          <tr><td class="p">100</td><td>Handle all eligible orders, including complex and marketplace orders</td></tr>
+          <tr><td class="p">5</td><td>Show whether an order is cancellable</td><td class="bar"><i style="width:5%"></i></td></tr>
+          <tr><td class="p">25</td><td>Request cancellation online, processed manually</td><td class="bar"><i style="width:25%"></i></td></tr>
+          <tr><td class="p">40</td><td>Automatically cancel single-item orders</td><td class="bar"><i style="width:40%"></i></td></tr>
+          <tr><td class="p">55</td><td>Automatically cancel entire multi-item orders</td><td class="bar"><i style="width:55%"></i></td></tr>
+          <tr><td class="p">80</td><td>Cancel selected items within an order</td><td class="bar"><i style="width:80%"></i></td></tr>
+          <tr><td class="p">100</td><td>Handle all eligible orders, including complex and marketplace orders</td><td class="bar"><i style="width:100%"></i></td></tr>
         </table>
         <ul>
           <li>A plan’s value is the highest step its released slices have reached. Skipped steps count once a higher one is live.</li>
@@ -544,7 +628,9 @@ function scoreHTML(m,ref){
   const sc=scoreOf(m),cls=v=>v<40?'lo':v>=70?'hi':'';
   const part=(name,v,why,rv)=>'<div><div class="sp-head"><span>'+name+'</span><b>'+v+(rv!=null?' <small style="font:500 .7rem var(--mono);color:var(--muted)">David '+rv+'</small>':'')+'</b></div><div class="sp-bar"><i class="'+cls(v)+'" style="width:'+Math.max(2,v)+'%"></i></div><div class="sp-why">'+why+'</div></div>';
   const rs=ref?scoreOf(ref):null;
-  return '<div class="score"><div class="score-total"><span>Slicing score</span><b>'+sc.overall+'<small>/100</small></b>'+
+  const vd=sc.overall>=80?['hi','Value slicer!']:sc.overall>=60?['','Nearly there']:sc.overall>=40?['','Some layers showing']:['lo','Layer cake'];
+  return '<div class="score"><div class="score-total"><span>Slicing score</span><b><span data-count="'+sc.overall+'">'+sc.overall+'</span><small>/100</small></b>'+
+    '<em class="verdict '+vd[0]+'" style="font-style:normal">'+vd[1]+'</em>'+
     '<p>The average of the three learnings.'+(rs?' David’s plan: '+rs.overall+'.':'')+'</p></div><div class="score-parts">'+
     part('1 · Slice by usable value',sc.usable,sc.usable+'% of your build weeks went into slices customers can use. Technical work and supporting pieces on their own don’t count; experiments don’t count against you.',rs&&rs.usable)+
     part('2 · Get value out early',sc.early,m.first?'Customers first got value in week '+m.first+' of '+m.total+'.':'Customers never got any value from this plan.',rs&&rs.early)+
@@ -642,7 +728,7 @@ function chartBlock(id,runs,main,opts){
     svg+='<path d="'+stepPath(r.m.sch,S,y)+'" fill="none" '+sty[r.key]+' vector-effect="non-scaling-stroke"/>';
   });
   let marks='';
-  main.m.sch.forEach(o=>{marks+='<span class="mark'+(o.after>o.before?'':' zero')+'" style="left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Slice '+(o.i+1)+' released">'+(o.i+1)+'</span>'});
+  main.m.sch.forEach(o=>{marks+='<span class="mark'+(o.after>o.before?'':' zero')+'" style="--d:'+(o.end/S).toFixed(3)+';left:'+pc(o.end)+';top:'+(y(o.after))+'%" title="Slice '+(o.i+1)+' released">'+(o.i+1)+'</span>'});
   let gap='';
   if(main.m.G>0)gap='<div class="gap" style="left:'+pc(main.m.gs)+';width:'+pc(main.m.G)+'"><span>longest wait: '+main.m.G+' wk</span></div>';
   // end labels
@@ -650,7 +736,7 @@ function chartBlock(id,runs,main,opts){
   runs.forEach(r=>{let t=y(r.m.M);while(used.some(u=>Math.abs(u-t)<22))t+= (t>50?-22:22);used.push(t);
     const col={you:'var(--accent-ink)',prev:'#7D879A',david:'var(--navy)'}[r.key];
     ends+='<span style="top:'+Math.max(6,Math.min(96,t))+'%;color:'+col+'"><b>'+r.m.M+'</b>'+r.label+'</span>'});
-  const blocks=main.m.sch.map(o=>'<div class="blk'+(o.after>o.before?'':' zero')+'" style="left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(o.i+1)+': '+esc(o.s.text)+'">'+(o.i+1)+'</div>').join('');
+  const blocks=main.m.sch.map(o=>'<div class="blk'+(o.after>o.before?'':' zero')+'" style="--d:'+(o.start/S).toFixed(3)+';left:'+pc(o.start)+';width:'+pc(o.end-o.start)+'" title="Slice '+(o.i+1)+': '+esc(o.s.text)+'">'+(o.i+1)+'</div>').join('');
   let ticks='';const step=S>16?2:1;for(let w=0;w<=S;w+=step)ticks+='<span style="left:'+pc(w)+'">'+w+'</span>';
   const keyLines=runs.length>1?runs.map(r=>'<span><i class="k-'+r.key+'"></i>'+r.label+'</span>').join(''):'';
   return '<div class="chart-wrap">'+
@@ -687,8 +773,8 @@ function statTiles(m){
     '<div class="stat"><b>'+m.G+' wk</b><span>Longest wait for new value</span></div></div>';
 }
 function sliceList(m,withWhy){
-  return '<ol class="slist">'+m.sch.map(o=>{const up=o.after>o.before;
-    return '<li><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
+  return '<ol class="slist">'+m.sch.map((o,k)=>{const up=o.after>o.before;
+    return '<li style="--k:'+k+'"><span class="num'+(up?'':' zero')+'">'+(o.i+1)+'</span><span class="txt"><span class="wk">Weeks '+(o.start+1)+(o.end-o.start>1?'–'+o.end:'')+' · size '+o.s.size+'</span>'+esc(o.s.text)+'</span>'+
       '<span class="pts '+(up?'up':'none')+'">'+(up?'+'+(o.after-o.before)+' → '+o.after:'no new value')+'</span>'+(withWhy?'<span class="why">'+esc(o.s.reason)+'</span>':'')+'</li>'}).join('')+'</ol>';
 }
 function renderResult(){
@@ -704,8 +790,12 @@ function renderResult(){
       '</tbody></table>';
   }
   h+=sliceList(current.m,true);
-  $('res-panel').innerHTML=h;
+  $('res-panel').innerHTML=h;countUp($('res-panel'));
   if(comparing)renderAlt();
+}
+function countUp(root){
+  root.querySelectorAll('[data-count]').forEach(el=>{const to=+el.dataset.count;if(reduce||!to)return;const t0=performance.now(),dur=900;
+    (function f(t){const k=Math.min(1,(t-t0)/dur);el.textContent=Math.round(to*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0)});
 }
 function renderAlt(){
   const dm=measures(DAVID),you={key:'you',label:'Your plan',m:current.m},alt={key:'david',label:'Reference',m:dm};

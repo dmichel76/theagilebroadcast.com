@@ -15,8 +15,7 @@
      Backlog currents: example shown  a visitor chose to see the example again (sent from backlog-currents.html)
      Backlog currents: CSV loaded     a visitor loaded their own CSVs (files and snapshot counts only; the files never leave the browser)
      ChatterBoard opened       link to the ChatterBoard page
-     ChatterBoard: GitHub      click through to the ChatterBoard repo, its zip or its issues (link = which)
-     ChatterBoard: demo played a visitor pressed Start on the sample board (sent from chatterboard.html) */
+     ChatterBoard: GitHub      click through to the ChatterBoard repo, its zip or its issues (link = which) */
 (function () {
   var UMAMI_WEBSITE_ID = '53310796-e37c-4a64-98a3-dfda55a4ba7c';
 

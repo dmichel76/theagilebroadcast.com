@@ -498,6 +498,7 @@ footer.site a{color:#C3CCDB}
 .tool-slice{--c:var(--accent)}
 .tool-carry{--c:#3B9BEF}
 .tool-currents{--c:#16A37F}
+.tool-chatter{--c:#7A5CC7}
 .tool .tool-art{height:56px;display:flex;align-items:flex-end}
 .tool .tool-dots{display:flex;gap:8px}
 .tool .tool-dots i{width:22px;height:22px;border-radius:50%;border:1px solid #2B2B2B}
@@ -506,7 +507,7 @@ footer.site a{color:#C3CCDB}
 .tool .tool-meta{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-top:auto}
 @media (prefers-reduced-motion:reduce){.tool{transition:none}}
 </style>
-<script defer src="assets/js/track.js?v=2026-10-26d"></script>
+<script defer src="assets/js/track.js?v=2026-10-27b"></script>
 <script defer src="assets/js/menu.js?v=2026-10-25"></script>
 </head>
 <body>
@@ -783,7 +784,7 @@ footer.site a{color:#C3CCDB}
       <div>
         <span class="eyebrow">Try it yourself</span>
         <h2>Tools</h2>
-        <p class="lede" style="margin-top:20px">Free tools to use on your own or with your team: exercises from my training, and ways to look at your own sprint and backlog data. Nothing you enter or load is stored or sent anywhere.</p>
+        <p class="lede" style="margin-top:20px">Free tools to use on your own or with your team: exercises from my training, and ways to look at your own sprint and backlog data. The web tools run in your browser: nothing you enter or load is stored or sent anywhere.</p>
       </div>
     </div>
     <div class="tools">
@@ -810,6 +811,12 @@ footer.site a{color:#C3CCDB}
         <h3>Backlog Currents</h3>
         <p>Drop weekly ADO or Jira backlog exports to see what climbs, sinks, stalls and skips the queue.</p>
         <span class="tool-meta">Backlog analysis · your own data →</span>
+      </a>
+      <a class="tool tool-chatter" href="chatterboard.html">
+        <span class="tool-art" aria-hidden="true"><svg width="120" height="56" viewBox="0 0 120 56"><rect x="2" y="8" width="24" height="10" rx="2" fill="#CBD3DF"/><rect x="2" y="22" width="24" height="10" rx="2" fill="#CBD3DF"/><rect x="32" y="8" width="24" height="10" rx="2" fill="#CBD3DF"/><rect x="32" y="22" width="24" height="10" rx="2" fill="#7A5CC7" stroke="#12213B" stroke-width="1.5"/><rect x="32" y="36" width="24" height="10" rx="2" fill="#CBD3DF"/><rect x="62" y="8" width="24" height="10" rx="2" fill="#CBD3DF"/><path d="M70 22 H114 a4 4 0 0 1 4 4 V40 a4 4 0 0 1 -4 4 H82 L74 50 L76 44 H70 a4 4 0 0 1 -4 -4 V26 a4 4 0 0 1 4 -4Z" fill="#fff" stroke="#12213B" stroke-width="1.5"/><path d="M78 30 v6 M84 28 v10 M90 31 v4 M96 27 v12 M102 30 v6 M108 32 v2" stroke="#7A5CC7" stroke-width="2.5" stroke-linecap="round"/><line x1="2" y1="54" x2="118" y2="54" stroke="#12213B" stroke-width="2"/></svg></span>
+        <h3>ChatterBoard</h3>
+        <p>A Chrome extension that gives Azure DevOps tickets a voice. It finds the cards that have sat still too long, highlights them on the board and reads them out at stand-up.</p>
+        <span class="tool-meta">Chrome extension · Azure DevOps →</span>
       </a>
     </div>
   </div>

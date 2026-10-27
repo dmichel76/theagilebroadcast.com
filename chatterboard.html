@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChatterBoard · David Michel | The Agile Broadcast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ChatterBoard is a free Chrome extension that gives Azure DevOps tickets a voice. It finds the cards that have sat still too long, highlights them on the board and reads them out loud at stand-up.">
+<link rel="canonical" href="https://theagilebroadcast.com/chatterboard.html">
+<link rel="icon" href="assets/img/chatterboard-icon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ChatterBoard (Chrome extension for Azure DevOps boards). Built to match carry-over.html and backlog-currents.html:
+   1. Site chrome: the navy header and footer shared with the other pages, scoped to header.site / footer.site.
+   2. The page: the data tools' design system (tokens, hero card, panels), every rule scoped under .cb.
+      It follows the visitor's light/dark setting. Facts on scoring and options come from background.js and
+      options.js in github.com/dmichel76/ChatterBoard. */
+
+/* ---------- 1. site chrome (same as carry-over.html) ---------- */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --on-navy:#DCE3EF;
+  --site-accent:#F2A91E;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+}
+[hidden]{display:none!important}
+body{margin:0}
+header.site,footer.site{font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+header.site *,footer.site *{box-sizing:border-box}
+header.site .wrap,footer.site .wrap{max-width:1200px;margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){header.site .wrap,footer.site .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+header.site .nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+header.site .brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+header.site .brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+header.site .brand span{font-family:var(--mono);font-size:.72rem;color:var(--site-accent);letter-spacing:.08em;text-transform:uppercase}
+header.site .nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+header.site .nav ul a{color:var(--on-navy);text-decoration:none}
+header.site .nav ul a:hover{color:var(--site-accent)}
+header.site .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;text-transform:uppercase;letter-spacing:.02em;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s;padding:10px 16px;font-size:.85rem;background:var(--site-accent);color:var(--navy)}
+header.site .btn:hover{background:#FFC04D}
+header.site a:focus-visible{outline:3px solid var(--site-accent);outline-offset:3px}
+@media (max-width:980px){header.site .nav ul{display:none}}
+@media (max-width:420px){header.site .nav .btn{padding:9px 12px;font-size:.78rem}header.site .brand span{display:none}}
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--site-accent)}
+
+/* ---------- 2. the page (the data tools' tokens and components, scoped under .cb) ---------- */
+.cb{
+  --bg:#f4f6f8; --surface:#ffffff; --fg:#17202b; --muted:#5d6b7a; --line:#dde3ea;
+  --accent:#2457c5; --amber:#b88a16; --good:#2f8f83; --bad:#d6573b;
+  --violet:#7A5CC7;
+  --font-display:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cb{
+  --bg:#10151c; --surface:#18202a; --fg:#e6ebf1; --muted:#93a1b1; --line:#2a3542;
+  --accent:#7aa5f5; --amber:#d8ab3c; --good:#4fb3a6; --bad:#ec7a5e; --violet:#a58ef0; color-scheme:dark;
+}}
+:root[data-theme="dark"] .cb{
+  --bg:#10151c; --surface:#18202a; --fg:#e6ebf1; --muted:#93a1b1; --line:#2a3542;
+  --accent:#7aa5f5; --amber:#d8ab3c; --good:#4fb3a6; --bad:#ec7a5e; --violet:#a58ef0; color-scheme:dark;
+}
+.cb{display:block;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.cb *,.cb *::before,.cb *::after{box-sizing:border-box}
+.cb .wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+.cb h1{font-family:var(--font-display);font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance;font-weight:700}
+.cb h2{font-size:18px;margin:0;text-wrap:balance;font-family:inherit;font-weight:700;line-height:inherit}
+.cb h3{font-size:15px;margin:0;font-weight:600}
+.cb p{margin:0}
+.cb button{font:inherit;color:inherit}
+.cb a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:3px}
+.cb code{font-family:var(--font-mono);font-size:12px;overflow-wrap:anywhere}
+.cb .eyebrow{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.cb .lede{color:var(--muted);max-width:68ch}
+.cb .note{font-size:12px;color:var(--muted)}
+.cb .head-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:baseline}
+.cb .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.cb .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:22px}
+.cb button:focus-visible,.cb a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cb .cta{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;background:var(--fg);color:var(--surface);border:0;border-radius:8px;padding:10px 18px;cursor:pointer;text-decoration:none;transition:transform .15s}
+.cb .cta:hover{transform:translateY(-1px)}
+.cb .cta svg{width:16px;height:16px}
+.cb .btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:500;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer;text-decoration:none}
+.cb .btn:hover{border-color:var(--muted)}
+.cb .btn-lg{font-size:14px;padding:9px 16px;border-radius:8px}
+
+/* hero: centred, with a ticket's speech bubble as the centrepiece */
+.cb .hero{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;padding:36px 28px 32px;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  background:radial-gradient(70% 60% at 50% 38%,color-mix(in oklab,var(--violet) 14%,transparent),transparent 70%),radial-gradient(60% 50% at 0% 100%,color-mix(in oklab,var(--amber) 10%,transparent),transparent 65%),var(--surface)}
+@media (max-width:560px){.cb .hero{padding:26px 16px 24px}}
+.cb .title-row{display:flex;align-items:center;gap:10px}
+.cb .title-row img{width:36px;height:36px;border-radius:9px;background:#fff;border:1px solid var(--line);flex:none}
+.cb .title-row h1{font-size:22px}
+.cb .motto{font-family:var(--font-display);font-weight:700;font-size:clamp(32px,6vw,58px);line-height:1.04;letter-spacing:-.02em;max-width:16ch;text-wrap:balance;margin:0}
+.cb .motto em{font-style:normal;color:var(--violet)}
+.cb .scene{position:relative;width:min(600px,100%);margin:10px 0 6px;display:flex;flex-direction:column;align-items:flex-start}
+.cb .bubble{position:relative;align-self:flex-end;width:min(500px,94%);margin:0 0 30px;padding:22px 26px 20px;text-align:left;background:var(--surface);color:var(--fg);border:3px solid var(--fg);
+  border-radius:30px 36px 32px 26px / 32px 26px 36px 30px;transform:rotate(-1.5deg);box-shadow:6px 8px 0 color-mix(in oklab,var(--violet) 35%,transparent)}
+.cb .bubble::before,.cb .bubble::after{content:"";position:absolute;width:0;height:0;border-style:solid}
+.cb .bubble::before{left:58px;bottom:-30px;border-width:30px 34px 0 0;border-color:var(--fg) transparent transparent transparent}
+.cb .bubble::after{left:61px;bottom:-22px;border-width:22px 25px 0 0;border-color:var(--surface) transparent transparent transparent}
+.cb .bubble q{display:block;font-family:var(--font-display);font-weight:600;font-size:clamp(19px,2.6vw,25px);line-height:1.3;quotes:"“" "”";text-wrap:pretty}
+.cb .bubble .who{display:flex;align-items:center;gap:8px;margin-top:12px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cb .wave{display:inline-flex;gap:3px;align-items:center;height:14px}
+.cb .wave i{display:block;width:3px;height:100%;border-radius:2px;background:var(--violet);transform-origin:center}
+.cb .ticket{position:relative;width:min(290px,78%);text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid #3f78d8;border-radius:8px;padding:12px 14px;outline:3px solid var(--violet);outline-offset:3px;box-shadow:0 14px 30px rgba(18,33,59,.16);transform:rotate(1deg)}
+.cb .ticket .id{display:block;font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:3px}
+.cb .ticket b{display:block;font-size:15px;font-weight:600;line-height:1.3}
+.cb .ticket .meta{display:flex;justify-content:space-between;gap:8px;margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.cb .ticket .score{position:absolute;top:-12px;right:-12px;font-family:var(--font-mono);font-size:13px;font-weight:500;color:#fff;background:var(--bad);border-radius:999px;padding:3px 10px;box-shadow:0 4px 10px rgba(0,0,0,.18)}
+@media (max-width:560px){.cb .bubble{width:100%;padding:18px 18px 16px}.cb .bubble::before{left:40px}.cb .bubble::after{left:43px}.cb .ticket{width:86%}}
+@media (prefers-reduced-motion:no-preference){
+  .cb .bubble{animation:cb-pop .55s cubic-bezier(.2,1.5,.4,1) .15s both}
+  .cb .wave i{animation:cb-wave 1s ease-in-out infinite}
+  .cb .wave i:nth-child(2){animation-delay:.15s}.cb .wave i:nth-child(3){animation-delay:.3s}.cb .wave i:nth-child(4){animation-delay:.45s}
+}
+@keyframes cb-pop{from{opacity:0;transform:rotate(-4deg) scale(.7) translateY(20px)}to{opacity:1;transform:rotate(-1.5deg) scale(1)}}
+@keyframes cb-wave{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.cb .intro{font-size:17px;line-height:1.5;max-width:60ch;color:var(--fg)}
+.cb .hero .acts{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;align-items:center;margin-top:2px}
+.cb .facts{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.cb .facts li{font-family:var(--font-mono);font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
+/* the popup: screenshot beside what each control does */
+.cb .popup-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px 32px;align-items:center}
+@media (max-width:700px){.cb .popup-grid{grid-template-columns:1fr}}
+.cb .shot{justify-self:center;margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.cb .shot img{display:block;width:min(260px,70vw);height:auto;border-radius:12px;border:1px solid var(--line);box-shadow:0 14px 34px rgba(18,33,59,.16);background:#fff}
+.cb .shot figcaption{font-size:12px;color:var(--muted)}
+.cb .ctrls{margin:0;display:grid;gap:12px;font-size:14px;max-width:62ch}
+.cb .ctrls dt{font-weight:600}
+.cb .ctrls dd{margin:2px 0 0;color:var(--muted)}
+
+/* how it works */
+.cb .sigs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.cb .sc-card{border:1px solid var(--line);border-top:4px solid var(--c,var(--violet));border-radius:10px;padding:14px 16px;display:grid;gap:8px;align-content:start;background:var(--surface)}
+.cb .sc-card p{font-size:14px;color:var(--muted)}
+.cb .sc-card q{display:block;font-size:13.5px;font-style:italic;color:var(--fg);quotes:"“" "”"}
+.cb .rules{margin:0;padding-left:20px;display:grid;gap:8px;color:var(--muted);font-size:14px;max-width:80ch}
+.cb .rules b{color:var(--fg);font-weight:600}
+.cb .tones{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cb .tone{background:var(--surface);padding:12px 14px;display:grid;gap:4px}
+.cb .tone .lv{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c)}
+.cb .tone q{font-size:13.5px;font-style:italic;quotes:"“" "”"}
+.cb .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.cb .mode{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:6px;align-content:start}
+.cb .mode .pill{justify-self:start;font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:999px;background:var(--line);color:var(--muted)}
+.cb .mode .pill.on{background:color-mix(in oklab,var(--accent) 16%,var(--surface));color:var(--accent)}
+.cb .mode p{font-size:13.5px;color:var(--muted)}
+.cb .byok{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;padding:18px 20px;border-radius:12px;background:color-mix(in oklab,var(--violet) 9%,var(--surface));border:1px solid color-mix(in oklab,var(--violet) 35%,transparent)}
+.cb .byok-ico{flex:none;width:34px;height:34px;color:var(--violet)}
+.cb .byok-text{flex:1 1 380px;display:grid;gap:4px;min-width:0}
+.cb .byok-text p{color:var(--muted);font-size:14px;max-width:72ch}
+.cb .outro{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between}
+@media (prefers-reduced-motion:reduce){.cb *{transition:none!important}}
+</style>
+<script defer src="assets/js/track.js?v=2026-10-27b"></script>
+<script defer src="assets/js/menu.js?v=2026-10-25"></script>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#tools">Tools</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main class="cb" id="cb">
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Chrome extension · Azure DevOps boards</div>
+    <div class="title-row">
+      <img src="assets/img/chatterboard-icon.png" alt="" width="128" height="128">
+      <h1>ChatterBoard</h1>
+    </div>
+    <p class="motto">What if tickets <em>could speak?</em></p>
+    <figure class="scene" aria-label="Example: a ticket stuck in Ready for QA for 46 days says: I've been rotting in Ready for QA for 46 days. Completely abandoned.">
+      <div class="bubble" aria-hidden="true">
+        <q>I've been rotting in Ready for QA for 46 days. Completely abandoned.</q>
+        <span class="who"><span class="wave"><i></i><i></i><i></i><i></i></span>Story 4402, at stand-up</span>
+      </div>
+      <div class="ticket" aria-hidden="true">
+        <span class="score">77</span>
+        <span class="id">Story 4402 · Ready for QA</span>
+        <b>Middleware currently builds a synchronous queue</b>
+        <span class="meta"><span>In column 46d</span><span>Updated 20d ago</span></span>
+      </div>
+    </figure>
+    <p class="intro">ChatterBoard gives your Azure DevOps tickets a voice. At stand-up, it finds the cards that have sat still too long, scrolls each one into view, highlights it and reads it out loud. The stuck work speaks first, before anyone starts reading out status updates.</p>
+    <ul class="facts" aria-label="At a glance">
+      <li>Free and open source</li><li>Azure DevOps</li><li>Chrome</li><li>Works out of the box with Chrome's voice</li>
+    </ul>
+    <div class="acts">
+      <a class="cta" href="https://github.com/dmichel76/ChatterBoard" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Get it on GitHub</a>
+      <a class="btn btn-lg" href="#how">How it works</a>
+    </div>
+  </header>
+
+  <section class="panel" aria-labelledby="popup-h">
+    <h2 id="popup-h">At stand-up</h2>
+    <div class="popup-grid">
+      <figure class="shot">
+        <picture>
+          <source srcset="assets/img/chatterboard-popup.webp" type="image/webp">
+          <img src="assets/img/chatterboard-popup.jpg" alt="The ChatterBoard popup reading ticket 1 of 5: frustration score 92, last updated 15 days ago, 36 days in the Ready for QA column and 50 days in the Resolved state, with Templates, AI text, Chrome TTS and AI voice mode pills." width="562" height="820" loading="lazy">
+        </picture>
+        <figcaption>The extension popup during a run</figcaption>
+      </figure>
+      <dl class="ctrls">
+        <div><dt>Start</dt><dd>Scores the tickets on the board, queues the ones that most need attention, and starts reading them out, one at a time. Each card is scrolled into view and highlighted while it speaks.</dd></div>
+        <div><dt>Previous and Next</dt><dd>Move through the queue at the team's pace, to go back to a ticket or skip to the next one.</dd></div>
+        <div><dt>Clear</dt><dd>Stops and resets.</dd></div>
+        <div><dt>Frustration score</dt><dd>Shows why the ticket was picked: its score, and how long it has waited on each signal.</dd></div>
+        <div><dt>Mode pills</dt><dd>Switch between template and AI-written words, and between Chrome's voice and ElevenLabs, without opening Options.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="panel" id="how" aria-labelledby="how-h">
+    <div class="head-row">
+      <h2 id="how-h">How it picks the tickets</h2>
+      <p class="note">Each ticket gets a frustration score from 0 to 100.</p>
+    </div>
+    <div class="sigs">
+      <div class="sc-card" style="--c:var(--amber)">
+        <h3>Time since last updated</h3>
+        <p>How long since anyone changed anything on the ticket.</p>
+        <q>Nobody has touched me for 23 days. Starting to feel a bit neglected here.</q>
+      </div>
+      <div class="sc-card" style="--c:var(--bad)">
+        <h3>Time in column</h3>
+        <p>How long the ticket has sat in its current board column, read from its history. The column is named when it speaks.</p>
+        <q>I've been stuck in Ready for QA for 46 days. This is beyond a joke.</q>
+      </div>
+      <div class="sc-card" style="--c:var(--violet)">
+        <h3>Time in state</h3>
+        <p>How long since the ticket's state last changed, for example how long it has been Active or Resolved.</p>
+        <q>Been in progress for 33 days. This is taking longer than expected.</q>
+      </div>
+    </div>
+    <ul class="rules">
+      <li><b>Only what's on screen.</b> It looks at the tickets visible on the board, and skips the first and last columns: work not started yet, and work that's done.</li>
+      <li><b>Relative or absolute.</b> Relative scoring compares every wait with the longest one on the board, so the worst ticket today always scores near 100. Absolute scoring compares each wait with a fixed number of days (30 by default), so a calm board stays calm.</li>
+      <li><b>One score per ticket.</b> The frustration score is the average of its signal scores. Tickets are queued from the highest score down, five by default.</li>
+      <li><b>Only the signals that matter.</b> A signal scoring under half of the ticket's strongest signal is not mentioned, so one clear problem isn't drowned out by two small ones.</li>
+      <li><b>Skip what you choose.</b> Tags, states and work item types you list in Options are ignored.</li>
+    </ul>
+    <div class="tones" aria-label="Tone by frustration score">
+      <div class="tone" style="--c:var(--good)"><span class="lv">Calm · 0–30</span><q>It's been 4 days since anyone looked at me. No rush though.</q></div>
+      <div class="tone" style="--c:var(--amber)"><span class="lv">Cheeky · 31–70</span><q>11 days without an update. Am I invisible or something?</q></div>
+      <div class="tone" style="--c:var(--bad)"><span class="lv">Serious · 71–100</span><q>Nobody has touched me for 23 days. This is completely unacceptable.</q></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="voice-h">
+    <div class="head-row">
+      <h2 id="voice-h">Words and voices</h2>
+      <p class="note">Switch either one from the popup's mode pills, mid-stand-up if you like.</p>
+    </div>
+    <div class="modes">
+      <div class="mode"><span class="pill on">Templates</span><p>The default. Thirty hand-written sentences, ten per signal, from patient to fed up. No API key needed.</p></div>
+      <div class="mode"><span class="pill">AI text</span><p>A fresh one or two sentences per ticket from OpenAI's GPT-4o-mini, written in the right tone. Falls back to the templates if OpenAI isn't available.</p></div>
+      <div class="mode"><span class="pill on">Chrome TTS</span><p>The default. Chrome's built-in voices, nothing to set up.</p></div>
+      <div class="mode"><span class="pill">AI voice</span><p>Realistic ElevenLabs voices. Each ticket gets its own voice, picked from its ID, so the board sounds like a crowd. Or pin one voice in Options.</p></div>
+    </div>
+  </section>
+
+  <section class="byok" aria-labelledby="byok-h">
+    <svg class="byok-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/></svg>
+    <div class="byok-text">
+      <h2 id="byok-h">Bring your own key</h2>
+      <p>ChatterBoard uses your own Azure DevOps token, plus your own OpenAI or ElevenLabs keys if you want AI words or voices. They stay in your browser. There's no ChatterBoard server and nothing to sign up for.</p>
+    </div>
+    <a class="btn btn-lg" href="https://github.com/dmichel76/ChatterBoard#setup" target="_blank" rel="noopener">Setup on GitHub ↗</a>
+  </section>
+
+  <section class="panel outro">
+    <p class="lede">Install steps, options, questions or a bug: it's all on GitHub. Want to talk about how your team runs stand-up and gets work flowing?</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <a class="btn btn-lg" href="https://github.com/dmichel76/ChatterBoard/issues" target="_blank" rel="noopener">Open an issue</a>
+      <a class="cta" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="./#tools">More tools</a></span>
+  </div>
+</footer>
+<script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body>
+</html>

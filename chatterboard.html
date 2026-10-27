@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChatterBoard · David Michel | The Agile Broadcast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ChatterBoard is a free Chrome extension that gives Azure DevOps tickets a voice. It finds the cards that have sat still too long, highlights them on the board and reads them out loud at stand-up. Try it on a sample board.">
+<link rel="canonical" href="https://theagilebroadcast.com/chatterboard.html">
+<link rel="icon" href="assets/img/chatterboard-icon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ChatterBoard (Chrome extension for Azure DevOps boards). Built to match carry-over.html and backlog-currents.html:
+   1. Site chrome: the navy header and footer shared with the other pages, scoped to header.site / footer.site.
+   2. The page: the data tools' design system (tokens, hero card, panels, controls), every rule scoped under .cb.
+      It follows the visitor's light/dark setting.
+   The demo board replays the extension's own rules (background.js in github.com/dmichel76/ChatterBoard): three signals
+   scored relative to the longest wait on the board (or against a fixed number of days), frustration score = their
+   average, signals under half the strongest are not spoken, first and last columns skipped, sentences from sentences/*.txt
+   picked by tone (calm 0-30, cheeky 31-70, serious 71-100). Speech uses the browser's own voice. Nothing is sent anywhere. */
+
+/* ---------- 1. site chrome (same as carry-over.html) ---------- */
+:root{
+  --navy:#12213B; --navy-2:#1C3157; --on-navy:#DCE3EF;
+  --site-accent:#F2A91E;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+}
+[hidden]{display:none!important}
+body{margin:0}
+header.site,footer.site{font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+header.site *,footer.site *{box-sizing:border-box}
+header.site .wrap,footer.site .wrap{max-width:1200px;margin:0 auto;padding-left:max(24px, env(safe-area-inset-left, 0px));padding-right:max(24px, env(safe-area-inset-right, 0px))}
+@media (max-width:560px){header.site .wrap,footer.site .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}}
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);border-bottom:1px solid var(--navy-2)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--navy)}
+header.site .nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
+header.site .brand{display:flex;flex-direction:column;text-decoration:none;color:#fff;line-height:1.1}
+header.site .brand b{font-family:var(--display);font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.01em}
+header.site .brand span{font-family:var(--mono);font-size:.72rem;color:var(--site-accent);letter-spacing:.08em;text-transform:uppercase}
+header.site .nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-weight:500;font-size:.95rem}
+header.site .nav ul a{color:var(--on-navy);text-decoration:none}
+header.site .nav ul a:hover{color:var(--site-accent)}
+header.site .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:750;text-transform:uppercase;letter-spacing:.02em;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s;padding:10px 16px;font-size:.85rem;background:var(--site-accent);color:var(--navy)}
+header.site .btn:hover{background:#FFC04D}
+header.site a:focus-visible{outline:3px solid var(--site-accent);outline-offset:3px}
+@media (max-width:980px){header.site .nav ul{display:none}}
+@media (max-width:420px){header.site .nav .btn{padding:9px 12px;font-size:.78rem}header.site .brand span{display:none}}
+footer.site{padding-block:28px;background:var(--navy);color:#8D9AB0;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+footer.site a{color:#C3CCDB;text-decoration:none}
+footer.site a:hover{color:var(--site-accent)}
+
+/* ---------- 2. the page (the data tools' tokens and components, scoped under .cb) ---------- */
+.cb{
+  --bg:#f4f6f8; --surface:#ffffff; --fg:#17202b; --muted:#5d6b7a; --line:#dde3ea;
+  --accent:#2457c5; --amber:#b88a16; --good:#2f8f83; --bad:#d6573b;
+  --violet:#7A5CC7; --card:#ffffff; --card-edge:#3f78d8;
+  --font-display:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cb{
+  --bg:#10151c; --surface:#18202a; --fg:#e6ebf1; --muted:#93a1b1; --line:#2a3542;
+  --accent:#7aa5f5; --amber:#d8ab3c; --good:#4fb3a6; --bad:#ec7a5e; --violet:#a58ef0; --card:#1f2935; --card-edge:#6b9cf0; color-scheme:dark;
+}}
+:root[data-theme="dark"] .cb{
+  --bg:#10151c; --surface:#18202a; --fg:#e6ebf1; --muted:#93a1b1; --line:#2a3542;
+  --accent:#7aa5f5; --amber:#d8ab3c; --good:#4fb3a6; --bad:#ec7a5e; --violet:#a58ef0; --card:#1f2935; --card-edge:#6b9cf0; color-scheme:dark;
+}
+.cb{display:block;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.cb *,.cb *::before,.cb *::after{box-sizing:border-box}
+.cb .wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+.cb h1{font-family:var(--font-display);font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance;font-weight:700}
+.cb h2{font-size:18px;margin:0;text-wrap:balance;font-family:inherit;font-weight:700;line-height:inherit}
+.cb h3{font-size:15px;margin:0;font-weight:600}
+.cb p{margin:0}
+.cb button{font:inherit;color:inherit}
+.cb a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:3px}
+.cb code{font-family:var(--font-mono);font-size:12px;overflow-wrap:anywhere}
+.cb .eyebrow{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.cb .lede{color:var(--muted);max-width:68ch}
+.cb .note{font-size:12px;color:var(--muted)}
+.cb .head-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:baseline}
+.cb .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.cb .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:22px}
+.cb button:focus-visible,.cb a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cb .cta{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;background:var(--fg);color:var(--surface);border:0;border-radius:8px;padding:10px 18px;cursor:pointer;text-decoration:none;transition:transform .15s}
+.cb .cta:hover{transform:translateY(-1px)}
+.cb .cta svg{width:16px;height:16px}
+.cb .btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:500;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer;text-decoration:none}
+.cb .btn:hover{border-color:var(--muted)}
+.cb .btn:disabled{opacity:.45;cursor:default}
+.cb .btn:disabled:hover{border-color:var(--line)}
+.cb .btn-lg{font-size:14px;padding:9px 16px;border-radius:8px}
+.cb .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.cb .seg button{font:inherit;font-size:13px;background:transparent;color:var(--fg);border:0;padding:5px 11px;cursor:pointer}
+.cb .seg button+button{border-left:1px solid var(--line)}
+.cb .seg button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.cb .ctl{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:13px;color:var(--muted)}
+
+/* hero (the data tools' hero card; the popup screenshot sits where their drop zone is) */
+.cb .hero{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px 36px;align-items:center;padding:28px;border:1px solid var(--line);border-radius:14px;
+  background:radial-gradient(120% 90% at 100% 0%,color-mix(in oklab,var(--violet) 15%,transparent),transparent 60%),radial-gradient(80% 70% at 0% 100%,color-mix(in oklab,var(--amber) 10%,transparent),transparent 65%),var(--surface)}
+@media (max-width:860px){.cb .hero{grid-template-columns:1fr;padding:22px 18px}}
+.cb .hero-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cb .title-row{display:flex;align-items:center;gap:14px}
+.cb .title-row img{width:52px;height:52px;border-radius:12px;background:#fff;border:1px solid var(--line);flex:none}
+.cb .intro{font-size:17px;line-height:1.5;max-width:56ch;color:var(--fg)}
+.cb .hero .acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+.cb .facts{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.cb .facts li{font-family:var(--font-mono);font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
+.cb .shot{justify-self:center;margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.cb .shot img{display:block;width:min(281px,70vw);height:auto;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 44px rgba(18,33,59,.18);transform:rotate(1.5deg);background:#fff}
+.cb .shot figcaption{font-size:12px;color:var(--muted)}
+
+/* demo: a sample board + the popup's score card */
+.cb .stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+@media (max-width:900px){.cb .stage{grid-template-columns:1fr}}
+.cb .player{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.cb .player .gap{flex:1}
+.cb .board-scroll{overflow-x:auto;border-radius:10px;background:var(--bg);border:1px solid var(--line);scrollbar-width:thin}
+.cb .board{display:grid;grid-template-columns:repeat(5,minmax(148px,1fr));gap:10px;padding:12px;min-width:780px}
+.cb .col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cb .col-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12px;font-weight:600;padding:2px 2px 6px;border-bottom:2px solid var(--line)}
+.cb .col-h span{font-family:var(--font-mono);font-weight:400;color:var(--muted);font-size:11px}
+.cb .col.skip .col-h span{color:var(--muted)}
+.cb .tk{position:relative;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--card-edge);border-radius:6px;padding:8px 9px 9px;font-size:12.5px;line-height:1.35;transition:box-shadow .25s,transform .25s,opacity .25s,outline-color .25s;outline:3px solid transparent;outline-offset:2px}
+.cb .tk .id{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-bottom:2px}
+.cb .tk .sc{position:absolute;top:6px;right:7px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;padding:0 6px;border-radius:999px;color:var(--surface);background:var(--muted)}
+.cb .tk.bug{--card-edge:#cc293d}
+.cb .col.skip .tk{opacity:.55}
+.cb .board.scored .tk.queued{box-shadow:0 0 0 1px color-mix(in oklab,var(--violet) 55%,transparent)}
+.cb .tk.now{outline-color:var(--violet);transform:scale(1.03);box-shadow:0 10px 26px rgba(0,0,0,.18);z-index:1}
+.cb .tk.now::after{content:"";position:absolute;inset:-7px;border-radius:9px;border:2px solid var(--violet);opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.cb .tk.now::after{animation:cb-ring 1.4s ease-out infinite}}
+@keyframes cb-ring{0%{opacity:.7;transform:scale(.97)}100%{opacity:0;transform:scale(1.06)}}
+/* score card (mirrors the extension popup) */
+.cb .pop{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px)}
+@media (max-width:900px){.cb .pop{position:static}}
+.cb .pop .status{font-size:13px;color:var(--muted)}
+.cb .scorebox{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:12px;background:var(--bg)}
+.cb .fs{display:flex;align-items:center;gap:12px}
+.cb .fs svg{width:44px;height:44px;flex:none}
+.cb .fs b{font-family:var(--font-mono);font-size:30px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1}
+.cb .fs small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.cb .ttl{font-size:13px;border-top:1px solid var(--line);padding-top:10px}
+.cb .ttl b{display:block;font-size:12px;color:var(--muted);font-weight:500}
+.cb .sig{display:grid;gap:4px;font-size:12.5px}
+.cb .sig .r{display:flex;justify-content:space-between;gap:8px}
+.cb .sig .r b{font-weight:600}
+.cb .sig .r span{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.cb .sig .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.cb .sig .bar i{display:block;height:100%;border-radius:99px;transition:width .5s ease}
+.cb .sig.muted{opacity:.45}
+.cb .sig .mute-note{font-size:11px;color:var(--muted)}
+.cb .said{font-size:14px;line-height:1.45;padding:10px 12px;border-left:3px solid var(--violet);background:color-mix(in oklab,var(--violet) 8%,var(--surface));border-radius:0 8px 8px 0;min-height:3em}
+.cb .said.idle{color:var(--muted);border-left-color:var(--line);background:transparent}
+.cb .idle-art{display:grid;place-items:center;padding:18px 0 6px}
+.cb .idle-art svg{width:120px;height:auto}
+
+/* how it works */
+.cb .sigs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.cb .sc-card{border:1px solid var(--line);border-top:4px solid var(--c,var(--violet));border-radius:10px;padding:14px 16px;display:grid;gap:8px;align-content:start;background:var(--surface)}
+.cb .sc-card p{font-size:14px;color:var(--muted)}
+.cb .sc-card q{display:block;font-size:13.5px;font-style:italic;color:var(--fg);quotes:"“" "”"}
+.cb .rules{margin:0;padding-left:20px;display:grid;gap:8px;color:var(--muted);font-size:14px;max-width:80ch}
+.cb .rules b{color:var(--fg);font-weight:600}
+.cb .tones{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cb .tone{background:var(--surface);padding:12px 14px;display:grid;gap:4px}
+.cb .tone .lv{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c)}
+.cb .tone q{font-size:13.5px;font-style:italic;quotes:"“" "”"}
+.cb .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.cb .mode{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:6px;align-content:start}
+.cb .mode .pill{justify-self:start;font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:999px;background:var(--line);color:var(--muted)}
+.cb .mode .pill.on{background:color-mix(in oklab,var(--accent) 16%,var(--surface));color:var(--accent)}
+.cb .mode p{font-size:13.5px;color:var(--muted)}
+.cb .steps{margin:0;padding-left:22px;display:grid;gap:10px;font-size:14px;max-width:72ch}
+.cb .steps li::marker{font-family:var(--font-mono);color:var(--muted)}
+.cb .steps span{color:var(--muted)}
+.cb table{width:100%;border-collapse:collapse;font-size:13.5px}
+.cb th,.cb td{text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.cb th{font-family:var(--font-mono);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.cb td:first-child{font-weight:600;white-space:nowrap}
+.cb td:last-child{color:var(--muted)}
+@media (max-width:560px){.cb td:first-child{white-space:normal}}
+.cb .privacy{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:10px;font-size:13.5px;color:var(--muted);background:color-mix(in oklab,var(--good) 9%,var(--surface));border:1px solid color-mix(in oklab,var(--good) 35%,transparent)}
+.cb .privacy svg{flex:none;width:20px;height:20px;color:var(--good);margin-top:1px}
+.cb .privacy b{color:var(--fg);font-weight:600}
+.cb .outro{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between}
+@media (prefers-reduced-motion:reduce){.cb *{transition:none!important}}
+</style>
+<script defer src="assets/js/track.js?v=2026-10-27"></script>
+<script defer src="assets/js/menu.js?v=2026-10-25"></script>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="The Agile Broadcast, home">
+      <b>The Agile Broadcast</b>
+      <span>Dr David Michel</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="./#training">Training</a></li>
+        <li><a href="./#coaching">Coaching</a></li>
+        <li><a href="./#speaking">Speaking</a></li>
+        <li><a href="./#tools">Tools</a></li>
+        <li><a href="./#book">Book</a></li>
+        <li><a href="./#videos">Videos</a></li>
+        <li><a href="./#about">About</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+  </div>
+</header>
+
+<main class="cb" id="cb">
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-text">
+      <div class="eyebrow">Chrome extension · Azure DevOps boards</div>
+      <div class="title-row">
+        <img src="assets/img/chatterboard-icon.png" alt="" width="128" height="128">
+        <h1>ChatterBoard</h1>
+      </div>
+      <p class="intro">Gives your Azure DevOps tickets a voice. At stand-up, it finds the cards that have sat still too long, scrolls each one into view, highlights it and reads it out loud. The stuck work speaks first, before anyone starts reading out status updates.</p>
+      <ul class="facts" aria-label="At a glance">
+        <li>Free and open source</li><li>Azure DevOps</li><li>Chrome</li><li>Works out of the box with Chrome's voice</li>
+      </ul>
+      <div class="acts">
+        <a class="cta" href="https://github.com/dmichel76/ChatterBoard" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Get it on GitHub</a>
+        <a class="btn btn-lg" href="#demo">Hear a sample board</a>
+      </div>
+    </div>
+    <figure class="shot">
+      <picture>
+        <source srcset="assets/img/chatterboard-popup.webp" type="image/webp">
+        <img src="assets/img/chatterboard-popup.jpg" alt="The ChatterBoard popup reading ticket 1 of 5: frustration score 92, last updated 15 days ago, 36 days in the Ready for QA column and 50 days in the Resolved state, with Templates, AI text, Chrome TTS and AI voice mode pills." width="562" height="820">
+      </picture>
+      <figcaption>The extension popup during a run</figcaption>
+    </figure>
+  </header>
+
+  <section class="panel" id="demo" aria-labelledby="demo-h">
+    <div class="head-row">
+      <h2 id="demo-h">Hear it on a sample board</h2>
+      <p class="note">A made-up team's board, scored with the extension's own rules. Turn your sound on.</p>
+    </div>
+    <div class="player">
+      <button type="button" class="cta" id="start">Start</button>
+      <button type="button" class="btn" id="prev" disabled>Previous</button>
+      <button type="button" class="btn" id="next" disabled>Next</button>
+      <button type="button" class="btn" id="clear" disabled>Clear</button>
+      <span class="gap"></span>
+      <div class="ctl">Scoring <span class="seg" id="mode" role="group" aria-label="Scoring mode"><button type="button" data-mode="relative" aria-pressed="true">Relative</button><button type="button" data-mode="absolute" aria-pressed="false">Absolute · 30 days</button></span></div>
+      <div class="ctl"><span class="seg" role="group" aria-label="Sound"><button type="button" id="sound" aria-pressed="true">Sound on</button></span></div>
+    </div>
+    <div class="stage">
+      <div class="board-scroll" id="boardScroll">
+        <div class="board" id="board" aria-label="Sample Azure DevOps board"></div>
+      </div>
+      <aside class="pop" aria-label="ChatterBoard popup">
+        <p class="status" id="status" aria-live="polite">Press Start to hear the three tickets that most need attention.</p>
+        <div class="scorebox" id="scorebox" hidden>
+          <div class="fs"><span id="face"></span><div><b id="score">0</b><small>Frustration score</small></div></div>
+          <div class="ttl"><b>Title</b><span id="ttl"></span></div>
+          <div id="sigs" style="display:grid;gap:10px"></div>
+        </div>
+        <div class="idle-art" id="idleArt" aria-hidden="true"><svg viewBox="0 0 120 70"><rect x="4" y="18" width="56" height="34" rx="5" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><rect x="4" y="18" width="5" height="34" rx="2" fill="var(--card-edge)"/><rect x="16" y="28" width="34" height="4" rx="2" fill="var(--line)"/><rect x="16" y="38" width="24" height="4" rx="2" fill="var(--line)"/><path d="M68 10 H112 a4 4 0 0 1 4 4 V36 a4 4 0 0 1 -4 4 H82 L72 48 L74 40 H68 a4 4 0 0 1 -4 -4 V14 a4 4 0 0 1 4 -4Z" fill="var(--surface)" stroke="var(--violet)" stroke-width="2"/><path d="M76 19 v12 M83 16 v18 M90 21 v8 M97 15 v20 M104 19 v12" stroke="var(--violet)" stroke-width="3" stroke-linecap="round"/></svg></div>
+        <p class="said idle" id="said" aria-live="polite">What the ticket says will appear here.</p>
+      </aside>
+    </div>
+    <p class="note">The sound uses your browser's own voice, like the extension's default Chrome voice. Nothing on this page is sent anywhere.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="how-h">
+    <div class="head-row">
+      <h2 id="how-h">How it picks the tickets</h2>
+      <p class="note">Each ticket gets a frustration score from 0 to 100.</p>
+    </div>
+    <div class="sigs">
+      <div class="sc-card" style="--c:var(--amber)">
+        <h3>Time since last updated</h3>
+        <p>How long since anyone changed anything on the ticket.</p>
+        <q>Nobody has touched me for 23 days. Starting to feel a bit neglected here.</q>
+      </div>
+      <div class="sc-card" style="--c:var(--bad)">
+        <h3>Time in column</h3>
+        <p>How long the ticket has sat in its current board column, read from its history. The column is named when it speaks.</p>
+        <q>I've been stuck in Ready for QA for 46 days. This is beyond a joke.</q>
+      </div>
+      <div class="sc-card" style="--c:var(--violet)">
+        <h3>Time in state</h3>
+        <p>How long since the ticket's state last changed, for example how long it has been Active or Resolved.</p>
+        <q>Been in progress for 33 days. This is taking longer than expected.</q>
+      </div>
+    </div>
+    <ul class="rules">
+      <li><b>Only what's on screen.</b> It looks at the tickets visible on the board, and skips the first and last columns: work not started yet, and work that's done.</li>
+      <li><b>Relative or absolute.</b> Relative scoring compares every wait with the longest one on the board, so the worst ticket today always scores near 100. Absolute scoring compares each wait with a fixed number of days (30 by default), so a calm board stays calm.</li>
+      <li><b>One score per ticket.</b> The frustration score is the average of its signal scores. Tickets are queued from the highest score down, five by default.</li>
+      <li><b>Only the signals that matter.</b> A signal scoring under half of the ticket's strongest signal is not mentioned, so one clear problem isn't drowned out by two small ones.</li>
+      <li><b>Skip what you choose.</b> Tags, states and work item types you list in Options are ignored.</li>
+    </ul>
+    <div class="tones" aria-label="Tone by frustration score">
+      <div class="tone" style="--c:var(--good)"><span class="lv">Calm · 0–30</span><q>It's been 4 days since anyone looked at me. No rush though.</q></div>
+      <div class="tone" style="--c:var(--amber)"><span class="lv">Cheeky · 31–70</span><q>11 days without an update. Am I invisible or something?</q></div>
+      <div class="tone" style="--c:var(--bad)"><span class="lv">Serious · 71–100</span><q>Nobody has touched me for 23 days. This is completely unacceptable.</q></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="voice-h">
+    <div class="head-row">
+      <h2 id="voice-h">Words and voices</h2>
+      <p class="note">Switch either one from the popup's mode pills, mid-stand-up if you like.</p>
+    </div>
+    <div class="modes">
+      <div class="mode"><span class="pill on">Templates</span><p>The default. Thirty hand-written sentences, ten per signal, from patient to fed up. No API key needed.</p></div>
+      <div class="mode"><span class="pill">AI text</span><p>A fresh one or two sentences per ticket from OpenAI's GPT-4o-mini, written in the right tone. Falls back to the templates if OpenAI isn't available.</p></div>
+      <div class="mode"><span class="pill on">Chrome TTS</span><p>The default. Chrome's built-in voices, nothing to set up.</p></div>
+      <div class="mode"><span class="pill">AI voice</span><p>Realistic ElevenLabs voices. Each ticket gets its own voice, picked from its ID, so the board sounds like a crowd. Or pin one voice in Options.</p></div>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel" aria-labelledby="install-h">
+      <h2 id="install-h">Install it</h2>
+      <p class="note">It isn't on the Chrome Web Store yet, so you load it yourself. It takes two minutes.</p>
+      <ol class="steps">
+        <li><b>Get the code.</b> <span>Download the zip from <a href="https://github.com/dmichel76/ChatterBoard/archive/refs/heads/main.zip">GitHub</a> and unzip it, or clone the repository.</span></li>
+        <li><b>Load it into Chrome.</b> <span>Go to <code>chrome://extensions</code>, turn on Developer mode, click Load unpacked and pick the folder.</span></li>
+        <li><b>Add your token.</b> <span>Open the extension's Options and paste an Azure DevOps personal access token with Work Items (Read) scope.</span></li>
+        <li><b>Run it at stand-up.</b> <span>Open your board, click the ChatterBoard icon and press Start. Use Next and Previous to move through the queue, and Clear to reset.</span></li>
+      </ol>
+    </section>
+    <section class="panel" aria-labelledby="opts-h">
+      <h2 id="opts-h">Options</h2>
+      <table>
+        <thead><tr><th>Setting</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Azure DevOps token</td><td>Required. Read-only access to work items.</td></tr>
+          <tr><td>Scoring mode</td><td>Relative (default) or absolute, with the number of days that counts as 100.</td></tr>
+          <tr><td>Tickets spoken</td><td>How many tickets to queue per run. Default 5.</td></tr>
+          <tr><td>Ignore</td><td>Tags, states and work item types to skip.</td></tr>
+          <tr><td>OpenAI key</td><td>Only for AI text.</td></tr>
+          <tr><td>ElevenLabs key</td><td>Only for AI voices. Add a voice ID to use one voice for every ticket.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div class="privacy">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <p><b>Your keys stay in your browser.</b> The token and any API keys are kept in Chrome's local storage on your machine. ChatterBoard only talks to Azure DevOps, plus OpenAI or ElevenLabs if you turn those on. There's no ChatterBoard server.</p>
+  </div>
+
+  <section class="panel outro">
+    <p class="lede">Questions, ideas or a bug? Open an issue on GitHub. Want to talk about how your team runs stand-up and gets work flowing?</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <a class="btn btn-lg" href="https://github.com/dmichel76/ChatterBoard/issues" target="_blank" rel="noopener">Open an issue</a>
+      <a class="cta" href="https://calendly.com/david-michel-theagilebroadcast/30min" target="_blank" rel="noopener">Book a conversation</a>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> The Agile Broadcast · Dr David Michel</span>
+    <span><a href="./#tools">More tools</a></span>
+  </div>
+</footer>
+<script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+<script>
+(function(){
+  // Sentences: sentences/*.txt in the extension (lines 1-3 calm, 4-7 cheeky, 8-10 serious).
+  var LINES = {
+    lastUpdated: [
+      "I haven't been updated in {duration}. Just checking in!",
+      "It's been {duration} since anyone looked at me. No rush though.",
+      "{duration} since my last update. Still here, patiently waiting.",
+      "Nobody has touched me for {duration}. Starting to feel a bit neglected here.",
+      "{duration} without an update. Am I invisible or something?",
+      "It's been {duration} since someone cared. Feeling a little forgotten, not gonna lie.",
+      "I've been sitting here for {duration} without any love. Hello? Anyone?",
+      "{duration} of radio silence. Is this thing even on anymore?",
+      "{duration} since my last update. This is getting ridiculous.",
+      "Nobody has touched me for {duration}. This is completely unacceptable."],
+    timeInColumn: [
+      "I've been in {column} for {duration}. Taking my time here.",
+      "Hanging out in {column} for {duration} now. It's cozy.",
+      "{duration} in {column}. Just enjoying the view.",
+      "I've been stuck in {column} for {duration}. Getting a bit stale.",
+      "{duration} in {column}. Can we move things along?",
+      "Sitting in {column} for {duration}. This is taking forever.",
+      "I've been trapped in {column} for {duration}. Someone please move me!",
+      "{duration} in {column} and counting. This is painful.",
+      "Stuck in {column} for {duration}. This is beyond a joke.",
+      "I've been rotting in {column} for {duration}. Completely abandoned."],
+    timeInProgress: [
+      "I've been in progress for {duration}. Making steady progress here.",
+      "Working on this for {duration} now. Things are moving along nicely.",
+      "{duration} since I started. Coming along at a good pace.",
+      "I've been worked on for {duration}. Could use a bit more attention though.",
+      "{duration} in progress. Starting to drag a little, don't you think?",
+      "Been in progress for {duration}. This is taking longer than expected.",
+      "I've been actively worked for {duration}. Can someone actually finish me?",
+      "{duration} and still going. This is taking way too long.",
+      "In progress for {duration} now. This is becoming a problem.",
+      "I've been in progress for {duration}. How is this still not done?"]
+  };
+  // A made-up board. Waits in days: u = last updated, c = in column, s = in state.
+  var COLS = ["New", "Active", "In Review", "Ready for QA", "Closed"];
+  var TICKETS = [
+    {id:4812, col:0, state:"New", t:"Gift card balance on account page", u:30, c:30, s:30},
+    {id:4830, col:0, state:"New", t:"Spike: returns label via app", u:21, c:21, s:21},
+    {id:4655, col:1, state:"Active", t:"Add Apple Pay to checkout", u:1.2, c:3.4, s:3.4},
+    {id:4590, col:1, state:"Active", t:"Refactor size guide service", u:2.1, c:14.1, s:14.1},
+    {id:4701, col:1, state:"Active", t:"Fix basket badge count on iOS", u:0.4, c:1.9, s:1.9, bug:1},
+    {id:4511, col:2, state:"Active", t:"Upgrade search API client", u:9.2, c:27.5, s:33.1},
+    {id:4688, col:2, state:"Active", t:"Wishlist sharing link", u:2.3, c:2.3, s:8.6},
+    {id:4402, col:3, state:"Resolved", t:"Middleware currently builds a synchronous queue", u:20.1, c:46.3, s:50.3},
+    {id:4720, col:3, state:"Resolved", t:"Recently viewed carousel on product page", u:1.1, c:1.1, s:4.2},
+    {id:4377, col:4, state:"Closed", t:"Saved addresses limit raised to 20", u:60, c:60, s:60},
+    {id:4366, col:4, state:"Closed", t:"Dark mode for order history", u:61, c:61, s:61}
+  ];
+  var MAX = 3;
+  var $ = function(id){return document.getElementById(id)};
+  var board = $("board"), mode = "relative", soundOn = true, queue = [], idx = -1, timer = null, playing = false, runId = 0;
+  var synth = window.speechSynthesis || null;
+
+  function shortDur(d){var days=Math.floor(d), h=Math.round((d-days)*24); if(h===24){days++;h=0} return days ? days+"d "+h+"h" : h+"h"}
+  function speechDur(d){if(d<1){var h=Math.max(1,Math.round(d*24));return h+" hour"+(h===1?"":"s")} var n=Math.round(d);return n+" day"+(n===1?"":"s")}
+  function tone(score){return score<=30?"calm":score<=70?"cheeky":"serious"}
+  function pick(key, t){var r=t==="calm"?[0,2]:t==="cheeky"?[3,6]:[7,9];return LINES[key][r[0]+Math.floor(Math.random()*(r[1]-r[0]+1))]}
+
+  function score(){
+    var eligible = TICKETS.filter(function(k){return k.col>0 && k.col<COLS.length-1});
+    var maxD = Math.max.apply(null, eligible.map(function(k){return Math.max(k.u,k.c,k.s)}));
+    var scale = mode==="relative" ? maxD : 30;
+    return eligible.map(function(k){
+      var sig = [
+        {key:"lastUpdated", label:"Last updated", d:k.u},
+        {key:"timeInColumn", label:"In '"+COLS[k.col]+"' column", d:k.c, column:COLS[k.col]},
+        {key:"timeInProgress", label:"In '"+k.state+"' state", d:k.s}
+      ].map(function(s){s.score=Math.round(Math.max(0,Math.min(100,s.d/scale*100)));return s});
+      var fs = Math.round(sig.reduce(function(a,s){return a+s.score},0)/sig.length);
+      var sorted = sig.slice().sort(function(a,b){return b.score-a.score||b.d-a.d});
+      var top = sorted[0].score;
+      sorted.forEach(function(s){s.spoken = s.score >= top*0.5});
+      return {k:k, fs:fs, sig:sig, spoken:sorted.filter(function(s){return s.spoken})};
+    }).sort(function(a,b){return b.fs-a.fs});
+  }
+
+  function render(){
+    var scored = queue.length ? queue : [];
+    board.innerHTML = "";
+    board.classList.toggle("scored", scored.length>0);
+    COLS.forEach(function(name, ci){
+      var col = document.createElement("div");
+      var skip = ci===0 || ci===COLS.length-1;
+      col.className = "col"+(skip?" skip":"");
+      var items = TICKETS.filter(function(k){return k.col===ci});
+      col.innerHTML = '<div class="col-h">'+name+'<span>'+(skip?"skipped":items.length)+'</span></div>';
+      items.forEach(function(k){
+        var e = document.createElement("div");
+        e.className = "tk"+(k.bug?" bug":"");
+        e.id = "tk-"+k.id;
+        var q = scored.filter(function(x){return x.k===k})[0];
+        if(q){e.classList.add("queued");}
+        e.innerHTML = '<span class="id">'+(k.bug?"Bug":"Story")+" "+k.id+'</span>'+k.t+(q?'<span class="sc" style="background:'+colour(q.fs)+'">'+q.fs+'</span>':"");
+        col.appendChild(e);
+      });
+      board.appendChild(col);
+    });
+  }
+  function colour(s){return s<=30?"var(--good)":s<=70?"var(--amber)":"var(--bad)"}
+  function face(s){
+    var t=tone(s), c=colour(s);
+    var mouth = t==="calm" ? '<path d="M15 29 Q22 35 29 29" stroke="#2B2B2B" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+      : t==="cheeky" ? '<path d="M15 31 H29" stroke="#2B2B2B" stroke-width="2.4" stroke-linecap="round"/>'
+      : '<path d="M15 33 Q22 26 29 33" stroke="#2B2B2B" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    var brows = t==="serious" ? '<path d="M11 14 L19 17 M33 14 L25 17" stroke="#2B2B2B" stroke-width="2.4" stroke-linecap="round"/>' : "";
+    return '<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="'+c+'"/>'+brows+'<circle cx="16" cy="20" r="2.4" fill="#2B2B2B"/><circle cx="28" cy="20" r="2.4" fill="#2B2B2B"/>'+mouth+'</svg>';
+  }
+
+  function show(i){
+    idx = i;
+    var q = queue[i];
+    document.querySelectorAll(".cb .tk.now").forEach(function(e){e.classList.remove("now")});
+    var el = $("tk-"+q.k.id); el.classList.add("now");
+    var sc = $("boardScroll");
+    sc.scrollTo({left: Math.max(0, el.offsetLeft - sc.clientWidth/2 + el.offsetWidth/2), behavior: "smooth"});
+    $("status").textContent = "Reading ticket "+(i+1)+" of "+queue.length;
+    $("scorebox").hidden = false; $("idleArt").hidden = true;
+    $("face").innerHTML = face(q.fs);
+    $("score").textContent = q.fs;
+    $("ttl").textContent = q.k.t;
+    $("sigs").innerHTML = q.sig.map(function(s){
+      return '<div class="sig'+(s.spoken?"":" muted")+'"><div class="r"><b>'+s.label+'</b><span>'+shortDur(s.d)+'</span></div><div class="bar"><i style="width:'+s.score+'%;background:'+colour(s.score)+'"></i></div>'+(s.spoken?"":'<span class="mute-note">Not mentioned: under half the strongest signal</span>')+'</div>';
+    }).join("");
+    var t = tone(q.fs);
+    var text = [q.k.t+"."].concat(q.spoken.map(function(s){
+      return pick(s.key, t).replace("{duration}", speechDur(s.d)).replace("{column}", s.column||"this column");
+    })).join(" ");
+    var said = $("said"); said.classList.remove("idle"); said.textContent = "“"+text+"”";
+    $("prev").disabled = i===0; $("next").disabled = i>=queue.length-1;
+    say(text, function(){ if(i<queue.length-1) show(i+1); else done(); });
+  }
+  function say(text, then){
+    var my = ++runId;
+    clearTimeout(timer);
+    if(synth) synth.cancel();
+    var next = function(){ if(my===runId && playing) timer = setTimeout(then, 900); };
+    if(soundOn && synth && window.SpeechSynthesisUtterance){
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-GB"; u.rate = 1;
+      var fallback = setTimeout(next, 4000 + text.length*90);
+      u.onend = function(){clearTimeout(fallback); next()};
+      u.onerror = function(){clearTimeout(fallback); next()};
+      synth.speak(u);
+    } else {
+      timer = setTimeout(function(){ if(my===runId && playing) then(); }, 2500 + text.length*45);
+    }
+  }
+  function done(){ playing = false; $("status").textContent = "Done. "+queue.length+" tickets read out. Press Start to hear them again."; $("start").textContent = "Start"; }
+  function start(){
+    queue = score().slice(0, MAX);
+    render();
+    playing = true;
+    $("start").textContent = "Restart";
+    $("clear").disabled = false;
+    try{window.umami&&window.umami.track("ChatterBoard: demo played",{mode:mode,sound:soundOn})}catch(_){}
+    show(0);
+  }
+  function clearAll(){
+    playing = false; runId++; clearTimeout(timer); if(synth) synth.cancel();
+    queue = []; idx = -1; render();
+    $("scorebox").hidden = true; $("idleArt").hidden = false;
+    var said = $("said"); said.classList.add("idle"); said.textContent = "What the ticket says will appear here.";
+    $("status").textContent = "Press Start to hear the three tickets that most need attention.";
+    $("start").textContent = "Start"; $("prev").disabled = $("next").disabled = $("clear").disabled = true;
+  }
+
+  $("start").addEventListener("click", start);
+  $("clear").addEventListener("click", clearAll);
+  $("next").addEventListener("click", function(){ if(idx<queue.length-1){playing=true; show(idx+1)} });
+  $("prev").addEventListener("click", function(){ if(idx>0){playing=true; show(idx-1)} });
+  $("sound").addEventListener("click", function(){
+    soundOn = !soundOn; this.setAttribute("aria-pressed", soundOn); this.textContent = soundOn ? "Sound on" : "Sound off";
+    if(!soundOn && synth) synth.cancel();
+  });
+  document.querySelectorAll("#mode button").forEach(function(b){
+    b.addEventListener("click", function(){
+      mode = b.dataset.mode;
+      document.querySelectorAll("#mode button").forEach(function(x){x.setAttribute("aria-pressed", x===b)});
+      if(queue.length){ start(); }
+    });
+  });
+  if(!synth){ var s=$("sound"); soundOn=false; s.textContent="No voice in this browser"; s.disabled=true; s.setAttribute("aria-pressed","false"); }
+  render();
+})();
+</script>
+</body>
+</html>

@@ -47,6 +47,16 @@ window.COURSES = [
     testimonial: null
   },
   {
+    title: "Leading for Value and Flow",
+    audience: "For leaders and managers",
+    status: "in-development",
+    summary:
+      "A course for the people who shape the system teams work in: setting outcomes, managing flow rather than people, and creating room to learn.",
+    outcomes: [],
+    formats: [],
+    testimonial: null
+  },
+  {
     title: "Slicing Work by Value",
     audience: "For teams · Advanced",
     status: "in-development",
@@ -67,16 +77,6 @@ window.COURSES = [
     formats: [],
     testimonial: null
   },
-  {
-    title: "Leading for Value and Flow",
-    audience: "For leaders and managers",
-    status: "in-development",
-    summary:
-      "A course for the people who shape the system teams work in: setting outcomes, managing flow rather than people, and creating room to learn.",
-    outcomes: [],
-    formats: [],
-    testimonial: null
-    },
   {
     title: "Ways of Working with AI",
     audience: "For individuals, teams and organisations",

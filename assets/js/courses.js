@@ -16,6 +16,7 @@
                  to colour-code it
     formats      List of ways it can be run (can be empty: [])
     testimonial  null, or { quote: "...", name: "...", role: "..." }
+    hidden       Optional. true keeps the course in this file but off the site
 */
 window.COURSES = [
   {
@@ -58,6 +59,7 @@ window.COURSES = [
   },
   {
     title: "Slicing Work by Value",
+    hidden: true,
     audience: "For teams · Advanced",
     status: "in-development",
     summary:
@@ -68,6 +70,7 @@ window.COURSES = [
   },
   {
     title: "Flow Metrics",
+    hidden: true,
     audience: "For teams and leaders",
     status: "in-development",
     summary:
@@ -79,6 +82,7 @@ window.COURSES = [
   },
   {
     title: "Ways of Working with AI",
+    hidden: true,
     audience: "For individuals, teams and organisations",
     status: "in-development",
     summary:

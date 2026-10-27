@@ -57,6 +57,17 @@ window.COURSES = [
     testimonial: null
   },
   {
+    title: "Flow Metrics",
+    audience: "For teams and leaders",
+    status: "in-development",
+    summary:
+      "Cycle time, throughput, work in progress and work item age: what they tell you about how work really flows, how to read them without gaming them, and how to use them to forecast and to decide where to improve next.",
+    pillars: ["Flow"],
+    outcomes: [],
+    formats: [],
+    testimonial: null
+  },
+  {
     title: "Leading for Value and Flow",
     audience: "For leaders and managers",
     status: "in-development",
